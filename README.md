@@ -9,4 +9,26 @@
 
 
 ## Project Structure
-
+```
+App-Title/
+└── lib/
+    ├── data/
+    │   ├── models/      		    # Blueprints: Converts Firestore JSON to Dart Objects
+    │   └── repositories/     	# Logic: Pure Firebase functions (Auth, CRUD, etc.)
+    │
+    ├── features/             	# Business Logic & UI grouped by feature
+    │   ├── auth/             	# Login, Signup, Forgot Password
+    │   │   ├── pages/        	# Full-screen widgets
+    │   │   └── widgets/      	# Small, reusable auth-only components
+    │   │
+    │   ├── tenant/           	# Logic specific to the Tenant role
+    │   │   ├── pages/        
+    │   │   └── widgets/      
+    │   │
+    │   └── manager/          	# Logic specific to the Manager role
+    │       ├── pages/        
+    │       └── widgets/      
+    │
+    ├── app.dart              	# Global app settings (Theming, Route generation)
+    └── main.dart             	# Root: App entry point & Firebase initialization
+```
