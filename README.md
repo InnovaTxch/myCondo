@@ -11,6 +11,24 @@
 
 ## Software Architecture
 
+Architecture Pattern: Feature-First Architecture with Layered Data Access
+
+The system follows a Feature-First architecture where code is organized by business capability instead of technical type. Each feature contains its own UI and logic. Shared data logic is placed in a centralized data layer.
+
+Structure Layers:
+
+- Presentation Layer
+    - Pages
+    - Widgets
+    - Role-based UI (Tenant, Manager)
+- Feature Layer
+    - Auth
+    - Resident
+    - Manager
+- Data Layer
+    - Models
+    - Repositories
+    = Supabase integration
 
 
 ## Project Structure
@@ -18,7 +36,7 @@
 App-Title/
 └── lib/
     ├── data/
-    │   ├── models/      		    # Blueprints: Converts Firestore JSON to Dart Objects
+    │   ├── models/      	    # Blueprints: Converts Firestore JSON to Dart Objects
     │   └── repositories/     	# Logic: Pure Firebase functions (Auth, CRUD, etc.)
     │
     ├── features/             	# Business Logic & UI grouped by feature
@@ -26,7 +44,7 @@ App-Title/
     │   │   ├── pages/        	# Full-screen widgets
     │   │   └── widgets/      	# Small, reusable auth-only components
     │   │
-    │   ├── tenant/           	# Logic specific to the Tenant role
+    │   ├── resident/           # Logic specific to the Resident role
     │   │   ├── pages/        
     │   │   └── widgets/      
     │   │
