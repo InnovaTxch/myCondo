@@ -1,15 +1,15 @@
 # CMSC-129-Project
 
-## Description
+## 📝 Description
 
 {App Name} is a mobile application built with Flutter and Dart. It allows condo managers to {insert manager functions}. Residents can {insert resident functions}. The system uses Supabase as its backend for authentication, database, and storage.
 
-## Logical View Diagram
+## 📊 Logical View Diagram
 
 <img width="289" height="230" alt="image" src="https://github.com/user-attachments/assets/620fe1f3-1167-4a09-bf60-6012f7b82ddf" />
 
 
-## Software Architecture
+## 🏗️ Software Architecture
 
 Architecture Pattern: Feature-First Architecture with Layered Data Access
 
@@ -31,7 +31,7 @@ Structure Layers:
     = Supabase integration
 
 
-## Project Structure
+## 📂 Project Structure
 ```
 App-Title/
 └── lib/
