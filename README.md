@@ -28,7 +28,7 @@ Structure Layers:
 - Data Layer
     - Models
     - Repositories
-    = Supabase integration
+    - Supabase integration
 
 
 ## 📂 Project Structure
