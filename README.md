@@ -1,7 +1,7 @@
 
 ---
 
-# CMSC 129 Final Project
+# CMSC 129 Project
 
 ### Group Members:
 * *Kent Francis Genilo*
