@@ -38,23 +38,22 @@ The system follows a Feature-First architecture where code is organized by busin
 
 ## Structure Layers
 
-### Presentation Layer
+```
+Presentation Layer
+  * Pages
+  * Widgets
+  * Role-based UI (Tenant, Manager)
 
-* Pages
-* Widgets
-* Role-based UI (Tenant, Manager)
+Feature Layer
+  * Auth
+  * Resident
+  * Manager
 
-### Feature Layer
-
-* Auth
-* Resident
-* Manager
-
-### Data Layer
-
-* Models
-* Repositories
-* Supabase integration
+Data Layer
+  * Models
+  * Repositories
+  * Supabase integration
+```
 
 ---
 
