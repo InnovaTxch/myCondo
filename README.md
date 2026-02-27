@@ -6,6 +6,7 @@
 
 ## Logical View Diagram
 
+<img width="289" height="230" alt="image" src="https://github.com/user-attachments/assets/620fe1f3-1167-4a09-bf60-6012f7b82ddf" />
 
 
 ## Software Architecture
