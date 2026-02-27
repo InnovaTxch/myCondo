@@ -16,8 +16,7 @@
 
 ### Description
 
-{App Name} is a mobile application built with Flutter and Dart. It allows condo managers to {insert manager functions}. Residents can {insert resident functions}. The system uses Supabase as its backend for authentication, database, and storage.
-
+{App Name} is a mobile application built with Flutter and Dart. It allows **condo managers** to manage residents, units, and occupancy records. **Managers** can generate bills for residents and broadcast announcements for maintenance and security notices. **Residents** can receive push notifications, pay their dues, view their payment history, and receive security notices. The system uses **Supabase** as its backend for authentication, database storage, and real-time updates.
 ## Logical View Diagram
 > [!NOTE]
 > The diagram below is rendered using **Mermaid.js**. For the best viewing experience, please view this file on GitHub or a Markdown editor with Mermaid support.
@@ -139,8 +138,8 @@ Data Layer
 App-Title/
 └── lib/
     ├── data/
-    │   ├── models/            # Blueprints: Converts Firestore JSON to Dart Objects
-    │   └── repositories/      # Logic: Pure Firebase functions (Auth, CRUD, etc.)
+    │   ├── models/            # Blueprints: Converts Supabase JSON to Dart Objects
+    │   └── repositories/      # Logic: Supabase functions (Auth, CRUD, etc.)
     │
     ├── features/              # Business Logic & UI grouped by feature
     │   ├── auth/              # Login, Signup, Forgot Password
@@ -156,5 +155,5 @@ App-Title/
     │       └── widgets/
     │
     ├── app.dart               # Global app settings (Theming, Route generation)
-    └── main.dart              # Root: App entry point & Firebase initialization
+    └── main.dart              # Root: App entry point & Supabase initialization
 ```
