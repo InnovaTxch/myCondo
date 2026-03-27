@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-class TenantDashboard extends StatelessWidget {
+class ResidentDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(title: Text("Tenant Dashboard")),
+      appBar: AppBar(title: Text("Resident Dashboard")),
 
       body: Center(
         child: Text(
-          "Mobile Tenant Interface",
+          "Mobile Resident Interface",
           style: TextStyle(fontSize: 24),
         ),
       ),

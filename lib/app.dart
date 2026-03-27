@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'screens/splash_screen.dart';
-import 'screens/role_selection.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/dashboard.dart';
+import 'package:mycondo/features/shared/pages/splash_screen.dart';
+import 'package:mycondo/features/shared/pages/dashboard.dart';
+import 'package:mycondo/features/auth/pages/role_selection.dart';
+import 'package:mycondo/features/auth/pages/login_screen.dart';
+import 'package:mycondo/features/auth/pages/signup_screen.dart';
+
 
 class MyCondoApp extends StatelessWidget {
   const MyCondoApp({super.key});
