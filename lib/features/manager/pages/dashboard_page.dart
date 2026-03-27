@@ -60,13 +60,13 @@ class ManagerDashboardPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              DashboardNavigationBar(
-                items: displayNavigationItems,
-                selectedIndex: selectedNavigationIndex,
-              ),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: DashboardNavigationBar(
+                            items: displayNavigationItems,
+                            selectedIndex: selectedNavigationIndex,
       ),
     );
   }
