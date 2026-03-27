@@ -12,6 +12,15 @@
 
 ---
 
+> [!NOTE]
+> Hello guys! Naghimo ko gali env file para sa url kag anon key kang supabase ta.
+> 
+> Also nagsend na ko gali invitations in case need niyo iaccess aton supabase. 
+> Kindly check your up mails na lang.
+> 
+> As for the details and prereq to run main.dart without error, 
+> please refer to `.env.example` which will serve as our template.
+
 # Logical View Diagram
 
 ### Description

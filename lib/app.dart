@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'features/manager/pages/dashboard_page.dart';
-import 'features/manager/widgets/dashboard_models.dart';
-import 'features/auth/pages/splash_screen.dart';
-import 'features/auth/pages/role_selection.dart';
-import 'features/auth/pages/login_screen.dart';
-import 'features/auth/pages/signup_screen.dart';
-import 'features/resident/pages/tenant_dashboard.dart';
+import 'package:mycondo/features/shared/pages/splash_screen.dart';
+import 'package:mycondo/features/manager/pages/dashboard_page.dart';
+import 'package:mycondo/features/manager/widgets/dashboard_models.dart';
+import 'package:mycondo/features/auth/pages/role_selection.dart';
+import 'package:mycondo/features/auth/pages/login_screen.dart';
+import 'package:mycondo/features/auth/pages/signup_screen.dart';
+
 
 class MyCondoApp extends StatelessWidget {
   const MyCondoApp({super.key});
@@ -47,7 +47,7 @@ class MyCondoApp extends StatelessWidget {
                 );
               }
 
-              return const TenantDashboard();
+              return const SplashScreen();
             },
             settings: settings,
           );
