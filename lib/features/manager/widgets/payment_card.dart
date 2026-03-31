@@ -43,10 +43,12 @@ class PaymentCard extends StatelessWidget {
                     Text(
                       'Shared: ${payment.room}',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
+                        fontFamily: "Urbanist",
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFB4B4B4),
+                        height: 1.0,
+                      ),                    ),
                   ],
                 ),
               ),
@@ -55,17 +57,23 @@ class PaymentCard extends StatelessWidget {
                 children: [
                   Text(
                     payment.method,
-                    style: const TextStyle(
-                      fontSize: 11,
+                    style: TextStyle(
+                      fontFamily: "Urbanist",
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFF53B1FD),
+                      height: 1.0,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     payment.date,
                     style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.grey.shade500,
+                      fontFamily: "Urbanist",
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFB4B4B4),
+                      height: 1.0,
                     ),
                   ),
                 ],
@@ -77,9 +85,12 @@ class PaymentCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: Text(
               payment.amount,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                fontFamily: "Urbanist",
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+                height: 1.0,
               ),
             ),
           ),
@@ -112,14 +123,14 @@ class PaymentCard extends StatelessWidget {
         return _filledButton(
           label: 'Approved',
           onTap: null,
-          width: 82,
+          width: 110,
         );
 
       case PaymentStatus.rejected:
         return _outlineButton(
           label: 'Rejected',
           onTap: null,
-          width: 88,
+          width: 100,
         );
     }
   }
@@ -127,7 +138,7 @@ class PaymentCard extends StatelessWidget {
   Widget _filledButton({
     required String label,
     VoidCallback? onTap,
-    double width = 92,
+    double width = 100,
   }) {
     return SizedBox(
       width: width,
@@ -144,7 +155,13 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 12),
+          style: TextStyle(
+            fontFamily: "Urbanist",
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            height: 1.0,
+          ),
         ),
       ),
     );
@@ -153,7 +170,7 @@ class PaymentCard extends StatelessWidget {
   Widget _outlineButton({
     required String label,
     VoidCallback? onTap,
-    double width = 92,
+    double width = 100,
   }) {
     return SizedBox(
       width: width,
@@ -169,7 +186,13 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(fontSize: 12),
+          style: TextStyle(
+            fontFamily: "Urbanist",
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF53B1FD),
+            height: 1.0,
+          ),
         ),
       ),
     );
