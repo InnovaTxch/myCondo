@@ -138,6 +138,8 @@ class _SignupScreenState extends State<SignupScreen>{
 
   @override
   Widget build(BuildContext context) {
+    final role =
+        ModalRoute.of(context)?.settings.arguments as String? ?? 'tenant';
 
     return Scaffold(
       backgroundColor: Color(0xFFF4F4F4),

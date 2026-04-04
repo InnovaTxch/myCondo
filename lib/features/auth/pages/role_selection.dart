@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 class RoleSelection extends StatelessWidget {
+  const RoleSelection({super.key});
 
   void chooseRole(BuildContext context, String role) {
-    Navigator.pushNamed(context, '/signup');
+    Navigator.pushNamed(
+      context,
+      '/signup',
+      arguments: role,
+    );
   }
 
   @override
@@ -62,7 +67,7 @@ class RoleSelection extends StatelessWidget {
                     ),
 
                     onPressed: () {
-                      chooseRole(context, "manager");
+                      chooseRole(context, 'manager');
                     },
 
                     child: Text("Manager"),
@@ -82,7 +87,7 @@ class RoleSelection extends StatelessWidget {
                     ),
 
                     onPressed: () {
-                      chooseRole(context, "tenant");
+                      chooseRole(context, 'tenant');
                     },
 
                     child: Text("Tenant"),
