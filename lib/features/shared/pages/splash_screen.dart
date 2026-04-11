@@ -5,13 +5,10 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Color(0xFFF4F4F4),
-
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -30,29 +27,28 @@ class SplashScreen extends StatelessWidget {
 
             SizedBox(height: 5),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              "away from home",
-              style: TextStyle(
-                fontFamily: "Urbanist",
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                "away from home",
+                style: TextStyle(
+                  fontFamily: "Urbanist",
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
-          ),
 
-          Transform.translate(
-            offset: Offset(-60, 0), // move left
-            child: Image.asset(
-              "assets/images/house.png",
-              height: 500,
-              fit: BoxFit.contain,
+            // ✅ Expanded lets the image take remaining space without overflowing
+            Expanded(
+              child: Transform.translate(
+                offset: Offset(-60, 0),
+                child: Image.asset(
+                  "assets/images/house.png",
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
-          ),
-
-
-            Spacer(),
 
             Center(
               child: ElevatedButton(
@@ -63,11 +59,9 @@ class SplashScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-
                 onPressed: () {
                   Navigator.pushNamed(context, '/role');
                 },
-
                 child: Text(
                   "Let's Get Started",
                   style: TextStyle(
