@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/manager/pages/dashboard_page.dart';
-import 'package:mycondo/features/manager/widgets/dashboard_models.dart';
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
@@ -24,7 +23,11 @@ class MyCondoApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
+        '/onboarding': (context) => OnboardingPage(),
         '/manager-dashboard': (context) => ManagerDashboardPage(),
+        '/manager-transaction': (context) => ManagerDashboardPage(),
+        '/manager-chat': (context) => ManagerDashboardPage(),
+        '/manager-about': (context) => ManagerDashboardPage(),
         '/manager-profile': (context) => ManagerDashboardPage(),
         '/add-bill': (context) => CreateBillPage()
       }

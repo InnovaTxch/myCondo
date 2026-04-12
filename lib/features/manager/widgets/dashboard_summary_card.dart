@@ -69,7 +69,7 @@ class DashboardSummaryCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   _ProgressRing(
                     progress: summary.completionPercent,
-                    label: summary.progressLabel,
+                    label: summary.progressLabel ?? "NULL",
                   ),
                 ],
               ),
