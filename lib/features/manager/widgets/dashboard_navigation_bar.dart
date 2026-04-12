@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-class DashboardNavigationBar extends StatelessWidget {
-  const DashboardNavigationBar({
-    super.key,
-    required this.items,
-    required this.selectedIndex,
-  });
+class DashboardNavigationBar extends StatefulWidget {
+   const DashboardNavigationBar({super.key});
 
   final List<DashboardNavigationItem> items;
   final int selectedIndex;
+  @override
+  State<DashboardNavigationBar> createState() => _DashboardNavigationBar();
+}
+
+
 
   @override
   Widget build(BuildContext context) {
