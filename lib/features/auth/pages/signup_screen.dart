@@ -38,6 +38,7 @@ class _SignupScreenState extends State<SignupScreen>{
       await authService.signUpWithEmailPassword(email, password);
       if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signup successful!")));
+      Navigator.pushReplacementNamed(context, '/onboarding');
 
     } catch (e) {
       if(!mounted) return;
