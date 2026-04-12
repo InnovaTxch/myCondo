@@ -5,10 +5,16 @@ class AuthService {
 
   //sign up with email and password
   Future<AuthResponse> signUpWithEmailPassword(String email, String password) async{
-    return await _supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
+    try {
+      return await _supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+    } on AuthException catch (e) {
+      throw e.message;
+    } catch (e) {
+      throw "An unexpected error occurred";
+    }
   }
 
   //log in with email and password
