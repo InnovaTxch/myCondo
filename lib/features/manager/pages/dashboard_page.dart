@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
 import 'package:mycondo/data/models/manager/dashboard_models.dart';
 
 import '../widgets/dashboard_announcement_section.dart';
