@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
 
 class DashboardSummary {
-  const DashboardSummary({
-    required this.totalTenants,
-    required this.pendingReports,
-    required this.paymentsToReview,
-    required this.completionPercent,
-    this.progressLabel = 'rate paid',
-  });
-
-  final int? totalTenants;
-  final int? pendingReports;
-  final int? paymentsToReview;
-  final double? completionPercent;
-  final String progressLabel;
+  int? totalTenants;
+  int? pendingReports;
+  int? paymentsToReview;
+  double? completionPercent;
+  String? progressLabel;
 }
 
 class DashboardAnnouncement {
@@ -47,12 +39,5 @@ class DashboardQuickAction {
   final String subtitle;
   final IconData icon;
   final Color? iconBadgeColor;
-  final VoidCallback? onTap;
-}
-
-class DashboardNavigationItem {
-  const DashboardNavigationItem({required this.icon, this.onTap});
-
-  final IconData icon;
   final VoidCallback? onTap;
 }

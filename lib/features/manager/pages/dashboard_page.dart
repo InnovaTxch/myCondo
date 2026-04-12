@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:mycondo/data/models/manager/dashboard_models.dart';
+
 import '../widgets/dashboard_announcement_section.dart';
 import '../widgets/dashboard_defaults.dart';
 import '../widgets/dashboard_greeting.dart';
-import '../widgets/dashboard_models.dart';
 import '../widgets/dashboard_navigation_bar.dart';
 import '../widgets/dashboard_quick_action_tile.dart';
 import '../widgets/dashboard_summary_card.dart';

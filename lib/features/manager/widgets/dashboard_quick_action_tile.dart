@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dashboard_models.dart';
+import 'package:mycondo/data/models/manager/dashboard_models.dart';
 
 class DashboardQuickActionTile extends StatelessWidget {
   const DashboardQuickActionTile({
