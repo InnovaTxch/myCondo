@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'dashboard_models.dart';
+import 'package:mycondo/data/models/manager/dashboard_models.dart';
 import 'dashboard_skeleton_block.dart';
 
 class DashboardSummaryCard extends StatelessWidget {
@@ -69,7 +69,7 @@ class DashboardSummaryCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   _ProgressRing(
                     progress: summary.completionPercent,
-                    label: summary.progressLabel,
+                    label: summary.progressLabel ?? "NULL",
                   ),
                 ],
               ),

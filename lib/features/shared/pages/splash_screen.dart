@@ -65,7 +65,7 @@ class SplashScreen extends StatelessWidget {
                 ),
 
                 onPressed: () {
-                  Navigator.pushNamed(context, '/role');
+                  Navigator.pushNamed(context, '/login');
                 },
 
                 child: Text(

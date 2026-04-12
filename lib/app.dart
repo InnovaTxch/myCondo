@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/manager/pages/dashboard_page.dart';
-import 'package:mycondo/features/manager/widgets/dashboard_models.dart';
-import 'package:mycondo/features/auth/pages/role_selection.dart';
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
+import 'package:mycondo/features/shared/pages/onboarding_page.dart';
 
 import 'package:mycondo/features/manager/pages/create_bill_page.dart';
 
@@ -22,41 +21,16 @@ class MyCondoApp extends StatelessWidget {
 
       routes: {
         '/': (context) => SplashScreen(),
-        '/role': (context) => RoleSelection(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
+        '/onboarding': (context) => OnboardingPage(),
+        '/manager-dashboard': (context) => ManagerDashboardPage(),
+        '/manager-transaction': (context) => ManagerDashboardPage(),
+        '/manager-chat': (context) => ManagerDashboardPage(),
+        '/manager-about': (context) => ManagerDashboardPage(),
+        '/manager-profile': (context) => ManagerDashboardPage(),
         '/add-bill': (context) => CreateBillPage()
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/dashboard') {
-          final role = settings.arguments as String? ?? 'tenant';
-
-          return MaterialPageRoute<void>(
-            builder: (context) {
-              if (role == 'manager') {
-                return const ManagerDashboardPage(
-                  managerName: '',
-                  summary: DashboardSummary(
-                    totalTenants: null,
-                    pendingReports: null,
-                    paymentsToReview: null,
-                    completionPercent: null,
-                  ),
-                  announcements: [],
-                  quickActions: [],
-                  navigationItems: [],
-                  selectedNavigationIndex: 0,
-                );
-              }
-
-              return const SplashScreen();
-            },
-            settings: settings,
-          );
-        }
-
-        return null;
-      },
+      }
     );
   }
 }
