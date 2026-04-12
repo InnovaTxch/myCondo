@@ -39,6 +39,15 @@ class _LoginScreenState extends State<LoginScreen>{
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login successful!")),
       );
+      
+      String? role = await authService.getRole();
+
+      if (!mounted) return;
+
+      Navigator.pushReplacementNamed(
+        context, 
+        role == 'manager' ? '/manager-dashboard' : '/resident-dashboard'
+      );
 
     } on SocketException {
       if (!mounted) return;
