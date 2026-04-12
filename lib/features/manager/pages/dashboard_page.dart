@@ -10,25 +10,24 @@ import '../widgets/dashboard_navigation_bar.dart';
 import '../widgets/dashboard_quick_action_tile.dart';
 import '../widgets/dashboard_summary_card.dart';
 
-class ManagerDashboardPage extends StatelessWidget {
-  const ManagerDashboardPage({
-    super.key,
-    required this.managerName,
-    required this.summary,
-    required this.announcements,
-    required this.quickActions,
-    required this.navigationItems,
-    required this.selectedNavigationIndex,
-    this.onAddAnnouncement,
-  });
+class ManagerDashboardPage extends StatefulWidget {
+  const ManagerDashboardPage({super.key});
 
-  final String managerName;
-  final DashboardSummary summary;
-  final List<DashboardAnnouncement> announcements;
-  final List<DashboardQuickAction> quickActions;
-  final List<DashboardNavigationItem> navigationItems;
-  final int selectedNavigationIndex;
-  final VoidCallback? onAddAnnouncement;
+  @override
+  State<ManagerDashboardPage> createState() => _ManagerDashboardPage();
+}
+
+class _ManagerDashboardPage extends State<ManagerDashboardPage> {
+
+  ManagerDashboardService dashboardService = ManagerDashboardService();
+
+  String? managerName;
+  DashboardSummary summary = DashboardSummary();
+  List<DashboardAnnouncement> announcements = [];
+  List<DashboardQuickAction> quickActions = [];
+  int selectedNavigationIndex = 0;
+  VoidCallback? onAddAnnouncement;
+
 
   @override
   Widget build(BuildContext context) {

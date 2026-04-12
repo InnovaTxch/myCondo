@@ -23,38 +23,9 @@ class MyCondoApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
+        '/manager-dashboard': (context) => ManagerDashboardPage(),
         '/add-bill': (context) => CreateBillPage()
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/dashboard') {
-          final role = settings.arguments as String? ?? 'tenant';
-
-          return MaterialPageRoute<void>(
-            builder: (context) {
-              if (role == 'manager') {
-                return const ManagerDashboardPage(
-                  managerName: '',
-                  summary: DashboardSummary(
-                    totalTenants: null,
-                    pendingReports: null,
-                    paymentsToReview: null,
-                    completionPercent: null,
-                  ),
-                  announcements: [],
-                  quickActions: [],
-                  navigationItems: [],
-                  selectedNavigationIndex: 0,
-                );
-              }
-
-              return const SplashScreen();
-            },
-            settings: settings,
-          );
-        }
-
-        return null;
-      },
+      }
     );
   }
 }
