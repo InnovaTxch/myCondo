@@ -3,7 +3,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  //sign up with email and password
+  Future<String?> getRole() async {
+  try {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return null;
+
+    final data = await _supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle(); // Use maybeSingle to avoid errors if the profile is missing
+
+    return data?['role'] as String?;
+  } catch (e) {
+    print("Error fetching role: $e");
+    return null;
+  }
+}
+
   Future<AuthResponse> signUpWithEmailPassword(String email, String password) async{
     try {
       return await _supabase.auth.signUp(
