@@ -4,17 +4,27 @@ import 'dart:math';
 class OnboardingService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<AuthResponse> setupManagerAccount(String condoName) async {
+  Future<void> setupManagerAccount(String condoName) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      
-      return await _supabase.from('condos').insert({
+      if (userId == null) throw "No user logged in";
+
+      await _supabase.from('profiles').upsert({
+        'id': userId,
+        'role': 'manager'
+      });
+
+      final code = await _generateCondoCode();
+
+      await _supabase.from('condos').insert({
         'name': condoName,
         'manager_id': userId,
-        'code': await _generateCondoCode()
+        'code': code,
       });
+
     } catch (e) {
-      throw "An unexpected error occurred";
+      print("Error in setupManagerAccount: $e");
+      throw e.toString(); 
     }
   }
 

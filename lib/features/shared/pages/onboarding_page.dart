@@ -20,22 +20,42 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _extraInfoController = TextEditingController();
 
   String selectedRole = "unassigned";
+  bool _isLoading = false;
 
-  void _handleFinalSubmit() async{
-    String input = _extraInfoController.text;
+  void _handleFinalSubmit() async {
+    final input = _extraInfoController.text.trim();
+    if (input.isEmpty || selectedRole == "unassigned") return;
 
-    switch (selectedRole) {
-      case "manager":
-        await _service.setupManagerAccount(input);
-        break;
-      case "resident":
-        // resident setup
-        break;
-      default:
-        return;
+    setState(() => _isLoading = true);
+
+    try {
+      switch (selectedRole) {
+        case "manager":
+          await _service.setupManagerAccount(input);
+          break;
+        case "resident":
+          // await _service.setupResidentAccount(input);
+          break;
+      }
+
+      if (!mounted) return;
+
+      Navigator.pushReplacementNamed(
+        context, 
+        selectedRole == 'manager' ? '/manager-dashboard' : '/resident-dashboard'
+      );
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-
   }
 
   @override
@@ -123,6 +143,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ? _handleFinalSubmit
                     : null,
                 color: Color(0xFF5DA9E9),
+                isLoading: _isLoading
               ),
             ],
           ),
