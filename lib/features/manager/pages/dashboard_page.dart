@@ -28,6 +28,21 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   int selectedNavigationIndex = 0;
   VoidCallback? onAddAnnouncement;
 
+  Future<void> _initializePage() async{
+    final name = await dashboardService.getFirstName();
+
+    if (!mounted) return;
+    setState(() {
+      managerName = name;
+
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePage();
+  }
 
   @override
   Widget build(BuildContext context) {
