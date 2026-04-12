@@ -3,6 +3,8 @@
 /macos/
 /windows/
 
+.idea
+
 # Miscellaneous
 *.class
 *.lock
