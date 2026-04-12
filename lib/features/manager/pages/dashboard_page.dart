@@ -48,9 +48,6 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   Widget build(BuildContext context) {
     final displayQuickActions =
         quickActions.isNotEmpty ? quickActions : defaultDashboardQuickActions;
-    final displayNavigationItems = navigationItems.isNotEmpty
-        ? navigationItems
-        : defaultDashboardNavigationItems;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F4),
@@ -60,7 +57,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DashboardGreeting(managerName: managerName),
+              DashboardGreeting(managerName: managerName ?? ""),
               const SizedBox(height: 24),
               DashboardSummaryCard(summary: summary),
               const SizedBox(height: 16),
@@ -80,10 +77,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
           ),
         ),
       ),
-      bottomNavigationBar: DashboardNavigationBar(
-                            items: displayNavigationItems,
-                            selectedIndex: selectedNavigationIndex,
-      ),
+      bottomNavigationBar: DashboardNavigationBar(),
     );
   }
 }
