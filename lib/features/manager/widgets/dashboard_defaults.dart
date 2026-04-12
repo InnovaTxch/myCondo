@@ -25,11 +25,3 @@ const List<DashboardQuickAction> defaultDashboardQuickActions = [
     icon: Icons.receipt_long_outlined,
   ),
 ];
-
-const List<DashboardNavigationItem> defaultDashboardNavigationItems = [
-  DashboardNavigationItem(icon: Icons.home_outlined),
-  DashboardNavigationItem(icon: Icons.access_time_outlined),
-  DashboardNavigationItem(icon: Icons.chat_bubble_outline_rounded),
-  DashboardNavigationItem(icon: Icons.info_outline_rounded),
-  DashboardNavigationItem(icon: Icons.person_outline_rounded),
-];
