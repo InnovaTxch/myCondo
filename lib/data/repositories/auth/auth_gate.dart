@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/auth/pages/login_screen.dart';
-import 'package:mycondo/features/shared/pages/dashboard.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /*

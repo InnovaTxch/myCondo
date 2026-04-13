@@ -1,40 +1,53 @@
 import 'package:flutter/material.dart';
 
+import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
+import 'package:mycondo/data/models/manager/dashboard_models.dart';
+
 import '../widgets/dashboard_announcement_section.dart';
 import '../widgets/dashboard_defaults.dart';
 import '../widgets/dashboard_greeting.dart';
-import '../widgets/dashboard_models.dart';
 import '../widgets/dashboard_navigation_bar.dart';
 import '../widgets/dashboard_quick_action_tile.dart';
 import '../widgets/dashboard_summary_card.dart';
 
-class ManagerDashboardPage extends StatelessWidget {
-  const ManagerDashboardPage({
-    super.key,
-    required this.managerName,
-    required this.summary,
-    required this.announcements,
-    required this.quickActions,
-    required this.navigationItems,
-    required this.selectedNavigationIndex,
-    this.onAddAnnouncement,
-  });
+class ManagerDashboardPage extends StatefulWidget {
+  const ManagerDashboardPage({super.key});
 
-  final String managerName;
-  final DashboardSummary summary;
-  final List<DashboardAnnouncement> announcements;
-  final List<DashboardQuickAction> quickActions;
-  final List<DashboardNavigationItem> navigationItems;
-  final int selectedNavigationIndex;
-  final VoidCallback? onAddAnnouncement;
+  @override
+  State<ManagerDashboardPage> createState() => _ManagerDashboardPage();
+}
+
+class _ManagerDashboardPage extends State<ManagerDashboardPage> {
+
+  ManagerDashboardService dashboardService = ManagerDashboardService();
+
+  String? managerName;
+  DashboardSummary summary = DashboardSummary();
+  List<DashboardAnnouncement> announcements = [];
+  List<DashboardQuickAction> quickActions = [];
+  int selectedNavigationIndex = 0;
+  VoidCallback? onAddAnnouncement;
+
+  Future<void> _initializePage() async{
+    final name = await dashboardService.getFirstName();
+
+    if (!mounted) return;
+    setState(() {
+      managerName = name;
+
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePage();
+  }
 
   @override
   Widget build(BuildContext context) {
     final displayQuickActions =
         quickActions.isNotEmpty ? quickActions : defaultDashboardQuickActions;
-    final displayNavigationItems = navigationItems.isNotEmpty
-        ? navigationItems
-        : defaultDashboardNavigationItems;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F4),
@@ -44,7 +57,7 @@ class ManagerDashboardPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DashboardGreeting(managerName: managerName),
+              DashboardGreeting(managerName: managerName ?? ""),
               const SizedBox(height: 24),
               DashboardSummaryCard(summary: summary),
               const SizedBox(height: 16),
@@ -64,10 +77,7 @@ class ManagerDashboardPage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: DashboardNavigationBar(
-                            items: displayNavigationItems,
-                            selectedIndex: selectedNavigationIndex,
-      ),
+      bottomNavigationBar: DashboardNavigationBar(),
     );
   }
 }
