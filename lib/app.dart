@@ -26,7 +26,7 @@ class MyCondoApp extends StatelessWidget {
         '/role': (context) => RoleSelection(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
-        '/add-bill': (context) => CreateBillPage()
+        '/add-bill': (context) => CreateBillPage(),
         '/inbox': (context) => const InboxScreen(),
       },
       onGenerateRoute: (settings) {
