@@ -8,11 +8,9 @@ class ResidentDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(title: Text("Resident Dashboard")),
-
       body: Center(
         child: Text(
-          "Mobile Resident Interface",
+          "RESIDENT DASHBOARD",
           style: TextStyle(fontSize: 24),
         ),
       ),
