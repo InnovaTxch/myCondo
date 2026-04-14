@@ -6,6 +6,7 @@ import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
 import 'package:mycondo/features/shared/pages/inbox_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
+import 'package:mycondo/features/resident/pages/resident_dashboard.dart';
 
 import 'package:mycondo/features/manager/pages/create_bill_page.dart';
 
@@ -26,6 +27,7 @@ class MyCondoApp extends StatelessWidget {
         '/signup': (context) => SignupScreen(),
         '/onboarding': (context) => OnboardingPage(),
         '/manager-dashboard': (context) => ManagerDashboardPage(),
+        '/resident-dashboard': (context) => ResidentDashboard(),
         '/manager-transaction': (context) => ManagerDashboardPage(),
         '/manager-chat': (context) => InboxScreen(),
         '/manager-about': (context) => ManagerDashboardPage(),

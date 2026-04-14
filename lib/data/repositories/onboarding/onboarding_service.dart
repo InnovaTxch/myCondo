@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 
 class OnboardingService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -23,7 +24,7 @@ class OnboardingService {
       });
 
     } catch (e) {
-      print("Error in setupManagerAccount: $e");
+      debugPrint("Error in setupManagerAccount: $e");
       throw e.toString(); 
     }
   }

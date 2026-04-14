@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/features/auth/pages/login_screen.dart';
+import 'package:mycondo/features/manager/pages/dashboard_page.dart';
+import 'package:mycondo/features/resident/pages/resident_dashboard.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /*
@@ -14,6 +17,7 @@ class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Supabase.instance.client.auth;
+    final authService = AuthService();
 
     return StreamBuilder<AuthState>(
       stream: auth.onAuthStateChange,
@@ -25,9 +29,24 @@ class AuthGate extends StatelessWidget {
         final session = snapshot.data?.session;
 
         if (session != null) {
-          return Dashboard();
+          return FutureBuilder<String?>(
+            future: authService.getRole(),
+            builder: (context, roleSnapshot) {
+              if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              final role = roleSnapshot.data;
+              if (role == 'manager') {
+                return const ManagerDashboardPage();
+              }
+              return const ResidentDashboard();
+            },
+          );
         } else {
-          return LoginScreen();
+          return const LoginScreen();
         }
       },
     );

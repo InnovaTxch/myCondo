@@ -1,27 +1,31 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<String?> getRole() async {
-  try {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return null;
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return null;
 
-    final data = await _supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle to avoid errors if the profile is missing
+      final data = await _supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
 
-    return data?['role'] as String?;
-  } catch (e) {
-    print("Error fetching role: $e");
-    return null;
+      return data?['role'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
-}
 
-  Future<AuthResponse> signUpWithEmailPassword(String email, String password) async{
+  Future<AuthResponse> signUpWithEmailPassword(
+    String email,
+    String password,
+  ) async {
     try {
       return await _supabase.auth.signUp(
         email: email,
@@ -29,13 +33,18 @@ class AuthService {
       );
     } on AuthException catch (e) {
       throw e.message;
+    } on SocketException {
+      throw "Cannot connect to Supabase. Check your internet and SUPABASE_URL in .env.";
     } catch (e) {
-      throw "An unexpected error occurred";
+      throw e.toString();
     }
   }
 
   //log in with email and password
-  Future<AuthResponse> signInWithEmailPassword(String email, String password) async{
+  Future<AuthResponse> signInWithEmailPassword(
+    String email,
+    String password,
+  ) async {
     return await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
@@ -43,11 +52,11 @@ class AuthService {
   }
 
   //sign out
-  Future<void> signOut() async{
+  Future<void> signOut() async {
     await _supabase.auth.signOut();
   }
 
-  String? getCurrentUserEmail(){
+  String? getCurrentUserEmail() {
     final session = _supabase.auth.currentSession;
     final user = session?.user;
     return user?.email;
