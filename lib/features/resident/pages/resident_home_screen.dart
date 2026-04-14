@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'resident_dashboard.dart';
 import 'package:mycondo/features/resident/widgets/dashboard_navigation_bar.dart';
+import 'package:mycondo/features/shared/pages/inbox_screen.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -16,7 +16,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   final List<Widget> _pages = [
     ResidentDashboard(),
     // Resident Payment History Page
-    // Resident Inbox Page
+    InboxScreen(),
     // Resident About
     // Resident Profile
   ];

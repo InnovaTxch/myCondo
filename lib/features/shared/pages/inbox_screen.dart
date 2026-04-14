@@ -1,136 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/services/shared/chat_services.dart';
 import 'chat_screen.dart';
 
-class InboxScreen extends StatelessWidget {
+class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});
 
   @override
+  State<InboxScreen> createState() => _InboxScreenState();
+}
+
+class _InboxScreenState extends State<InboxScreen> {
+  final _service = MessagingService();
+
+  Future<int> _getOrCreateConversation(String myId, String otherId) {
+    return _service.getOrCreateConversation(myId, otherId);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final conversations = [
-      {
-        'name': 'Angel',
-        'lastMessage': 'Sending you love! ❤️',
-        'time': '12:11 AM',
-        'avatar': null,
-        'unread': true,
-      },
-    ];
+    final currentUser = _service.currentUserId;
+    if (currentUser == null) {
+      return const Scaffold(body: Center(child: Text("Please Login")));
+    }
+    final myId = currentUser;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F4),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF4F4F4),
         elevation: 0,
-        title: const Text(
-          'Inbox',
-          style: TextStyle(
-            fontFamily: 'Urbanist',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
+        title: const Text('Messages',
+            style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Urbanist')),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: conversations.length,
-        itemBuilder: (context, index) {
-          final convo = conversations[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChatScreen(name: convo['name'] as String),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _service.fetchOtherUsers(myId),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final users = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: users.length,
+            itemBuilder: (context, index) {
+              final user = users[index];
+              final String name =
+                  "${user['first_name'] ?? 'User'} ${user['last_name'] ?? ''}";
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFF4A90D9),
+                  child: Text((user['first_name'] ?? "U")[0],
+                      style: const TextStyle(color: Colors.white)),
                 ),
+                title: Text(name,
+                    style: const TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w600)),
+                subtitle: Text(user['role'] ?? 'resident',
+                    style: const TextStyle(fontFamily: 'Urbanist')),
+                trailing: const Icon(Icons.chat_bubble_outline),
+                onTap: () async {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (res) =>
+                        const Center(child: CircularProgressIndicator()),
+                  );
+
+                  try {
+                    final id =
+                        await _getOrCreateConversation(myId, user['id']);
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ChatScreen(name: name, conversationId: id),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e")));
+                  }
+                },
               );
             },
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Colors.grey[300],
-                        child: const Icon(Icons.person, color: Colors.white, size: 28),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          convo['name'] as String,
-                          style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          convo['lastMessage'] as String,
-                          style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: 13,
-                            color: Colors.grey[500],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        convo['time'] as String,
-                        style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontSize: 11,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      IconButton(
-                        icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                        onPressed: () {},
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
           );
         },
       ),
