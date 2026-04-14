@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
@@ -121,7 +119,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                     child: DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: "Bill Type", border: OutlineInputBorder()),
                       items: _billTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                      onChanged: (val) => _selectedBillType = val,
+                      onChanged: (val) => setState(() => _selectedBillType = val),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -173,7 +171,17 @@ class _CreateBillPageState extends State<CreateBillPage> {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
-                  onPressed: _selectedResidents.isEmpty ? null : () => print("Sending bill to ${_selectedResidents.length} people"),
+                  onPressed: _selectedResidents.isEmpty || _selectedBillType == null
+                      ? null
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Sending $_selectedBillType to ${_selectedResidents.length} resident(s)",
+                              ),
+                            ),
+                          );
+                        },
                   child: const Text("Generate & Send Bills", style: TextStyle(fontSize: 16)),
                 ),
               )

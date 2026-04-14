@@ -6,6 +6,7 @@ class PaymentHistoryCard extends StatelessWidget {
   final String amount;
 
   const PaymentHistoryCard({
+    super.key,
     required this.time,
     required this.label,
     required this.amount,

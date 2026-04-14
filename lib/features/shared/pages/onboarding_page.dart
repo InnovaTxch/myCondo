@@ -113,7 +113,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
-                child: selectedRole == null
+                child: selectedRole == "unassigned"
                     ? const SizedBox.shrink()
                     : Column(
                         key: ValueKey(selectedRole),
@@ -139,7 +139,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
               SubmitButton(
                 text: "Get Started",
-                onPressed: selectedRole != null && _extraInfoController.text.isNotEmpty
+                onPressed: selectedRole != "unassigned" && _extraInfoController.text.isNotEmpty
                     ? _handleFinalSubmit
                     : null,
                 color: Color(0xFF5DA9E9),

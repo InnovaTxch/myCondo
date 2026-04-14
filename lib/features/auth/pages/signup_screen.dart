@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:mycondo/features/auth/widgets/signup_form.dart';
 import 'package:mycondo/features/auth/widgets/login_gateway.dart';
@@ -40,13 +42,32 @@ class _SignupScreenState extends State<SignupScreen>{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signup successful!")));
       Navigator.pushReplacementNamed(context, '/onboarding');
 
+    } on SocketException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No internet connection. Please check your network."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
+      );
     } catch (e) {
       if(!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error signup up: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error signing up: $e"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
 
     } finally {
-      if(!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
 
   }
