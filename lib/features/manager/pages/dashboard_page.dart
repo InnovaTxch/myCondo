@@ -4,11 +4,11 @@ import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart
 import 'package:mycondo/data/models/manager/dashboard_models.dart';
 
 import '../widgets/dashboard_announcement_section.dart';
-import '../widgets/dashboard_defaults.dart';
 import '../widgets/dashboard_greeting.dart';
 import '../widgets/dashboard_navigation_bar.dart';
-import '../widgets/dashboard_quick_action_tile.dart';
 import '../widgets/dashboard_summary_card.dart';
+import '../widgets/dashboard_quick_actions.dart';
+import '../widgets/dashboard_quick_action_tile.dart';
 
 class ManagerDashboardPage extends StatefulWidget {
   const ManagerDashboardPage({super.key});
@@ -46,9 +46,6 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final displayQuickActions =
-        quickActions.isNotEmpty ? quickActions : defaultDashboardQuickActions;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F4),
       body: SafeArea(
@@ -66,12 +63,9 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
                 onAddAnnouncement: onAddAnnouncement,
               ),
               const SizedBox(height: 18),
-              ...displayQuickActions.map(
-                (action) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: DashboardQuickActionTile(action: action),
-                ),
-              ),
+            
+              DashboardQuickActions(),
+              
               const SizedBox(height: 12),
             ],
           ),
