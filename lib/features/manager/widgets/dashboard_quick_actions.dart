@@ -30,6 +30,7 @@ class DashboardQuickActions extends StatelessWidget{
           title: 'Tenant Bills',
           subtitle: 'Add tenant rent dues here.',
           icon: Icons.calendar_month_outlined,
+          onTap: () => Navigator.pushNamed(context, '/add-bills'),
         ),
         DashboardQuickActionTile(
           title: 'Maintenance Requests',
