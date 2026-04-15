@@ -38,6 +38,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   String? _selectedBillType;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   bool _isAccountabilityShared = false;
+  bool _isLoading = false;
   
   final List<Map<String, dynamic>> _breakdownItems = [
     {'title': TextEditingController(), 
