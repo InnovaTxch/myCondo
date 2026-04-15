@@ -3,6 +3,7 @@ import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../widgets/bill_recipient_container.dart';
+import '../widgets/bill_details.dart';
 
 class CreateBillPage extends StatefulWidget {
   const CreateBillPage({super.key});
@@ -104,31 +105,14 @@ class _CreateBillPageState extends State<CreateBillPage> {
                       ),
                     )
                   ],
-                ),
-              ),
 
-              const SizedBox(height: 24),
-              // --- Bill Details (Type & Date) ---
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(labelText: "Bill Type", border: OutlineInputBorder()),
-                      items: _billTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                      onChanged: (val) => setState(() => _selectedBillType = val),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 20)),
-                      icon: const Icon(Icons.calendar_month),
-                      label: Text(DateFormat('MMM dd').format(_dueDate)),
-                      onPressed: () async {
-                        DateTime? picked = await showDatePicker(context: context, initialDate: _dueDate, firstDate: DateTime.now(), lastDate: DateTime(2030));
-                        if (picked != null) setState(() => _dueDate = picked);
-                      },
-                    ),
+                const SizedBox(height: 24),
+                
+                BillDetails(
+                  dueDate: _dueDate, 
+                  setSelectedBillType: _setSelectedBillType, 
+                  setDueDate: _setDueDate
+                ),
                   ),
                 ],
               ),
