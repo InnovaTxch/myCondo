@@ -2,6 +2,8 @@ import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mycondo/data/repositories/resident_service.dart';
+
 import '../widgets/bill_recipient_container.dart';
 import '../widgets/bill_details.dart';
 
@@ -21,19 +23,8 @@ class _CreateBillPageState extends State<CreateBillPage> {
     locale: "en_PH");
 
   // Mock Data
-  final List<Unit> _allUnits = [
-    Unit(name: "Unit 101", members: [
-      Resident(id: "1", name: "Alice Johnson", unit: "101"),
-      Resident(id: "2", name: "Bob Smith", unit: "101"),
-    ]),
-    Unit(name: "Unit 102", members: [
-      Resident(id: "3", name: "Charlie Davis", unit: "102"),
-    ]),
-    Unit(name: "Unit 201", members: [
-      Resident(id: "4", name: "Diana Prince", unit: "201"),
-      Resident(id: "5", name: "Edward Nigma", unit: "201"),
-    ]),
-  ];
+  final List<Unit> _allUnits = [];
+  final _residentService = ResidentService();
 
   final List<Resident> _selectedResidents = [];
   String? _selectedBillType;
@@ -43,10 +34,28 @@ class _CreateBillPageState extends State<CreateBillPage> {
     {'title': TextEditingController(), 'amount': TextEditingController()}
   ];
 
-  void _addResident(Resident r) {
-    if (!_selectedResidents.any((element) => element.id == r.id)) {
-      setState(() => _selectedResidents.add(r));
+  Future<void> _fetchUnits() async {
+    final units = await _residentService.fetchUnitsForManager();
+    
+    if (units != null) {
+      setState(() => _allUnits.addAll(units));
     }
+  }
+
+  bool _isSubmissionValid() {
+    if (_selectedResidents.isEmpty || _selectedBillType == null || _breakdownItems.isEmpty) {
+      return false;
+    }
+
+    for (var item in _breakdownItems) {
+      if (item['title'].text.isEmpty || item['amount'].text.isEmpty) {
+        return false;
+      }
+      if (double.tryParse(item['amount'].text) == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void _addUnit(Unit u) {
