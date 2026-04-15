@@ -1,5 +1,5 @@
 class Announcement {
-  final String id;
+  final int id;
   final String title;
   final String message;
   final String category; // 'urgent', 'reminder', 'info'
@@ -16,20 +16,27 @@ class Announcement {
   });
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId : int.parse(rawId.toString());
+
+    final createdAtValue = json['created_at'];
+    final createdAt = createdAtValue is String
+        ? DateTime.parse(createdAtValue)
+        : createdAtValue as DateTime;
+
     return Announcement(
-      id: json['id'] as String,
+      id: id,
       title: json['title'] as String,
-      message: json['message'] as String,
+      message: (json['content'] ?? json['message'] ?? '') as String,
       category: json['category'] as String? ?? 'info',
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: createdAt,
       postedBy: json['posted_by'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
         'title': title,
-        'message': message,
+        'content': message,
         'category': category,
-        'posted_by': postedBy,
       };
 }
