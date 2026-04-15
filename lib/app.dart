@@ -36,7 +36,7 @@ class MyCondoApp extends StatelessWidget {
         '/manager-about': (context) => ManagerDashboardPage(),
         '/manager-profile': (context) => ManagerDashboardPage(),
         '/manage-residents': (context) => ManageResidentsPage(),
-        '/add-bill': (context) => CreateBillPage()
+        '/add-bills': (context) => CreateBillPage()
       }
     );
   }
