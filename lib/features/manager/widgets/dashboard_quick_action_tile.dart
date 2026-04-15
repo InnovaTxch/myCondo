@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
-import 'package:mycondo/data/models/manager/dashboard_models.dart';
-
 class DashboardQuickActionTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+
   const DashboardQuickActionTile({
     super.key,
-    required this.action,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.onTap,
   });
-
-  final DashboardQuickAction action;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +20,7 @@ class DashboardQuickActionTile extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(28),
       child: InkWell(
-        onTap: action.onTap,
+        onTap: onTap ?? () {},
         borderRadius: BorderRadius.circular(28),
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -34,8 +38,8 @@ class DashboardQuickActionTile extends StatelessWidget {
           child: Row(
             children: [
               _QuickActionIcon(
-                icon: action.icon,
-                badgeColor: action.iconBadgeColor,
+                icon: icon,
+                badgeColor: Colors.black,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -43,7 +47,7 @@ class DashboardQuickActionTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      action.title,
+                      title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -53,7 +57,7 @@ class DashboardQuickActionTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      action.subtitle,
+                      subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontSize: 10,
                             color: const Color(0xFF8A8A8A),

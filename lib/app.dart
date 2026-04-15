@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/manager/pages/dashboard_page.dart';
+import 'package:mycondo/features/manager/pages/manage_residents_page.dart';
+
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
+
+import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/shared/pages/inbox_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
 import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
@@ -33,8 +36,9 @@ class MyCondoApp extends StatelessWidget {
         '/manager-chat': (context) => InboxScreen(),
         '/manager-about': (context) => ManagerDashboardPage(),
         '/manager-profile': (context) => ManagerDashboardPage(),
-        '/add-bill': (context) => CreateBillPage(),
         '/manager-announcements': (context) => ManagerAnnouncementsPage(),
+        '/manage-residents': (context) => ManageResidentsPage(),
+        '/add-bills': (context) => CreateBillPage()
       }
     );
   }
