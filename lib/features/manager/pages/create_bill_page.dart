@@ -2,6 +2,7 @@ import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../widgets/bill_recipient_container.dart';
 
 class CreateBillPage extends StatefulWidget {
   const CreateBillPage({super.key});
@@ -72,15 +73,10 @@ class _CreateBillPageState extends State<CreateBillPage> {
               const Text("Bill Recipients", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 10),
               
-              // --- The Big Recipient Container ---
-              Container(
-                constraints: const BoxConstraints(minHeight: 120),
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade50,
+                // --- The Big Recipient Container ---
+                BillRecipientContainer(
+                  selectedResidents: _selectedResidents, 
+                  allUnits: _allUnits,
                 ),
                 child: Stack(
                   children: [
