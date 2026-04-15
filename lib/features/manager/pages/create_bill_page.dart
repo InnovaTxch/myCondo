@@ -30,6 +30,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   final List<Resident> _selectedResidents = [];
   String? _selectedBillType;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
+  bool _isAccountabilityShared = false;
   
   final List<Map<String, dynamic>> _breakdownItems = [
     {'title': TextEditingController(), 'amount': TextEditingController()}
@@ -198,6 +199,10 @@ class _CreateBillPageState extends State<CreateBillPage> {
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: TextField(decoration: InputDecoration(prefixIcon: Icon(Icons.search), hintText: "Search Unit or Resident", border: OutlineInputBorder())),
+                CheckboxListTile(
+                  title: const Text("Split across all residents?"),
+                  value: _isAccountabilityShared, 
+                  onChanged: (val) => setState(() => _isAccountabilityShared = val ?? false),
                 ),
 
                 const SizedBox(height: 16),
