@@ -1,17 +1,20 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:mycondo/data/models/manager/dashboard_models.dart';
 import 'dashboard_skeleton_block.dart';
 
+
 class DashboardAnnouncementSection extends StatelessWidget {
   const DashboardAnnouncementSection({
     super.key,
-    required this.announcements,
-    this.onAddAnnouncement,
+    this.announcement,
+    this.isLoading = false,
+    this.onOpenAnnouncements,
   });
 
-  final List<DashboardAnnouncement> announcements;
-  final VoidCallback? onAddAnnouncement;
+  final DashboardAnnouncement? announcement;
+  final bool isLoading;
+  final VoidCallback? onOpenAnnouncements;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class DashboardAnnouncementSection extends StatelessWidget {
                 ),
                 const Spacer(),
                 InkWell(
-                  onTap: onAddAnnouncement,
+                  onTap: onOpenAnnouncements,
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     width: 28,
@@ -56,21 +59,18 @@ class DashboardAnnouncementSection extends StatelessWidget {
                       color: Color(0xFFF3F5F8),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.add, color: Colors.black, size: 20),
+                    child: const Icon(Icons.chevron_right_rounded, color: Colors.black, size: 20),
                   ),
                 ),
               ],
             ),
           ),
-          if (announcements.isNotEmpty)
-            ...announcements.map(
-              (announcement) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _AnnouncementCard(announcement: announcement),
-              ),
-            )
+          if (isLoading)
+            const _AnnouncementPlaceholderCard()
+          else if (announcement != null)
+            _AnnouncementCard(announcement: announcement!)
           else
-            const _AnnouncementPlaceholderCard(),
+            const _NoAnnouncementCard(),
         ],
       ),
     );
@@ -84,59 +84,56 @@ class _AnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: announcement.backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(announcement.icon, color: announcement.tint, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    announcement.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: announcement.tint,
-                          letterSpacing: 0.15,
-                        ),
+    return InkWell(
+      onTap: announcement.onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+        decoration: BoxDecoration(
+          color: announcement.backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(announcement.icon, color: announcement.tint, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      announcement.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: announcement.tint,
+                            letterSpacing: 0.15,
+                          ),
+                    ),
                   ),
                 ),
-              ),
-              InkWell(
-                onTap: announcement.onEdit,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Icon(
-                    Icons.edit_outlined,
-                    color: announcement.tint,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            announcement.message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
+                Icon(
+                  Icons.open_in_new_rounded,
                   color: announcement.tint,
-                  height: 1.25,
+                  size: 18,
                 ),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              announcement.message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    color: announcement.tint,
+                    height: 1.25,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,6 +160,30 @@ class _AnnouncementPlaceholderCard extends StatelessWidget {
           SizedBox(height: 8),
           DashboardSkeletonBlock(width: 180, height: 12),
         ],
+      ),
+    );
+  }
+}
+
+class _NoAnnouncementCard extends StatelessWidget {
+  const _NoAnnouncementCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7F8),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Text(
+        'No announcements yet. Tap the arrow to view the announcements page.',
+        style: TextStyle(
+          fontSize: 13,
+          color: Color(0xFF777777),
+          height: 1.3,
+        ),
       ),
     );
   }

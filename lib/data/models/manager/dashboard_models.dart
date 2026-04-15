@@ -15,7 +15,7 @@ class DashboardAnnouncement {
     this.icon = Icons.warning_rounded,
     this.tint = const Color(0xFFE5534B),
     this.backgroundColor = const Color(0xFFFBEAEA),
-    this.onEdit,
+    this.onTap,
   });
 
   final String title;
@@ -23,7 +23,7 @@ class DashboardAnnouncement {
   final IconData icon;
   final Color tint;
   final Color backgroundColor;
-  final VoidCallback? onEdit;
+  final VoidCallback? onTap;
 }
 
 class DashboardQuickAction {

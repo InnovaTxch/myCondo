@@ -59,7 +59,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
           } else {
             await _service.createAnnouncement(
               Announcement(
-                id: '',
+                id: 0,
                 title: title,
                 message: message,
                 category: category,
