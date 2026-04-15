@@ -5,6 +5,7 @@ import 'package:mycondo/features/manager/pages/manage_residents_page.dart';
 
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
+import 'package:mycondo/data/repositories/auth/auth_gate.dart';
 
 import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/shared/pages/inbox_screen.dart';
@@ -26,7 +27,8 @@ class MyCondoApp extends StatelessWidget {
       initialRoute: '/',
 
       routes: {
-        '/': (context) => SplashScreen(),
+        '/': (context) => AuthGate(),
+        '/splash': (context) => SplashScreen(),
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignupScreen(),
         '/onboarding': (context) => OnboardingPage(),

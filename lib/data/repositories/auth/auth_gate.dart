@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/manager/pages/dashboard_page.dart';
-import 'package:mycondo/features/resident/pages/resident_dashboard.dart';
+import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
+import 'package:mycondo/features/shared/pages/onboarding_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /*
@@ -42,7 +43,10 @@ class AuthGate extends StatelessWidget {
               if (role == 'manager') {
                 return const ManagerDashboardPage();
               }
-              return const ResidentDashboard();
+              if (role == 'resident') {
+                return const ResidentHomeScreen();
+              }
+              return const OnboardingPage();
             },
           );
         } else {

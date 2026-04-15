@@ -44,10 +44,13 @@ class _LoginScreenState extends State<LoginScreen>{
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context, 
-        role == 'manager' ? '/manager-dashboard' : '/resident-dashboard'
-      );
+      final destination = switch (role) {
+        'manager' => '/manager-dashboard',
+        'resident' => '/resident-dashboard',
+        _ => '/onboarding',
+      };
+
+      Navigator.pushReplacementNamed(context, destination);
 
     } on SocketException {
       if (!mounted) return;
