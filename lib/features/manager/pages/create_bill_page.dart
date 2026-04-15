@@ -7,6 +7,7 @@ import 'package:mycondo/data/repositories/resident_service.dart';
 import '../widgets/bill_recipient_container.dart';
 import '../widgets/bill_details.dart';
 
+import 'package:mycondo/features/shared/widgets/submit_button.dart';
 class CreateBillPage extends StatefulWidget {
   const CreateBillPage({super.key});
 
@@ -198,40 +199,20 @@ class _CreateBillPageState extends State<CreateBillPage> {
                   padding: EdgeInsets.all(16.0),
                   child: TextField(decoration: InputDecoration(prefixIcon: Icon(Icons.search), hintText: "Search Unit or Resident", border: OutlineInputBorder())),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: _allUnits.length,
-                    itemBuilder: (context, index) {
-                      final unit = _allUnits[index];
-                      return ExpansionTile(
-                        leading: const Icon(Icons.domain),
-                        title: Text(unit.name),
-                        subtitle: Text("${unit.members.length} members"),
-                        trailing: TextButton(
-                          onPressed: () {
-                            _addUnit(unit);
-                            Navigator.pop(context);
-                          },
-                          child: const Text("ADD UNIT"),
-                        ),
-                        children: unit.members.map((res) => ListTile(
-                          title: Text(res.name),
-                          leading: const Icon(Icons.person_outline),
-                          onTap: () {
-                            _addResident(res);
-                            Navigator.pop(context);
-                          },
-                        )).toList(),
-                      );
-                    },
-                  ),
+
+                const SizedBox(height: 16),
+
+                SubmitButton(
+                  text: "Generate & Send Bills", 
+                  onPressed: _isSubmissionValid() ? () => _generateBill() : null,
+                  color: Colors.blueAccent,
+                  isLoading: _isLoading,
                 ),
               ],
-            );
-          },
-        );
-      },
+            ),
+          ),
+        ),
+      )
     );
   }
 }
