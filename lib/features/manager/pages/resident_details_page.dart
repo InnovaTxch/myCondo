@@ -16,14 +16,12 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
   final ResidentRepository _repository = ResidentRepository.instance;
 
   final _nameController = TextEditingController();
-  final _unitController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _avatarUrlController = TextEditingController();
-  final _notesController = TextEditingController();
 
+  List<UnitOption> _units = [];
+  int? _selectedUnitId;
   bool _isLoading = true;
   bool _isEditing = false;
+  bool _notFound = false;
 
   @override
   void initState() {
@@ -34,44 +32,67 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _unitController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _avatarUrlController.dispose();
-    _notesController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
-    final resident = await _repository.getResidentById(widget.residentId);
-    if (!mounted) return;
+    try {
+      await _repository.refreshResidents();
+      final units = await _repository.getUnitOptions();
+      final resident = await _repository.getResidentById(widget.residentId);
+      if (!mounted) return;
 
-    if (resident != null) {
+      if (resident == null) {
+        setState(() {
+          _units = units;
+          _notFound = true;
+          _isLoading = false;
+        });
+        return;
+      }
+
       _nameController.text = resident.name;
-      _unitController.text = resident.unit;
-      _emailController.text = resident.email ?? '';
-      _phoneController.text = resident.phone ?? '';
-      _avatarUrlController.text = resident.avatarUrl ?? '';
-      _notesController.text = resident.notes ?? '';
-    }
+      _selectedUnitId = resident.unitId;
 
-    setState(() => _isLoading = false);
+      setState(() {
+        _units = units;
+        _selectedUnitId =
+            _selectedUnitId ?? (units.isNotEmpty ? units.first.id : null);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load resident: $e')),
+      );
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a unit.')),
+      );
+      return;
+    }
 
-    await _repository.updateResident(
-      widget.residentId,
-      ResidentUpsertInput(
-        name: _nameController.text,
-        unit: _unitController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        avatarUrl: _avatarUrlController.text,
-        notes: _notesController.text,
-      ),
-    );
+    try {
+      await _repository.updateResident(
+        widget.residentId,
+        ResidentUpsertInput(
+          name: _nameController.text,
+          unitId: _selectedUnitId!,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update resident: $e')),
+      );
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _isEditing = false);
@@ -115,6 +136,15 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    if (_notFound) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Resident Details')),
+        body: const Center(
+          child: Text('Resident no longer exists in Supabase.'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Resident Details')),
       body: SafeArea(
@@ -133,36 +163,24 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: _unitController,
-                  enabled: _isEditing,
+                DropdownButtonFormField<int>(
+                  value: _selectedUnitId,
+                  items: _units
+                      .map(
+                        (unit) => DropdownMenuItem<int>(
+                          value: unit.id,
+                          child: Text(unit.name),
+                        ),
+                      )
+                      .toList(),
                   decoration: const InputDecoration(labelText: 'Unit'),
+                  onChanged: !_isEditing
+                      ? null
+                      : (value) => setState(() => _selectedUnitId = value),
                   validator: (value) {
-                    if ((value ?? '').trim().isEmpty) return 'Unit is required';
+                    if (value == null) return 'Unit is required';
                     return null;
                   },
-                ),
-                TextFormField(
-                  controller: _emailController,
-                  enabled: _isEditing,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                TextFormField(
-                  controller: _phoneController,
-                  enabled: _isEditing,
-                  decoration: const InputDecoration(labelText: 'Phone'),
-                ),
-                TextFormField(
-                  controller: _avatarUrlController,
-                  enabled: _isEditing,
-                  decoration: const InputDecoration(labelText: 'Avatar URL'),
-                ),
-                TextFormField(
-                  controller: _notesController,
-                  enabled: _isEditing,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                  minLines: 2,
-                  maxLines: 4,
                 ),
                 const SizedBox(height: 24),
                 if (_isEditing) ...[

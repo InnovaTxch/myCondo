@@ -14,11 +14,14 @@ class ManageResidentsPage extends StatefulWidget {
 class _ManageResidentsPageState extends State<ManageResidentsPage> {
   final ResidentRepository _repository = ResidentRepository.instance;
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(() => setState(() {}));
+    _loadResidents();
   }
 
   @override
@@ -33,11 +36,29 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     return residents.where((resident) => resident.matchesQuery(query)).toList();
   }
 
+  Future<void> _loadResidents() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _repository.refreshResidents();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _openAddResident() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ResidentFormPage()),
     );
+    await _loadResidents();
   }
 
   Future<void> _openResidentDetails(String residentId) async {
@@ -47,6 +68,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
         builder: (_) => ResidentDetailsPage(residentId: residentId),
       ),
     );
+    await _loadResidents();
   }
 
   @override
@@ -69,7 +91,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                     controller: _searchController,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search),
-                      hintText: 'Search name, unit, email, or phone',
+                      hintText: 'Search name or unit',
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -88,7 +110,35 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             ),
             const SizedBox(height: 14),
             Expanded(
-              child: ValueListenableBuilder<List<ResidentProfile>>(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Unable to load residents from Supabase.',
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton(
+                                onPressed: _loadResidents,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ValueListenableBuilder<List<ResidentProfile>>(
                 valueListenable: _repository.residentsNotifier,
                 builder: (context, residents, _) {
                   final filtered = _filterResidents(residents);

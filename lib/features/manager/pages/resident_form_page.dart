@@ -14,40 +14,68 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
   final ResidentRepository _repository = ResidentRepository.instance;
 
   final _nameController = TextEditingController();
-  final _unitController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _avatarUrlController = TextEditingController();
-  final _notesController = TextEditingController();
 
+  List<UnitOption> _units = [];
+  int? _selectedUnitId;
+  bool _isLoadingUnits = true;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnits();
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _unitController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _avatarUrlController.dispose();
-    _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUnits() async {
+    try {
+      final units = await _repository.getUnitOptions();
+      if (!mounted) return;
+      setState(() {
+        _units = units;
+        _selectedUnitId = units.isNotEmpty ? units.first.id : null;
+        _isLoadingUnits = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingUnits = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load units: $e')),
+      );
+    }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a unit.')),
+      );
+      return;
+    }
 
     setState(() => _isSaving = true);
 
-    await _repository.addResident(
-      ResidentUpsertInput(
-        name: _nameController.text,
-        unit: _unitController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        avatarUrl: _avatarUrlController.text,
-        notes: _notesController.text,
-      ),
-    );
+    try {
+      await _repository.addResident(
+        ResidentUpsertInput(
+          name: _nameController.text,
+          unitId: _selectedUnitId!,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create resident account: $e')),
+      );
+      return;
+    }
 
     if (!mounted) return;
     Navigator.pop(context);
@@ -64,6 +92,11 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
             key: _formKey,
             child: Column(
               children: [
+                if (_isLoadingUnits)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: CircularProgressIndicator(),
+                  ),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Full Name'),
@@ -74,44 +107,37 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: _unitController,
+                DropdownButtonFormField<int>(
+                  value: _selectedUnitId,
+                  items: _units
+                      .map(
+                        (unit) => DropdownMenuItem<int>(
+                          value: unit.id,
+                          child: Text(unit.name),
+                        ),
+                      )
+                      .toList(),
                   decoration: const InputDecoration(labelText: 'Unit'),
+                  onChanged: _isSaving
+                      ? null
+                      : (value) => setState(() => _selectedUnitId = value),
                   validator: (value) {
-                    if ((value ?? '').trim().isEmpty) {
+                    if (value == null) {
                       return 'Unit is required';
                     }
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email (optional)'),
-                ),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone (optional)'),
-                ),
-                TextFormField(
-                  controller: _avatarUrlController,
-                  decoration: const InputDecoration(
-                    labelText: 'Avatar URL (optional)',
-                  ),
-                ),
-                TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes (optional)'),
-                  minLines: 2,
-                  maxLines: 4,
-                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isSaving ? null : _save,
+                    onPressed: _isSaving || _isLoadingUnits || _units.isEmpty
+                        ? null
+                        : _save,
                     child: _isSaving
                         ? const CircularProgressIndicator()
-                        : const Text('Save Resident'),
+                        : const Text('Create Resident Account'),
                   ),
                 ),
               ],
