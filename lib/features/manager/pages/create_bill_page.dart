@@ -126,6 +126,12 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _fetchUnits();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
