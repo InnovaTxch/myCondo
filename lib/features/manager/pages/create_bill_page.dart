@@ -7,7 +7,11 @@ import 'package:mycondo/data/repositories/resident_service.dart';
 import '../widgets/bill_recipient_container.dart';
 import '../widgets/bill_details.dart';
 
+import 'package:mycondo/data/models/shared/bill.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
+
+import 'package:mycondo/data/repositories/manager/bill_service.dart';
+
 class CreateBillPage extends StatefulWidget {
   const CreateBillPage({super.key});
 
@@ -18,13 +22,16 @@ class CreateBillPage extends StatefulWidget {
 class _CreateBillPageState extends State<CreateBillPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final List<String> _billTypes = ["Monthly Bill", "One-Time Fee"];
+  
   final pesoFormatter = NumberFormat.currency(symbol: "\u{20B1}",
     decimalDigits: 2,
-    locale: "en_PH");
+    locale: "en_PH"
+  );
 
   // Mock Data
   final List<Unit> _allUnits = [];
+
+  final _billServices = BillService();
   final _residentService = ResidentService();
 
   final List<Resident> _selectedResidents = [];
@@ -33,7 +40,8 @@ class _CreateBillPageState extends State<CreateBillPage> {
   bool _isAccountabilityShared = false;
   
   final List<Map<String, dynamic>> _breakdownItems = [
-    {'title': TextEditingController(), 'amount': TextEditingController()}
+    {'title': TextEditingController(), 
+    'amount': TextEditingController()}
   ];
 
   Future<void> _fetchUnits() async {
@@ -60,10 +68,55 @@ class _CreateBillPageState extends State<CreateBillPage> {
     return true;
   }
 
-  void _addUnit(Unit u) {
-    for (var member in u.members) {
-      _addResident(member);
+  Future<void> _generateBill() async {
+    if (_selectedResidents.isEmpty || _selectedBillType == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      List<String> residentIds = _selectedResidents.map((r) => r.id).toList();
+      List<Bill> bills = _breakdownItems.map((item) {
+        return Bill(
+          name: item['title'].text,
+          amount: ((double.tryParse(item['amount'].text) ?? 0.0) * 100).round(),
+        );
+      }).toList();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Sending $_selectedBillType...")),
+      );
+
+      await _billServices.generateAndSendBills(
+        billType: _selectedBillType!,
+        residentIds: residentIds,
+        dueDate: _dueDate,
+        bills: bills,
+        isAccountabilityShared: _isAccountabilityShared,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bills sent successfully!")),
+      );
+      
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to send bills: $e")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _setSelectedBillType(String? newValue) {
+    _selectedBillType = newValue;
+  }
+
+  void _setDueDate(DateTime newValue) {
+    _dueDate = newValue;
   }
 
   double _calculateTotal() {
