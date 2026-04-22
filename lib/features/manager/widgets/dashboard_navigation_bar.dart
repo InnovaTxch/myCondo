@@ -21,6 +21,14 @@ class _DashboardNavigationBar extends State<DashboardNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final inferredIndex = navigationItems.indexWhere(
+      (item) => item.$2 == currentRoute,
+    );
+    if (inferredIndex != -1) {
+      selectedIndex = inferredIndex;
+    }
+
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -53,6 +61,7 @@ class _DashboardNavigationBar extends State<DashboardNavigationBar> {
                 child: Center(
                   child: InkWell(
                     onTap: () {
+                      if (isSelected) return;
                       setState(() => selectedIndex = index);
                       Navigator.pushReplacementNamed(context, route);
                     },

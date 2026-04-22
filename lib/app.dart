@@ -14,6 +14,7 @@ import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 
 import 'package:mycondo/features/manager/pages/create_bill_page.dart';
 import 'package:mycondo/features/manager/pages/announcements_page.dart';
+import 'package:mycondo/features/manager/pages/profile_page.dart';
 
 class MyCondoApp extends StatelessWidget {
   const MyCondoApp({super.key});
@@ -37,7 +38,7 @@ class MyCondoApp extends StatelessWidget {
         '/manager-transaction': (context) => ManagerDashboardPage(),
         '/manager-chat': (context) => InboxScreen(),
         '/manager-about': (context) => ManagerDashboardPage(),
-        '/manager-profile': (context) => ManagerDashboardPage(),
+        '/manager-profile': (context) => ManagerProfilePage(),
         '/manager-announcements': (context) => ManagerAnnouncementsPage(),
         '/manage-residents': (context) => ManageResidentsPage(),
         '/add-bills': (context) => CreateBillPage()
