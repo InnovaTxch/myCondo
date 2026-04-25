@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
-import 'package:mycondo/features/manager/widgets/dashboard_navigation_bar.dart';
 
 class ManagerProfilePage extends StatefulWidget {
   const ManagerProfilePage({super.key});
@@ -152,7 +151,6 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                 ),
         ),
       ),
-      bottomNavigationBar: const DashboardNavigationBar(),
     );
   }
 }

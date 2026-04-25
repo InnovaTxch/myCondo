@@ -5,7 +5,6 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/manager/manager_announcement_service.dart';
 import 'package:mycondo/features/manager/widgets/announcement_card.dart';
 import 'package:mycondo/features/manager/widgets/announcement_form_sheet.dart';
-import 'package:mycondo/features/manager/widgets/dashboard_navigation_bar.dart';
 
 class ManagerAnnouncementsPage extends StatefulWidget {
   const ManagerAnnouncementsPage({super.key});
@@ -212,7 +211,6 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
           ],
         ),
       ),
-      bottomNavigationBar: DashboardNavigationBar(),
     );
   }
 }

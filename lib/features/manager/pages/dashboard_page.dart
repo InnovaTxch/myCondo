@@ -7,7 +7,6 @@ import 'package:mycondo/data/models/manager/dashboard_models.dart';
 
 import '../widgets/dashboard_announcement_section.dart';
 import '../widgets/dashboard_greeting.dart';
-import '../widgets/dashboard_navigation_bar.dart';
 import '../widgets/dashboard_summary_card.dart';
 import '../widgets/dashboard_quick_actions.dart';
 
@@ -134,15 +133,12 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
                     Navigator.pushNamed(context, '/manager-announcements'),
               ),
               const SizedBox(height: 18),
-            
+
               DashboardQuickActions(),
-              
-              const SizedBox(height: 12),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: DashboardNavigationBar(),
     );
   }
 }
