@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_profile_page.dart';
 import 'resident_dashboard.dart';
-import 'package:mycondo/features/shared/pages/inbox_screen.dart';
 import 'package:mycondo/features/shared/pages/placeholder_page.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
@@ -18,7 +18,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   final List<Widget> _pages = [
     const ResidentDashboard(),
     const PlaceholderPage(title: 'Resident Payment History'),
-    const InboxScreen(),
+    const ResidentManagerChatScreen(),
     const PlaceholderPage(title: 'Resident About'),
     const ResidentProfilePage(),
   ];

@@ -4,8 +4,14 @@ import 'package:mycondo/services/shared/chat_services.dart';
 class ChatScreen extends StatefulWidget {
   final String name;
   final int conversationId;
+  final bool showBackButton;
 
-  const ChatScreen({super.key, required this.name, required this.conversationId});
+  const ChatScreen({
+    super.key,
+    required this.name,
+    required this.conversationId,
+    this.showBackButton = true,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -47,10 +53,17 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF4F4F4),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: widget.showBackButton,
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.black,
+                  size: 18,
+                ),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Text(widget.name,
             style: const TextStyle(
                 color: Colors.black,

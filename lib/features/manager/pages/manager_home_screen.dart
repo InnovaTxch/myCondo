@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'profile_page.dart';
 
-import 'package:mycondo/features/shared/pages/inbox_screen.dart';
+import 'package:mycondo/features/manager/pages/manager_inbox_screen.dart';
 import 'package:mycondo/features/shared/pages/placeholder_page.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
@@ -25,7 +25,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   final List<Widget> _pages = [
     const ManagerDashboardPage(),
     const PlaceholderPage(title: 'Manager Payment History'),
-    const InboxScreen(),
+    const ManagerInboxScreen(),
     const PlaceholderPage(title: 'Manager About'),
     const ManagerProfilePage(),
   ];
