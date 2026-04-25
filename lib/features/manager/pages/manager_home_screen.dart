@@ -1,27 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:mycondo/features/resident/pages/resident_profile_page.dart';
-import 'resident_dashboard.dart';
+
+import 'dashboard_page.dart';
+import 'profile_page.dart';
+
 import 'package:mycondo/features/shared/pages/inbox_screen.dart';
 import 'package:mycondo/features/shared/pages/placeholder_page.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
-class ResidentHomeScreen extends StatefulWidget {
-  const ResidentHomeScreen({super.key});
+class ManagerHomeScreen extends StatefulWidget {
+  const ManagerHomeScreen({
+    super.key,
+    this.initialPageIndex = 0,
+  });
+
+  final int initialPageIndex;
 
   @override
-  State<ResidentHomeScreen> createState() => _ResidentHomeScreenState();
+  State<ManagerHomeScreen> createState() => _ManagerHomeScreenState();
 }
 
-class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
-  int _activePageIndex = 0;
+class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
+  late int _activePageIndex;
 
   final List<Widget> _pages = [
-    const ResidentDashboard(),
-    const PlaceholderPage(title: 'Resident Payment History'),
+    const ManagerDashboardPage(),
+    const PlaceholderPage(title: 'Manager Payment History'),
     const InboxScreen(),
-    const PlaceholderPage(title: 'Resident About'),
-    const ResidentProfilePage(),
+    const PlaceholderPage(title: 'Manager About'),
+    const ManagerProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _activePageIndex = widget.initialPageIndex;
+  }
 
   void changeActivePageIndex(int index) {
     setState(() => _activePageIndex = index);
