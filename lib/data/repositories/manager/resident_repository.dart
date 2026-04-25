@@ -97,6 +97,7 @@ class ResidentRepository {
         name: name.isEmpty ? 'Unnamed Resident' : name,
         unit: unit?.name ?? 'Unknown Unit',
         unitId: unitId,
+        status: row['status']?.toString(),
       );
     }).toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -188,7 +189,7 @@ class ResidentRepository {
   Future<void> deleteResident(String residentId) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await _supabase.from('residents').update({
-      'status': 'left',
+      'status': 'vacated',
       'left_at': now,
     }).eq('id', residentId);
 

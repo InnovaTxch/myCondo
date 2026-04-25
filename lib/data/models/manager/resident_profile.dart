@@ -8,6 +8,7 @@ class ResidentProfile {
     this.phone,
     this.notes,
     this.avatarUrl,
+    this.status,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class ResidentProfile {
   final String? phone;
   final String? notes;
   final String? avatarUrl;
+  final String? status;
 
   factory ResidentProfile.fromMap(Map<String, dynamic> map) {
     final firstName = map['first_name']?.toString().trim() ?? '';
@@ -35,6 +37,7 @@ class ResidentProfile {
       phone: map['phone']?.toString(),
       notes: map['notes']?.toString(),
       avatarUrl: map['avatar_url']?.toString(),
+      status: map['status']?.toString(),
     );
   }
 
@@ -55,6 +58,7 @@ class ResidentProfile {
     String? phone,
     String? notes,
     String? avatarUrl,
+    String? status,
   }) {
     return ResidentProfile(
       id: id ?? this.id,
@@ -65,6 +69,7 @@ class ResidentProfile {
       phone: phone ?? this.phone,
       notes: notes ?? this.notes,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      status: status ?? this.status,
     );
   }
 }
