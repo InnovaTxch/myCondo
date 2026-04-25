@@ -22,13 +22,12 @@ class CreateBillPage extends StatefulWidget {
 class _CreateBillPageState extends State<CreateBillPage> {
   final _formKey = GlobalKey<FormState>();
 
-  
-  final pesoFormatter = NumberFormat.currency(symbol: "\u{20B1}",
+  final pesoFormatter = NumberFormat.currency(
+    symbol: "PHP ",
     decimalDigits: 2,
-    locale: "en_PH"
+    locale: "en_PH",
   );
 
-  // Mock Data
   final List<Unit> _allUnits = [];
 
   final _billServices = BillService();
@@ -39,22 +38,26 @@ class _CreateBillPageState extends State<CreateBillPage> {
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   bool _isAccountabilityShared = false;
   bool _isLoading = false;
-  
+
   final List<Map<String, dynamic>> _breakdownItems = [
-    {'title': TextEditingController(), 
-    'amount': TextEditingController()}
+    {
+      'title': TextEditingController(),
+      'amount': TextEditingController(),
+    }
   ];
 
   Future<void> _fetchUnits() async {
     final units = await _residentService.fetchUnitsForManager();
-    
-    if (units != null) {
+
+    if (units != null && mounted) {
       setState(() => _allUnits.addAll(units));
     }
   }
 
   bool _isSubmissionValid() {
-    if (_selectedResidents.isEmpty || _selectedBillType == null || _breakdownItems.isEmpty) {
+    if (_selectedResidents.isEmpty ||
+        _selectedBillType == null ||
+        _breakdownItems.isEmpty) {
       return false;
     }
 
@@ -99,7 +102,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Bills sent successfully!")),
       );
-      
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,11 +115,11 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   void _setSelectedBillType(String? newValue) {
-    _selectedBillType = newValue;
+    setState(() => _selectedBillType = newValue);
   }
 
   void _setDueDate(DateTime newValue) {
-    _dueDate = newValue;
+    setState(() => _dueDate = newValue);
   }
 
   double _calculateTotal() {
@@ -133,81 +135,244 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   @override
+  void dispose() {
+    for (final item in _breakdownItems) {
+      (item['title'] as TextEditingController).dispose();
+      (item['amount'] as TextEditingController).dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F1EC),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Bill Recipients", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 10),
-                
-                // --- The Big Recipient Container ---
-                BillRecipientContainer(
-                  selectedResidents: _selectedResidents, 
-                  allUnits: _allUnits,
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.chevron_left_rounded),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      "Add Dues",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ],
                 ),
-
-                const SizedBox(height: 24),
-                
-                BillDetails(
-                  dueDate: _dueDate, 
-                  setSelectedBillType: _setSelectedBillType, 
-                  setDueDate: _setDueDate
+                const SizedBox(height: 16),
+                _buildSection(
+                  title: "Recipients",
+                  child: BillRecipientContainer(
+                    selectedResidents: _selectedResidents,
+                    allUnits: _allUnits,
+                    onSelectionChanged: () => setState(() {}),
+                  ),
                 ),
-
-                const Divider(height: 40),
-                // --- Breakdown Section ---
-                ..._breakdownItems.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  return Row(
+                const SizedBox(height: 16),
+                _buildSection(
+                  title: "Bill Details",
+                  child: BillDetails(
+                    dueDate: _dueDate,
+                    setSelectedBillType: _setSelectedBillType,
+                    setDueDate: _setDueDate,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSection(
+                  title: "Line Items",
+                  child: Column(
                     children: [
-                      Expanded(flex: 3, child: TextField(controller: _breakdownItems[index]['title'], decoration: const InputDecoration(hintText: "Description"))),
-                      const SizedBox(width: 8),
-                      Expanded(flex: 2, child: TextField(controller: _breakdownItems[index]['amount'], keyboardType: TextInputType.number, decoration: const InputDecoration(prefixText: "\u{20B1}"), onChanged: (_) => setState(() {}))),
-                      IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => setState(() => _breakdownItems.removeAt(index))),
-                    ],
-                  );
-                }),
-                TextButton.icon(onPressed: () => setState(() => _breakdownItems.add({'title': TextEditingController(), 'amount': TextEditingController()})), icon: const Icon(Icons.add), label: const Text("Add Line Item")),
-
-                const SizedBox(height: 30),
-                // --- Total & Submit ---
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.blueGrey.shade900,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Total Bill Amount", style: TextStyle(color: Colors.white, fontSize: 16)),
-                      Text(pesoFormatter.format(_calculateTotal()), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                      ..._breakdownItems.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        return _buildLineItem(index);
+                      }),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: _addLineItem,
+                          icon: const Icon(Icons.add),
+                          label: const Text("Add Line Item"),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                CheckboxListTile(
-                  title: const Text("Split across all residents?"),
-                  value: _isAccountabilityShared, 
-                  onChanged: (val) => setState(() => _isAccountabilityShared = val ?? false),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Total Bill Amount",
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        pesoFormatter.format(_calculateTotal()),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE6E2DD)),
+                  ),
+                  child: SwitchListTile(
+                    title: const Text(
+                      "Split across all residents",
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: const Text(
+                      "Each selected resident receives an equal share.",
+                    ),
+                    value: _isAccountabilityShared,
+                    onChanged: (val) =>
+                        setState(() => _isAccountabilityShared = val),
+                  ),
+                ),
+                const SizedBox(height: 18),
                 SubmitButton(
-                  text: "Generate & Send Bills", 
-                  onPressed: _isSubmissionValid() ? () => _generateBill() : null,
-                  color: Colors.blueAccent,
+                  text: "Generate & Send Bills",
+                  onPressed: _isSubmissionValid() ? _generateBill : null,
+                  color: const Color(0xFF1A1A1A),
                   isLoading: _isLoading,
                 ),
               ],
             ),
           ),
         ),
-      )
+      ),
     );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineItem(int index) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: TextField(
+              controller: _breakdownItems[index]['title'],
+              decoration: _inputDecoration("Description"),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: TextField(
+              controller: _breakdownItems[index]['amount'],
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: _inputDecoration("Amount").copyWith(
+                prefixText: "PHP ",
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          IconButton(
+            onPressed: _breakdownItems.length == 1
+                ? null
+                : () => _removeLineItem(index),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: const Color(0xFFF7F5F2),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  void _addLineItem() {
+    setState(() {
+      _breakdownItems.add({
+        'title': TextEditingController(),
+        'amount': TextEditingController(),
+      });
+    });
+  }
+
+  void _removeLineItem(int index) {
+    late final Map<String, dynamic> item;
+    setState(() {
+      item = _breakdownItems.removeAt(index);
+    });
+    (item['title'] as TextEditingController).dispose();
+    (item['amount'] as TextEditingController).dispose();
   }
 }
