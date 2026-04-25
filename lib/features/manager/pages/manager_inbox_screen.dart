@@ -11,6 +11,25 @@ class ManagerInboxScreen extends StatefulWidget {
 
 class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   final _service = MessagingService();
+  Future<List<Map<String, dynamic>>>? _residentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final managerId = _service.currentUserId;
+    if (managerId != null) {
+      _residentsFuture = _service.fetchResidentsForManager(managerId);
+    }
+  }
+
+  Future<void> _refreshResidents() async {
+    final managerId = _service.currentUserId;
+    if (managerId == null) return;
+
+    final future = _service.fetchResidentsForManager(managerId);
+    setState(() => _residentsFuture = future);
+    await future;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,56 +52,67 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
           ),
         ),
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _service.fetchResidentsForManager(managerId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final residents = snapshot.data!;
-          if (residents.isEmpty) {
-            return const Center(child: Text('No residents available.'));
-          }
-
-          return ListView.builder(
-            itemCount: residents.length,
-            itemBuilder: (context, index) {
-              final resident = residents[index];
-              final residentId = resident['id'].toString();
-              final name = _displayName(resident);
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: const Color(0xFF4A90D9),
-                  child: Text(
-                    _initial(name),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                title: Text(
-                  name,
-                  style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text(
-                  'Resident',
-                  style: TextStyle(fontFamily: 'Urbanist'),
-                ),
-                trailing: const Icon(Icons.chat_bubble_outline),
-                onTap: () => _openChat(
-                  residentId: residentId,
-                  residentName: name,
-                ),
+      body: RefreshIndicator(
+        onRefresh: _refreshResidents,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future:
+              _residentsFuture ?? _service.fetchResidentsForManager(managerId),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return _buildScrollableMessage(
+                child: Text('Error: ${snapshot.error}'),
               );
-            },
-          );
-        },
+            }
+            if (!snapshot.hasData) {
+              return _buildScrollableMessage(
+                child: const CircularProgressIndicator(),
+              );
+            }
+
+            final residents = snapshot.data!;
+            if (residents.isEmpty) {
+              return _buildScrollableMessage(
+                child: const Text('No residents available.'),
+              );
+            }
+
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: residents.length,
+              itemBuilder: (context, index) {
+                final resident = residents[index];
+                final residentId = resident['id'].toString();
+                final name = _displayName(resident);
+
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(0xFF4A90D9),
+                    child: Text(
+                      _initial(name),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Text(
+                    name,
+                    style: const TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Resident',
+                    style: TextStyle(fontFamily: 'Urbanist'),
+                  ),
+                  trailing: const Icon(Icons.chat_bubble_outline),
+                  onTap: () => _openChat(
+                    residentId: residentId,
+                    residentName: name,
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -131,5 +161,17 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return 'R';
     return trimmed[0].toUpperCase();
+  }
+
+  Widget _buildScrollableMessage({required Widget child}) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.55,
+          child: Center(child: child),
+        ),
+      ],
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/manager/pages/resident_form_page.dart';
+import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -36,9 +37,9 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     return residents.where((resident) => resident.matchesQuery(query)).toList();
   }
 
-  Future<void> _loadResidents() async {
+  Future<void> _loadResidents({bool showLoading = true}) async {
     setState(() {
-      _isLoading = true;
+      _isLoading = showLoading;
       _errorMessage = null;
     });
 
@@ -110,96 +111,109 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             ),
             const SizedBox(height: 14),
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'Unable to load residents from Supabase.',
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 12,
+              child: RefreshIndicator(
+                onRefresh: () => _loadResidents(showLoading: false),
+                child: _isLoading
+                    ? _buildScrollableMessage(
+                        child: const CircularProgressIndicator(),
+                      )
+                    : _errorMessage != null
+                        ? _buildScrollableMessage(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Unable to load residents from Supabase.',
+                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              OutlinedButton(
-                                onPressed: _loadResidents,
-                                child: const Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ValueListenableBuilder<List<ResidentProfile>>(
-                valueListenable: _repository.residentsNotifier,
-                builder: (context, residents, _) {
-                  final filtered = _filterResidents(residents);
+                                const SizedBox(height: 8),
+                                Text(
+                                  _errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton(
+                                  onPressed: _loadResidents,
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ValueListenableBuilder<List<ResidentProfile>>(
+                            valueListenable: _repository.residentsNotifier,
+                            builder: (context, residents, _) {
+                              final filtered = _filterResidents(residents);
 
-                  if (filtered.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No residents yet. Add your first resident profile.',
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }
+                              if (filtered.isEmpty) {
+                                return _buildScrollableMessage(
+                                  child: const Text(
+                                    'No residents yet. Add your first resident profile.',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                );
+                              }
 
-                  return ListView.separated(
-                    itemCount: filtered.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final resident = filtered[index];
+                              return ListView.separated(
+                                physics:
+                                    const AlwaysScrollableScrollPhysics(),
+                                itemCount: filtered.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  final resident = filtered[index];
 
-                      return Card(
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              _ResidentAvatar(resident: resident),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      resident.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
+                                  return Card(
+                                    color: Colors.white,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          ResidentListAvatar(
+                                            resident: resident,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  resident.name,
+                                                  style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Unit ${resident.unit}',
+                                                  style: const TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          OutlinedButton(
+                                            onPressed: () =>
+                                                _openResidentDetails(
+                                              resident.id,
+                                            ),
+                                            child: const Text('View Info'),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      'Unit ${resident.unit}',
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              OutlinedButton(
-                                onPressed: () =>
-                                    _openResidentDetails(resident.id),
-                                child: const Text('View Info'),
-                              ),
-                            ],
+                                  );
+                                },
+                              );
+                            },
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
               ),
             ),
           ],
@@ -207,37 +221,16 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
       ),
     );
   }
-}
 
-class _ResidentAvatar extends StatelessWidget {
-  const _ResidentAvatar({required this.resident});
-
-  final ResidentProfile resident;
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = resident.avatarUrl?.trim() ?? '';
-    if (avatarUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: 24,
-        backgroundImage: NetworkImage(avatarUrl),
-        onBackgroundImageError: (exception, stackTrace) {},
-      );
-    }
-
-    final name = resident.name.trim();
-    final initials = name.isEmpty
-        ? '?'
-        : name
-            .split(RegExp(r'\\s+'))
-            .where((part) => part.isNotEmpty)
-            .take(2)
-            .map((part) => part[0].toUpperCase())
-            .join();
-
-    return CircleAvatar(
-      radius: 24,
-      child: Text(initials),
+  Widget _buildScrollableMessage({required Widget child}) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: 360,
+          child: Center(child: child),
+        ),
+      ],
     );
   }
 }

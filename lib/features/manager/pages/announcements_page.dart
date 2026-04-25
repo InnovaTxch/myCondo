@@ -185,7 +185,21 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Color(0xFF3A8FE8)))
                   : _announcements.isEmpty
-                      ? _EmptyState(onPost: () => _openPostForm())
+                      ? RefreshIndicator(
+                          onRefresh: _refresh,
+                          color: const Color(0xFF3A8FE8),
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.sizeOf(context).height * 0.6,
+                                child: _EmptyState(
+                                  onPost: () => _openPostForm(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
                       : RefreshIndicator(
                           onRefresh: _refresh,
                           color: const Color(0xFF3A8FE8),

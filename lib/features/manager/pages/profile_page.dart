@@ -24,7 +24,9 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     _loadProfile();
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadProfile({bool showLoading = true}) async {
+    setState(() => _isLoadingProfile = showLoading);
+
     try {
       final firstName = await _dashboardService.getFirstName();
       final email = _authService.getCurrentUserEmail();
@@ -57,18 +59,29 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final name = _firstName?.trim().isNotEmpty == true ? _firstName! : 'Manager';
-    final email = _email?.trim().isNotEmpty == true ? _email! : 'No email available';
+    final name =
+        _firstName?.trim().isNotEmpty == true ? _firstName! : 'Manager';
+    final email =
+        _email?.trim().isNotEmpty == true ? _email! : 'No email available';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F4),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        child: RefreshIndicator(
+          onRefresh: () => _loadProfile(showLoading: false),
           child: _isLoadingProfile
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.sizeOf(context).height * 0.65,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  ],
+                )
+              : ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                   children: [
                     const Text(
                       'Profile',
@@ -123,7 +136,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                         ],
                       ),
                     ),
-                    const Spacer(),
+                    SizedBox(height: MediaQuery.sizeOf(context).height * 0.34),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -132,10 +145,13 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.logout_rounded),
-                        label: Text(_isSigningOut ? 'Logging out...' : 'Log out'),
+                        label:
+                            Text(_isSigningOut ? 'Logging out...' : 'Log out'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFBF2F2F),
                           foregroundColor: Colors.white,

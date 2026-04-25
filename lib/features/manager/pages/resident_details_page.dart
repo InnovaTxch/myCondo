@@ -61,6 +61,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       setState(() {
         _resident = resident;
         _units = units;
+        _notFound = false;
         _selectedUnitId =
             _selectedUnitId ?? (units.isNotEmpty ? units.first.id : null);
         _isLoading = false;
@@ -165,34 +166,38 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
           children: [
             ResidentDetailsHeader(onBack: () => Navigator.pop(context)),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildResidentCard(resident, unitName, status),
-                      const SizedBox(height: 22),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+              child: RefreshIndicator(
+                onRefresh: _load,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildResidentCard(resident, unitName, status),
+                        const SizedBox(height: 22),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ResidentBillsSection(
+                            residentId: widget.residentId,
+                          ),
                         ),
-                        child: ResidentBillsSection(
-                          residentId: widget.residentId,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

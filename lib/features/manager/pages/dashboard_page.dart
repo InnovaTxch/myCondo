@@ -29,6 +29,8 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   int selectedNavigationIndex = 0;
 
   Future<void> _initializePage() async {
+    setState(() => isAnnouncementLoading = true);
+
     try {
       final results = await Future.wait([
         dashboardService.getFirstName(),
@@ -117,25 +119,29 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F7F4),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DashboardGreeting(managerName: managerName ?? ""),
-              const SizedBox(height: 24),
-              DashboardSummaryCard(summary: summary),
-              const SizedBox(height: 16),
-              DashboardAnnouncementSection(
-                announcement: highlightedAnnouncement,
-                isLoading: isAnnouncementLoading,
-                onOpenAnnouncements: () =>
-                    Navigator.pushNamed(context, '/manager-announcements'),
-              ),
-              const SizedBox(height: 18),
+        child: RefreshIndicator(
+          onRefresh: _initializePage,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DashboardGreeting(managerName: managerName ?? ""),
+                const SizedBox(height: 24),
+                DashboardSummaryCard(summary: summary),
+                const SizedBox(height: 16),
+                DashboardAnnouncementSection(
+                  announcement: highlightedAnnouncement,
+                  isLoading: isAnnouncementLoading,
+                  onOpenAnnouncements: () =>
+                      Navigator.pushNamed(context, '/manager-announcements'),
+                ),
+                const SizedBox(height: 18),
 
-              DashboardQuickActions(),
-            ],
+                DashboardQuickActions(),
+              ],
+            ),
           ),
         ),
       ),
