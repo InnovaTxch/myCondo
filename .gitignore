@@ -2,6 +2,7 @@
 /linux/
 /macos/
 /windows/
+supabase
 
 .idea
 

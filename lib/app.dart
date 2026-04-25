@@ -5,7 +5,7 @@ import 'package:mycondo/features/manager/pages/manage_residents_page.dart';
 
 import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/auth/pages/signup_screen.dart';
-import 'package:mycondo/data/repositories/auth/auth_gate.dart';
+import 'package:mycondo/features/auth/pages/auth_gate.dart';
 
 import 'package:mycondo/features/shared/pages/splash_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';

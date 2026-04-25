@@ -15,27 +15,30 @@ class ResidentService {
           .select('condo_id')
           .eq('id', userId)
           .single();
-      
+
       final int condoId = condoData['condo_id'];
       final List<dynamic> data = await _supabase
           .from('units')
-          .select('id, name, residents(id, profiles(first_name))') 
+          .select('id, name, residents(id, profiles(first_name))')
           .eq('condo_id', condoId);
 
       return data.map((unitRow) {
         final List<dynamic> residentRows = unitRow['residents'] ?? [];
-        
+
         return Unit(
           id: unitRow['id'] as int,
           name: unitRow['name'] as String,
-          members: residentRows.map((resRow) => Resident(
-            id: resRow['id'] as String,
-            name: resRow['profiles']['first_name'] as String,
-            unitName: unitRow['name'] as String
-          )).toList(),
+          members: residentRows
+              .map(
+                (resRow) => Resident(
+                  id: resRow['id'] as String,
+                  name: resRow['profiles']['first_name'] as String,
+                  unitName: unitRow['name'] as String,
+                ),
+              )
+              .toList(),
         );
       }).toList();
-
     } catch (e) {
       print("Error fetching units: $e");
       return [];

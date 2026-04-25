@@ -2,7 +2,7 @@ import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mycondo/data/repositories/resident_service.dart';
+import 'package:mycondo/data/repositories/resident/resident_service.dart';
 
 import '../widgets/bill_recipient_container.dart';
 import '../widgets/bill_details.dart';
