@@ -6,9 +6,13 @@ class ResidentBillCard extends StatelessWidget {
   const ResidentBillCard({
     super.key,
     required this.bill,
+    required this.onPayment,
+    required this.onDelete,
   });
 
   final ResidentBillGroup bill;
+  final VoidCallback onPayment;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +83,64 @@ class ResidentBillCard extends StatelessWidget {
               ),
             ],
           ),
+          if (bill.paidAmount > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Paid',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+                Text(
+                  currency.format(_centavosToPesos(bill.paidAmount)),
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              ],
+            ),
+          ],
+          if (bill.isPartial) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Remaining',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  currency.format(_centavosToPesos(bill.outstandingAmount)),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: bill.isPaid ? null : onPayment,
+                  icon: const Icon(Icons.payments_outlined, size: 18),
+                  label: const Text('Payment'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: onDelete,
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                  ),
+                  child: const Icon(Icons.delete_outline),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -96,6 +158,8 @@ class ResidentBillCard extends StatelessWidget {
     switch (status) {
       case 'paid':
         return const Color(0xFF227A45);
+      case 'partial':
+        return const Color(0xFF1A73C8);
       case 'overdue':
         return const Color(0xFFB3261E);
       default:

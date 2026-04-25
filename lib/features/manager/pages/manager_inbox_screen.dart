@@ -27,7 +27,9 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     if (managerId == null) return;
 
     final future = _service.fetchResidentsForManager(managerId);
-    setState(() => _residentsFuture = future);
+    setState(() {
+      _residentsFuture = future;
+    });
     await future;
   }
 
