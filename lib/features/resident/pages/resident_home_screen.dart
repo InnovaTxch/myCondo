@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/features/resident/pages/resident_bills_page.dart';
 import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_profile_page.dart';
-import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/pages/placeholder_page.dart';
+import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
@@ -15,24 +16,24 @@ class ResidentHomeScreen extends StatefulWidget {
 class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   int _activePageIndex = 0;
 
-  final List<Widget> _pages = [
-    const ResidentDashboard(),
-    const PlaceholderPage(title: 'Resident Payment History'),
-    const ResidentManagerChatScreen(),
-    const PlaceholderPage(title: 'Resident About'),
-    const ResidentProfilePage(),
-  ];
-
   void changeActivePageIndex(int index) {
     setState(() => _activePageIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      ResidentDashboard(onOpenMessages: () => changeActivePageIndex(2)),
+      const ResidentBillsPage(showBackButton: false, paidOnly: true),
+      const ResidentManagerChatScreen(),
+      const PlaceholderPage(title: 'Resident About'),
+      const ResidentProfilePage(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _activePageIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: DashboardNavigationBar(
         currentIndex: _activePageIndex,

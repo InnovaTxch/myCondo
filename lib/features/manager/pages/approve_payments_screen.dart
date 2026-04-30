@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/payment_item.dart';
+import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
 
 class ApprovePaymentsScreen extends StatefulWidget {
@@ -10,45 +11,29 @@ class ApprovePaymentsScreen extends StatefulWidget {
 }
 
 class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
+  final PaymentApprovalRepository _repository = PaymentApprovalRepository();
   PaymentStatus selectedTab = PaymentStatus.pending;
+  late Future<List<PaymentItem>> _paymentsFuture;
 
-  final List<PaymentItem> allPayments =  [
-    PaymentItem(
-      residentName: 'John Smith',
-      room: 'Rm 05',
-      amount: '₱6,000.00',
-      method: 'Pay via Scanned QR',
-      date: 'Date: 01-19-26',
-      status: PaymentStatus.pending,
-    ),
-    PaymentItem(
-      residentName: 'Natasha Romanoff',
-      room: 'Rm 01',
-      amount: '₱3,000.00',
-      method: 'Pay via Scanned QR',
-      date: 'Date: 01-19-26',
-      status: PaymentStatus.pending,
-    ),
-    PaymentItem(
-      residentName: 'Robb Smith',
-      room: 'Rm 05',
-      amount: '₱3,000.00',
-      method: 'Pay via Scanned QR',
-      date: 'Date: 01-19-26',
-      status: PaymentStatus.approved,
-    ),
-    PaymentItem(
-      residentName: 'Lorelai Gilmore',
-      room: 'Rm 01',
-      amount: '₱3,000.00',
-      method: 'Pay via Scanned QR',
-      date: 'Date: 01-19-26',
-      status: PaymentStatus.rejected,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _paymentsFuture = _repository.getPayments(selectedTab);
+  }
 
-  List<PaymentItem> get filteredPayments {
-    return allPayments.where((payment) => payment.status == selectedTab).toList();
+  Future<void> _loadPayments() async {
+    final future = _repository.getPayments(selectedTab);
+    setState(() {
+      _paymentsFuture = future;
+    });
+    await future;
+  }
+
+  void _setSelectedTab(PaymentStatus status) {
+    setState(() {
+      selectedTab = status;
+      _paymentsFuture = _repository.getPayments(selectedTab);
+    });
   }
 
   @override
@@ -65,7 +50,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                 child: TextButton.icon(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.chevron_left, color: Colors.black),
-                  label: Text(
+                  label: const Text(
                     'Back',
                     style: TextStyle(
                       fontFamily: "Urbanist",
@@ -87,7 +72,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         'Approve Payments',
                         style: TextStyle(
                           fontFamily: "Urbanist",
@@ -101,36 +86,55 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                       _buildTabs(),
                       const SizedBox(height: 14),
                       Expanded(
-                        child: filteredPayments.isEmpty
-                            ? const Center(
-                          child: Text(
-                            'No payments found.',
-                            style: TextStyle(
-                              fontFamily: "Urbanist",
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                              height: 1.0,
-                            ),
-                          ),
-                        )
-                            : ListView.builder(
-                          itemCount: filteredPayments.length,
-                          itemBuilder: (context, index) {
-                            final payment = filteredPayments[index];
+                        child: FutureBuilder<List<PaymentItem>>(
+                          future: _paymentsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
 
-                            return PaymentCard(
-                              payment: payment,
-                              onApprove: () {
-                                setState(() {
-                                  payment.status = PaymentStatus.approved;
-                                });
-                              },
-                              onReject: () {
-                                setState(() {
-                                  payment.status = PaymentStatus.rejected;
-                                });
-                              },
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text(
+                                  'Unable to load payments: ${snapshot.error}',
+                                  textAlign: TextAlign.center,
+                                ),
+                              );
+                            }
+
+                            final payments =
+                                snapshot.data ?? const <PaymentItem>[];
+                            if (payments.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  'No payments found.',
+                                  style: TextStyle(
+                                    fontFamily: "Urbanist",
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: _loadPayments,
+                              child: ListView.builder(
+                                itemCount: payments.length,
+                                itemBuilder: (context, index) {
+                                  final payment = payments[index];
+                                  return PaymentCard(
+                                    payment: payment,
+                                    onApprove: () => _approve(payment),
+                                    onReject: () => _reject(payment),
+                                  );
+                                },
+                              ),
                             );
                           },
                         ),
@@ -168,17 +172,13 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
     final isSelected = selectedTab == status;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = status;
-        });
-      },
+      onTap: () => _setSelectedTab(status),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: "Urbanist",
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -187,7 +187,6 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
             ),
           ),
           const SizedBox(height: 4),
-
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: 2,
@@ -199,6 +198,91 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _approve(PaymentItem payment) async {
+    try {
+      await _repository.approvePayment(payment);
+      await _loadPayments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Approve failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _reject(PaymentItem payment) async {
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => const _RejectPaymentDialog(),
+    );
+    if (reason == null) return;
+
+    try {
+      await _repository.rejectPayment(
+        payment: payment,
+        reason: reason,
+      );
+      await _loadPayments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reject failed: $e')),
+      );
+    }
+  }
+}
+
+class _RejectPaymentDialog extends StatefulWidget {
+  const _RejectPaymentDialog();
+
+  @override
+  State<_RejectPaymentDialog> createState() => _RejectPaymentDialogState();
+}
+
+class _RejectPaymentDialogState extends State<_RejectPaymentDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Deny Payment'),
+      content: TextField(
+        controller: _controller,
+        minLines: 3,
+        maxLines: 5,
+        decoration: InputDecoration(
+          labelText: 'Reason',
+          errorText: _error,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final reason = _controller.text.trim();
+            if (reason.isEmpty) {
+              setState(() => _error = 'Reason is required.');
+              return;
+            }
+            Navigator.pop(context, reason);
+          },
+          child: const Text('Deny'),
+        ),
+      ],
     );
   }
 }

@@ -25,6 +25,7 @@ class DashboardQuickActions extends StatelessWidget{
           title: 'Approve Payments',
           subtitle: 'Approve cash and e-wallet payments here.',
           icon: Icons.fact_check_outlined,
+          onTap: () => Navigator.pushNamed(context, '/approve-payments'),
         ),
         DashboardQuickActionTile(
           title: 'Tenant Bills',
