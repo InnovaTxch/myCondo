@@ -89,21 +89,6 @@ Migration files live in:
 supabase/migrations/
 ```
 
-Current migrations:
-
-- `20260501000200_payment_approval_policies.sql`
-  - allows resident pending payment submissions
-  - allows residents to read their payment attempts and rejection reasons
-  - allows managers to read and review condo payments
-  - makes `payments.validated_by` nullable for pending resident submissions
-
-- `20260501000300_condo_about_fields.sql`
-  - adds About page fields to `condos`
-  - adds read access for managers/residents in the condo
-  - adds manager update access for the condo About page
-
-Apply these in the Supabase SQL editor or through your preferred migration flow before testing the related app features.
-
 ## Important Payment Status Values
 
 The app expects `payments.status` to use:
