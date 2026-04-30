@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 
 class PaymentCard extends StatelessWidget {
-  final PaymentItem payment;
-  final VoidCallback? onApprove;
-  final VoidCallback? onReject;
-
   const PaymentCard({
     super.key,
     required this.payment,
@@ -13,8 +10,15 @@ class PaymentCard extends StatelessWidget {
     this.onReject,
   });
 
+  final PaymentItem payment;
+  final VoidCallback? onApprove;
+  final VoidCallback? onReject;
+
   @override
   Widget build(BuildContext context) {
+    final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
+    final date = _formatDate(payment.date);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -36,19 +40,20 @@ class PaymentCard extends StatelessWidget {
                       payment.residentName,
                       style: const TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
-                      'Shared: ${payment.room}',
-                      style: TextStyle(
+                      payment.billType,
+                      style: const TextStyle(
                         fontFamily: "Urbanist",
                         fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFFB4B4B4),
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF8A8A8A),
                         height: 1.0,
-                      ),                    ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -56,23 +61,23 @@ class PaymentCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    payment.method,
+                    _statusLabel(payment.status),
                     style: TextStyle(
                       fontFamily: "Urbanist",
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF53B1FD),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: _statusColor(payment.status),
                       height: 1.0,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    payment.date,
-                    style: TextStyle(
+                    date,
+                    style: const TextStyle(
                       fontFamily: "Urbanist",
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFFB4B4B4),
+                      color: Color(0xFF8A8A8A),
                       height: 1.0,
                     ),
                   ),
@@ -84,16 +89,28 @@ class PaymentCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              payment.amount,
-              style: TextStyle(
+              currency.format(payment.amount / 100),
+              style: const TextStyle(
                 fontFamily: "Urbanist",
                 fontSize: 20,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: Colors.black,
                 height: 1.0,
               ),
             ),
           ),
+          if ((payment.proofUrl ?? '').isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _InfoRow(label: 'Proof', value: payment.proofUrl!),
+          ],
+          if ((payment.remark ?? '').isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _InfoRow(label: 'Remark', value: payment.remark!),
+          ],
+          if ((payment.rejectionReason ?? '').isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _InfoRow(label: 'Reason', value: payment.rejectionReason!),
+          ],
           const SizedBox(height: 12),
           _buildActionArea(),
         ],
@@ -108,7 +125,7 @@ class PaymentCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             _outlineButton(
-              label: 'Reject',
+              label: 'Deny',
               onTap: onReject,
             ),
             const SizedBox(width: 8),
@@ -118,17 +135,15 @@ class PaymentCard extends StatelessWidget {
             ),
           ],
         );
-
       case PaymentStatus.approved:
         return _filledButton(
           label: 'Approved',
           onTap: null,
           width: 110,
         );
-
       case PaymentStatus.rejected:
         return _outlineButton(
-          label: 'Rejected',
+          label: 'Denied',
           onTap: null,
           width: 100,
         );
@@ -155,7 +170,7 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -186,7 +201,7 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -195,6 +210,70 @@ class PaymentCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  String _formatDate(String value) {
+    final date = DateTime.tryParse(value);
+    if (date == null) return value;
+    return DateFormat('MMM d, h:mm a').format(date.toLocal());
+  }
+
+  String _statusLabel(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.pending:
+        return 'Pending';
+      case PaymentStatus.approved:
+        return 'Approved';
+      case PaymentStatus.rejected:
+        return 'Denied';
+    }
+  }
+
+  Color _statusColor(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.pending:
+        return const Color(0xFF8A6200);
+      case PaymentStatus.approved:
+        return const Color(0xFF227A45);
+      case PaymentStatus.rejected:
+        return const Color(0xFFB3261E);
+    }
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 58,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF777777),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12, height: 1.25),
+          ),
+        ),
+      ],
     );
   }
 }

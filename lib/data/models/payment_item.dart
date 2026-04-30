@@ -1,19 +1,29 @@
 enum PaymentStatus { pending, approved, rejected }
 
 class PaymentItem {
+  final int id;
   final String residentName;
   final String room;
-  final String amount;
-  final String method;
+  final int amount;
   final String date;
-  PaymentStatus status;
+  final String billType;
+  final int billId;
+  final String? proofUrl;
+  final String? remark;
+  final String? rejectionReason;
+  final PaymentStatus status;
 
-  PaymentItem({
+  const PaymentItem({
+    required this.id,
     required this.residentName,
     required this.room,
     required this.amount,
-    required this.method,
     required this.date,
+    required this.billType,
+    required this.billId,
     required this.status,
+    this.proofUrl,
+    this.remark,
+    this.rejectionReason,
   });
 }

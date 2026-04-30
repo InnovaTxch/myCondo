@@ -15,7 +15,7 @@ class ResidentBillRepository {
         .select(
           'id, due_date, status, '
           'bills!bills_monthly_bill_id_fkey(name, amount), '
-          'payments!payments_monthly_bill_id_fkey(amount, status)',
+          'payments!payments_monthly_bill_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
         )
         .eq('received_by', residentId);
 
@@ -24,7 +24,7 @@ class ResidentBillRepository {
         .select(
           'id, due_date, status, '
           'bills!bills_one_time_fee_id_fkey(name, amount), '
-          'payments!payments_one_time_fee_id_fkey(amount, status)',
+          'payments!payments_one_time_fee_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
         )
         .eq('received_by', residentId);
 
