@@ -92,12 +92,23 @@ class _SignupScreenState extends State<SignupScreen>{
             const SizedBox(height: 60),
 
             Text(
-              "Create an\naccount.",
+              "Create a\nmanager account.",
               style: TextStyle(
                 fontFamily: "Urbanist",
                 fontSize: 45,
                 fontWeight: FontWeight.w500,
                 height: 1.0,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              "Resident accounts are created by condo managers after setup.",
+              style: TextStyle(
+                color: Colors.black.withValues(alpha: 0.6),
+                fontSize: 15,
+                height: 1.35,
               ),
             ),
 

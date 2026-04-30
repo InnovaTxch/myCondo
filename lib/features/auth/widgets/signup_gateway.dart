@@ -6,20 +6,20 @@ class SignupGateway extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
       children: [
         GatewayText(
-          text: "Don't have an account yet? ", 
-          textColor: Colors.black.withValues(alpha: 0.6)
+          text: "Want to start managing your condo? ",
+          textColor: Colors.black.withValues(alpha: 0.6),
         ),
         GestureDetector(
           onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
           child: GatewayText(
-            text: "Create an account",
-            textColor: Color(0xFF53B1FD)
+            text: "Sign up",
+            textColor: Color(0xFF53B1FD),
           ),
-        )
+        ),
       ],
     );
   }
