@@ -202,6 +202,14 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
   }
 
   Future<void> _approve(PaymentItem payment) async {
+    final confirmed = await _confirmAction(
+      title: 'Approve Payment',
+      message:
+          'Approve this payment from ${payment.residentName}? This will apply it to the bill balance.',
+      actionLabel: 'Approve',
+    );
+    if (!confirmed) return;
+
     try {
       await _repository.approvePayment(payment);
       await _loadPayments();
@@ -220,6 +228,15 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
     );
     if (reason == null) return;
 
+    final confirmed = await _confirmAction(
+      title: 'Deny Payment',
+      message:
+          'Deny this payment from ${payment.residentName}? The reason will be shown to the resident.',
+      actionLabel: 'Deny',
+      isDestructive: true,
+    );
+    if (!confirmed) return;
+
     try {
       await _repository.rejectPayment(
         payment: payment,
@@ -232,6 +249,38 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
         SnackBar(content: Text('Reject failed: $e')),
       );
     }
+  }
+
+  Future<bool> _confirmAction({
+    required String title,
+    required String message,
+    required String actionLabel,
+    bool isDestructive = false,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  isDestructive ? const Color(0xFFB3261E) : null,
+              foregroundColor: isDestructive ? Colors.white : null,
+            ),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed == true;
   }
 }
 

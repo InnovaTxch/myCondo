@@ -5,8 +5,17 @@ class PaymentApprovalRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<List<PaymentItem>> getPayments(PaymentStatus status) async {
+    return _getPaymentsForStatuses([_toDatabaseStatus(status)]);
+  }
+
+  Future<List<PaymentItem>> getProcessedPayments() async {
+    return _getPaymentsForStatuses(['completed', 'rejected']);
+  }
+
+  Future<List<PaymentItem>> _getPaymentsForStatuses(
+    List<String> statuses,
+  ) async {
     final manager = await _requireManagerContext();
-    final statusValue = _toDatabaseStatus(status);
     final residentIds = await _getResidentIdsForCondo(manager.condoId);
     if (residentIds.isEmpty) return [];
 
@@ -27,7 +36,7 @@ class PaymentApprovalRepository {
           one_time_fees!payments_one_time_fee_id_fkey(id, due_date)
         ''')
         .inFilter('paid_by', residentIds)
-        .eq('status', statusValue)
+        .inFilter('status', statuses)
         .order('created_at', ascending: false);
 
     final profiles = await _getProfilesForPayments(data as List);

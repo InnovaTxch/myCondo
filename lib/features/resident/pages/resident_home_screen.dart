@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/features/resident/pages/resident_bills_page.dart';
 import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_profile_page.dart';
-import 'package:mycondo/features/shared/pages/placeholder_page.dart';
+import 'package:mycondo/features/shared/pages/condo_about_page.dart';
 import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
@@ -26,7 +26,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       ResidentDashboard(onOpenMessages: () => changeActivePageIndex(2)),
       const ResidentBillsPage(showBackButton: false, paidOnly: true),
       const ResidentManagerChatScreen(),
-      const PlaceholderPage(title: 'Resident About'),
+      const CondoAboutPage(canEdit: false),
       const ResidentProfilePage(),
     ];
 

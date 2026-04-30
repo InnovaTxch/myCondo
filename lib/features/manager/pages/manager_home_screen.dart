@@ -4,7 +4,8 @@ import 'dashboard_page.dart';
 import 'profile_page.dart';
 
 import 'package:mycondo/features/manager/pages/manager_inbox_screen.dart';
-import 'package:mycondo/features/shared/pages/placeholder_page.dart';
+import 'package:mycondo/features/manager/pages/manager_transaction_history_page.dart';
+import 'package:mycondo/features/shared/pages/condo_about_page.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 
 class ManagerHomeScreen extends StatefulWidget {
@@ -24,9 +25,9 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
   final List<Widget> _pages = [
     const ManagerDashboardPage(),
-    const PlaceholderPage(title: 'Manager Payment History'),
+    const ManagerTransactionHistoryPage(),
     const ManagerInboxScreen(),
-    const PlaceholderPage(title: 'Manager About'),
+    const CondoAboutPage(canEdit: true),
     const ManagerProfilePage(),
   ];
 
