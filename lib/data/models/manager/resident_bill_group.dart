@@ -35,8 +35,12 @@ class ResidentBillGroup {
   }
 
   BillPaymentAttempt? get latestRejectedPayment {
+    final pending = pendingPayment;
+    if (pending != null) return null;
+
     for (final payment in payments) {
       if (payment.status == 'rejected') return payment;
+      if (payment.status == 'completed') return null;
     }
     return null;
   }
