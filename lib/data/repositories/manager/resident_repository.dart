@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResidentRepository {
@@ -10,9 +11,12 @@ class ResidentRepository {
   static final ResidentRepository instance = ResidentRepository._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   final ValueNotifier<List<ResidentProfile>> residentsNotifier =
       ValueNotifier<List<ResidentProfile>>(<ResidentProfile>[]);
+  final ValueNotifier<List<UnitResidentGroup>> unitGroupsNotifier =
+      ValueNotifier<List<UnitResidentGroup>>(<UnitResidentGroup>[]);
 
   Future<List<ResidentProfile>> getResidents({String query = ''}) async {
     final residents = List<ResidentProfile>.from(residentsNotifier.value)
@@ -32,7 +36,7 @@ class ResidentRepository {
     final context = await _requireManagerContext();
     final unitsData = await _supabase
         .from('units')
-        .select('id, name')
+        .select('id, name, capacity')
         .eq('condo_id', context.condoId);
 
     final units = (unitsData as List)
@@ -40,12 +44,14 @@ class ResidentRepository {
           (row) => UnitOption(
             id: row['id'] as int,
             name: (row['name'] ?? '').toString(),
+            capacity: row['capacity'] as int?,
           ),
         )
         .toList();
 
     if (units.isEmpty) {
       residentsNotifier.value = <ResidentProfile>[];
+      unitGroupsNotifier.value = <UnitResidentGroup>[];
       return;
     }
 
@@ -54,7 +60,7 @@ class ResidentRepository {
 
     final residentsData = await _supabase
         .from('residents')
-        .select('id, unit_id, status')
+        .select('id, unit_id, status, code')
         .inFilter('unit_id', unitIds)
         .eq('status', 'active');
 
@@ -64,6 +70,9 @@ class ResidentRepository {
 
     if (residentRows.isEmpty) {
       residentsNotifier.value = <ResidentProfile>[];
+      unitGroupsNotifier.value = units
+          .map((unit) => UnitResidentGroup(unit: unit, residents: const []))
+          .toList();
       return;
     }
 
@@ -98,11 +107,14 @@ class ResidentRepository {
         unit: unit?.name ?? 'Unknown Unit',
         unitId: unitId,
         status: row['status']?.toString(),
+        condoCode: context.condoCode,
+        residentCode: row['code']?.toString(),
       );
     }).toList()
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     residentsNotifier.value = residents;
+    unitGroupsNotifier.value = _buildUnitGroups(units, residents);
   }
 
   Future<ResidentProfile?> getResidentById(String residentId) async {
@@ -115,13 +127,13 @@ class ResidentRepository {
 
   Future<List<UnitOption>> getUnitOptions() async {
     final context = await _requireManagerContext();
-    final data = await _supabase
+    final unitsData = await _supabase
         .from('units')
         .select('id, name, capacity')
         .eq('condo_id', context.condoId)
         .order('name');
 
-    return (data as List)
+    final units = (unitsData as List)
         .map(
           (row) => UnitOption(
             id: row['id'] as int,
@@ -130,98 +142,138 @@ class ResidentRepository {
           ),
         )
         .toList();
+
+    if (units.isEmpty) return units;
+
+    final unitIds = units.map((unit) => unit.id).toList();
+    final residentsData = await _supabase
+        .from('residents')
+        .select('unit_id')
+        .inFilter('unit_id', unitIds)
+        .eq('status', 'active');
+
+    final occupancy = <int, int>{};
+    for (final row in residentsData as List) {
+      final unitId = row['unit_id'] as int?;
+      if (unitId == null) continue;
+      occupancy[unitId] = (occupancy[unitId] ?? 0) + 1;
+    }
+
+    return units
+        .map(
+          (unit) => UnitOption(
+            id: unit.id,
+            name: unit.name,
+            capacity: unit.capacity,
+            occupied: occupancy[unit.id] ?? 0,
+          ),
+        )
+        .toList();
   }
 
-  Future<void> addResident(ResidentUpsertInput input) async {
+  Future<ResidentProfile> addResident(ResidentUpsertInput input) async {
     final context = await _requireManagerContext();
-    await _assertUnitBelongsToCondo(
-      unitId: input.unitId,
-      condoId: context.condoId,
-    );
+    final code = await _generateResidentCode(context.condoId);
 
-    final residentId = _generateUuidV4();
-    final (firstName, lastName) = _splitName(input.name);
+    final profile = await _supabase
+        .from('profiles')
+        .insert({
+          'first_name': input.firstName.trim(),
+          'last_name': input.lastName.trim(),
+          'role': 'resident',
+        })
+        .select('id')
+        .single();
+
+    final profileId = profile['id'].toString();
     final now = DateTime.now().toUtc().toIso8601String();
 
-    await _supabase.from('profiles').upsert({
-      'id': residentId,
-      'first_name': firstName,
-      'last_name': lastName,
-      'role': 'resident',
-    });
-
-    await _supabase.from('residents').upsert({
-      'id': residentId,
-      'unit_id': input.unitId,
-      'status': 'active',
-      'requested_at': now,
-      'approved_at': now,
-      'left_at': null,
-    });
-
-    await refreshResidents();
-  }
-
-  Future<void> updateResident(String residentId, ResidentUpsertInput input) async {
-    final context = await _requireManagerContext();
-    await _assertUnitBelongsToCondo(
-      unitId: input.unitId,
-      condoId: context.condoId,
+    await _supabase.from('residents').insert(
+      {
+        'id': profileId,
+        'unit_id': input.unitId,
+        'status': 'active',
+        'requested_at': now,
+        'approved_at': now,
+        'left_at': null,
+        'code': code,
+      },
     );
 
-    final (firstName, lastName) = _splitName(input.name);
+    await refreshResidents();
+    final resident = (await getResidentById(profileId)) ??
+        ResidentProfile(
+          id: profileId,
+          name: input.name.trim(),
+          unit: 'Selected Unit',
+          unitId: input.unitId,
+          status: 'active',
+        );
 
-    await _supabase.from('profiles').update({
-      'first_name': firstName,
-      'last_name': lastName,
-      'role': 'resident',
-    }).eq('id', residentId);
+    return resident.copyWith(
+      condoCode: context.condoCode,
+      residentCode: code,
+    );
+  }
 
-    await _supabase.from('residents').update({
-      'unit_id': input.unitId,
-      'status': 'active',
-      'left_at': null,
-    }).eq('id', residentId);
+  Future<void> updateResident(
+    String residentId,
+    ResidentUpsertInput input,
+  ) async {
+    await _supabase.rpc(
+      'update_resident_profile',
+      params: {
+        'p_resident_id': residentId,
+        'p_full_name': input.name,
+        'p_unit_id': input.unitId,
+      },
+    );
 
     await refreshResidents();
   }
 
   Future<void> deleteResident(String residentId) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await _supabase.from('residents').update({
-      'status': 'vacated',
-      'left_at': now,
-    }).eq('id', residentId);
-
+    await _supabase.rpc(
+      'vacate_resident',
+      params: {'p_resident_id': residentId},
+    );
     await refreshResidents();
   }
 
-  Future<void> _assertUnitBelongsToCondo({
-    required int unitId,
-    required int condoId,
-  }) async {
-    final unit = await _supabase
-        .from('units')
-        .select('id')
-        .eq('id', unitId)
-        .eq('condo_id', condoId)
-        .maybeSingle();
+  List<UnitResidentGroup> _buildUnitGroups(
+    List<UnitOption> units,
+    List<ResidentProfile> residents,
+  ) {
+    return units.map((unit) {
+      final unitResidents = residents
+          .where((resident) => resident.unitId == unit.id)
+          .toList()
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
-    if (unit == null) {
-      throw StateError('Selected unit does not belong to your condo.');
-    }
+      return UnitResidentGroup(
+        unit: UnitOption(
+          id: unit.id,
+          name: unit.name,
+          capacity: unit.capacity,
+          occupied: unitResidents.length,
+        ),
+        residents: unitResidents,
+      );
+    }).toList()
+      ..sort(
+        (a, b) => a.unit.name.toLowerCase().compareTo(b.unit.name.toLowerCase()),
+      );
   }
 
   Future<_ManagerContext> _requireManagerContext() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated manager found.');
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final manager = await _supabase
         .from('managers')
-        .select('id, condo_id')
-        .eq('id', userId)
+        .select('id, condo_id, condos(code)')
+        .eq('id', profile.id)
         .single();
 
     final condoIdValue = manager['condo_id'];
@@ -231,42 +283,52 @@ class ResidentRepository {
 
     return _ManagerContext(
       condoId: condoId,
+      condoCode: (manager['condos']?['code'] ?? '').toString(),
     );
   }
 
-  (String, String) _splitName(String fullName) {
-    final parts = fullName
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
+  Future<String> _generateResidentCode(int condoId) async {
+    final unitsData = await _supabase
+        .from('units')
+        .select('id')
+        .eq('condo_id', condoId);
+    final unitIds = (unitsData as List).map((row) => row['id'] as int).toList();
 
-    if (parts.isEmpty) return ('', '');
-    if (parts.length == 1) return (parts.first, '');
-    return (parts.first, parts.sublist(1).join(' '));
+    for (var attempt = 0; attempt < 20; attempt++) {
+      final code = _randomCode(8);
+      if (unitIds.isEmpty) return code;
+
+      final existing = await _supabase
+          .from('residents')
+          .select('id')
+          .inFilter('unit_id', unitIds)
+          .eq('code', code)
+          .maybeSingle();
+
+      if (existing == null) return code;
+    }
+
+    throw StateError('Could not generate a unique resident code.');
   }
 
-  String _generateUuidV4() {
+  String _randomCode(int length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
     final random = Random.secure();
-    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
-
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-
-    String hex(int value) => value.toRadixString(16).padLeft(2, '0');
-    final b = bytes.map(hex).toList();
-    return '${b[0]}${b[1]}${b[2]}${b[3]}-'
-        '${b[4]}${b[5]}-'
-        '${b[6]}${b[7]}-'
-        '${b[8]}${b[9]}-'
-        '${b[10]}${b[11]}${b[12]}${b[13]}${b[14]}${b[15]}';
+    return String.fromCharCodes(
+      Iterable.generate(
+        length,
+        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+      ),
+    );
   }
 }
 
 class _ManagerContext {
   const _ManagerContext({
     required this.condoId,
+    required this.condoCode,
   });
 
   final int condoId;
+  final String condoCode;
 }

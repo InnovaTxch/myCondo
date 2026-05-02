@@ -31,10 +31,10 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     super.dispose();
   }
 
-  List<ResidentProfile> _filterResidents(List<ResidentProfile> residents) {
+  List<UnitResidentGroup> _filterGroups(List<UnitResidentGroup> groups) {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return residents;
-    return residents.where((resident) => resident.matchesQuery(query)).toList();
+    if (query.isEmpty) return groups;
+    return groups.where((group) => group.matchesQuery(query)).toList();
   }
 
   Future<void> _loadResidents({bool showLoading = true}) async {
@@ -143,15 +143,15 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                               ],
                             ),
                           )
-                        : ValueListenableBuilder<List<ResidentProfile>>(
-                            valueListenable: _repository.residentsNotifier,
-                            builder: (context, residents, _) {
-                              final filtered = _filterResidents(residents);
+                        : ValueListenableBuilder<List<UnitResidentGroup>>(
+                            valueListenable: _repository.unitGroupsNotifier,
+                            builder: (context, groups, _) {
+                              final filtered = _filterGroups(groups);
 
                               if (filtered.isEmpty) {
                                 return _buildScrollableMessage(
                                   child: const Text(
-                                    'No residents yet. Add your first resident profile.',
+                                    'No units or residents match your search.',
                                     textAlign: TextAlign.center,
                                   ),
                                 );
@@ -163,54 +163,8 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                                 itemCount: filtered.length,
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: 10),
-                                itemBuilder: (context, index) {
-                                  final resident = filtered[index];
-
-                                  return Card(
-                                    color: Colors.white,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Row(
-                                        children: [
-                                          ResidentListAvatar(
-                                            resident: resident,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  resident.name,
-                                                  style: const TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w600,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Unit ${resident.unit}',
-                                                  style: const TextStyle(
-                                                    color: Colors.black54,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          OutlinedButton(
-                                            onPressed: () =>
-                                                _openResidentDetails(
-                                              resident.id,
-                                            ),
-                                            child: const Text('View Info'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
+                                itemBuilder: (context, index) =>
+                                    _buildUnitGroup(filtered[index]),
                               );
                             },
                           ),
@@ -231,6 +185,77 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
           child: Center(child: child),
         ),
       ],
+    );
+  }
+
+  Widget _buildUnitGroup(UnitResidentGroup group) {
+    final unit = group.unit;
+    final isFull = unit.isFull;
+
+    return Card(
+      color: Colors.white,
+      child: ExpansionTile(
+        initiallyExpanded: group.residents.isNotEmpty,
+        leading: Icon(
+          Icons.apartment_outlined,
+          color: isFull ? Colors.redAccent : Colors.black87,
+        ),
+        title: Text(
+          'Unit ${unit.name}',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Text(
+          unit.capacity == null
+              ? '${unit.occupied} tenants'
+              : '${unit.occupied} of ${unit.capacity} capacity',
+          style: TextStyle(
+            color: isFull ? Colors.redAccent : Colors.black54,
+          ),
+        ),
+        children: [
+          if (group.residents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'No tenants in this unit yet.',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            )
+          else
+            ...group.residents.map(_buildResidentTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResidentTile(ResidentProfile resident) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Row(
+        children: [
+          ResidentListAvatar(resident: resident),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              resident.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () => _openResidentDetails(resident.id),
+            child: const Text('View Info'),
+          ),
+        ],
+      ),
     );
   }
 }

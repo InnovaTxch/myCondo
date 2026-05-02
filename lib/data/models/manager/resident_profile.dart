@@ -9,6 +9,8 @@ class ResidentProfile {
     this.notes,
     this.avatarUrl,
     this.status,
+    this.condoCode,
+    this.residentCode,
   });
 
   final String id;
@@ -20,6 +22,8 @@ class ResidentProfile {
   final String? notes;
   final String? avatarUrl;
   final String? status;
+  final String? condoCode;
+  final String? residentCode;
 
   factory ResidentProfile.fromMap(Map<String, dynamic> map) {
     final firstName = map['first_name']?.toString().trim() ?? '';
@@ -38,6 +42,8 @@ class ResidentProfile {
       notes: map['notes']?.toString(),
       avatarUrl: map['avatar_url']?.toString(),
       status: map['status']?.toString(),
+      condoCode: map['condo_code']?.toString(),
+      residentCode: map['resident_code']?.toString(),
     );
   }
 
@@ -59,6 +65,8 @@ class ResidentProfile {
     String? notes,
     String? avatarUrl,
     String? status,
+    String? condoCode,
+    String? residentCode,
   }) {
     return ResidentProfile(
       id: id ?? this.id,
@@ -70,13 +78,16 @@ class ResidentProfile {
       notes: notes ?? this.notes,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       status: status ?? this.status,
+      condoCode: condoCode ?? this.condoCode,
+      residentCode: residentCode ?? this.residentCode,
     );
   }
 }
 
 class ResidentUpsertInput {
   const ResidentUpsertInput({
-    required this.name,
+    required this.firstName,
+    required this.lastName,
     required this.unitId,
     this.email,
     this.phone,
@@ -84,26 +95,20 @@ class ResidentUpsertInput {
     this.avatarUrl,
   });
 
-  final String name;
+  final String firstName;
+  final String lastName;
   final int unitId;
   final String? email;
   final String? phone;
   final String? notes;
   final String? avatarUrl;
 
+  String get name => '$firstName $lastName'.trim();
+
   Map<String, dynamic> toMap({String? managerId}) {
-    final nameParts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
-
-    final firstName = nameParts.isEmpty ? '' : nameParts.first;
-    final lastName = nameParts.length <= 1 ? '' : nameParts.sublist(1).join(' ');
-
     final data = <String, dynamic>{
-      'first_name': firstName,
-      'last_name': lastName,
+      'first_name': firstName.trim(),
+      'last_name': lastName.trim(),
       'unit_id': unitId,
       'email': _clean(email),
       'phone': _clean(phone),
@@ -130,9 +135,34 @@ class UnitOption {
     required this.id,
     required this.name,
     this.capacity,
+    this.occupied = 0,
   });
 
   final int id;
   final String name;
   final int? capacity;
+  final int occupied;
+
+  bool get isFull => capacity != null && occupied >= capacity!;
+
+  String get capacityLabel {
+    if (capacity == null) return '$occupied tenants';
+    return '$occupied/$capacity tenants';
+  }
+}
+
+class UnitResidentGroup {
+  const UnitResidentGroup({
+    required this.unit,
+    required this.residents,
+  });
+
+  final UnitOption unit;
+  final List<ResidentProfile> residents;
+
+  bool matchesQuery(String query) {
+    final q = query.toLowerCase();
+    return unit.name.toLowerCase().contains(q) ||
+        residents.any((resident) => resident.matchesQuery(q));
+  }
 }

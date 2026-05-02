@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/features/manager/widgets/resident_avatar.dart';
@@ -18,7 +19,8 @@ class ResidentDetailsPage extends StatefulWidget {
 class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
   final _formKey = GlobalKey<FormState>();
   final ResidentRepository _repository = ResidentRepository.instance;
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
 
   ResidentProfile? _resident;
   List<UnitOption> _units = [];
@@ -35,7 +37,8 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -55,7 +58,9 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         return;
       }
 
-      _nameController.text = resident.name;
+      final nameParts = _splitName(resident.name);
+      _firstNameController.text = nameParts.$1;
+      _lastNameController.text = nameParts.$2;
       _selectedUnitId = resident.unitId;
 
       setState(() {
@@ -88,7 +93,8 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       await _repository.updateResident(
         widget.residentId,
         ResidentUpsertInput(
-          name: _nameController.text,
+          firstName: _firstNameController.text,
+          lastName: _lastNameController.text,
           unitId: _selectedUnitId!,
         ),
       );
@@ -135,6 +141,34 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
 
     if (!mounted) return;
     Navigator.pop(context);
+  }
+
+  Future<void> _copyOnboardingCodes() async {
+    final resident = _resident;
+    if (resident == null) return;
+
+    final condoCode = resident.condoCode;
+    final residentCode = resident.residentCode;
+    if (condoCode == null ||
+        condoCode.isEmpty ||
+        residentCode == null ||
+        residentCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No resident code found.')),
+      );
+      return;
+    }
+
+    await Clipboard.setData(
+      ClipboardData(
+        text: 'Condo code: $condoCode\nResident code: $residentCode',
+      ),
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Onboarding codes copied.')),
+    );
   }
 
   @override
@@ -233,7 +267,9 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
           ResidentAvatar(resident: resident),
           const SizedBox(height: 16),
           Text(
-            resident?.name ?? _nameController.text,
+            resident?.name ??
+                '${_firstNameController.text} ${_lastNameController.text}'
+                    .trim(),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 22,
@@ -267,9 +303,9 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     return Column(
       children: [
         TextFormField(
-          controller: _nameController,
+          controller: _firstNameController,
           decoration: const InputDecoration(
-            labelText: 'Full Name',
+            labelText: 'First Name',
             filled: true,
             fillColor: Color(0xFFF5F5F5),
             border: OutlineInputBorder(
@@ -278,7 +314,24 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
             ),
           ),
           validator: (value) {
-            if ((value ?? '').trim().isEmpty) return 'Name is required';
+            if ((value ?? '').trim().isEmpty) return 'First name is required';
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _lastNameController,
+          decoration: const InputDecoration(
+            labelText: 'Last Name',
+            filled: true,
+            fillColor: Color(0xFFF5F5F5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          validator: (value) {
+            if ((value ?? '').trim().isEmpty) return 'Last name is required';
             return null;
           },
         ),
@@ -289,7 +342,15 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
               .map(
                 (unit) => DropdownMenuItem<int>(
                   value: unit.id,
-                  child: Text(unit.name),
+                  enabled: _unitAvailableForEdit(unit),
+                  child: Text(
+                    '${unit.name} (${unit.capacityLabel})',
+                    style: TextStyle(
+                      color: _unitAvailableForEdit(unit)
+                          ? Colors.black87
+                          : Colors.black38,
+                    ),
+                  ),
                 ),
               )
               .toList(),
@@ -327,7 +388,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         const SizedBox(height: 12),
         ResidentInfoField(
           icon: Icons.badge_outlined,
-          label: widget.residentId,
+          label: _onboardingCodeLabel(),
         ),
       ],
     );
@@ -354,7 +415,9 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         const SizedBox(height: 10),
         TextButton(
           onPressed: () {
-            _nameController.text = resident?.name ?? '';
+            final nameParts = _splitName(resident?.name ?? '');
+            _firstNameController.text = nameParts.$1;
+            _lastNameController.text = nameParts.$2;
             _selectedUnitId = resident?.unitId;
             setState(() => _isEditing = false);
           },
@@ -410,6 +473,15 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
+            onPressed: _copyOnboardingCodes,
+            icon: const Icon(Icons.copy_outlined),
+            label: const Text('Copy Onboarding Codes'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
             onPressed: _delete,
             icon: const Icon(Icons.person_remove_outlined),
             label: const Text('Remove Resident'),
@@ -432,5 +504,31 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       if (unit.id == _selectedUnitId) return unit.name;
     }
     return resident?.unit ?? 'Unknown Unit';
+  }
+
+  String _onboardingCodeLabel() {
+    final resident = _resident;
+    final residentCode = resident?.residentCode;
+    if (residentCode == null || residentCode.isEmpty) {
+      return 'Resident code unavailable';
+    }
+    return 'Resident code $residentCode';
+  }
+
+  bool _unitAvailableForEdit(UnitOption unit) {
+    if (unit.id == _resident?.unitId) return true;
+    return !unit.isFull;
+  }
+
+  (String, String) _splitName(String fullName) {
+    final parts = fullName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) return ('', '');
+    if (parts.length == 1) return (parts.first, '');
+    return (parts.first, parts.sublist(1).join(' '));
   }
 }

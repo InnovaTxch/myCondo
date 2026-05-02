@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 
@@ -13,7 +14,8 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
   final _formKey = GlobalKey<FormState>();
   final ResidentRepository _repository = ResidentRepository.instance;
 
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
 
   List<UnitOption> _units = [];
   int? _selectedUnitId;
@@ -28,7 +30,8 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -36,9 +39,11 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
     try {
       final units = await _repository.getUnitOptions();
       if (!mounted) return;
+      final availableUnits = units.where((unit) => !unit.isFull).toList();
       setState(() {
         _units = units;
-        _selectedUnitId = units.isNotEmpty ? units.first.id : null;
+        _selectedUnitId =
+            availableUnits.isNotEmpty ? availableUnits.first.id : null;
         _isLoadingUnits = false;
       });
     } catch (e) {
@@ -62,23 +67,61 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
     setState(() => _isSaving = true);
 
     try {
-      await _repository.addResident(
+      final resident = await _repository.addResident(
         ResidentUpsertInput(
-          name: _nameController.text,
+          firstName: _firstNameController.text,
+          lastName: _lastNameController.text,
           unitId: _selectedUnitId!,
         ),
       );
+      if (!mounted) return;
+      await _showProfileDialog(resident);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create resident account: $e')),
+        SnackBar(content: Text('Failed to create resident profile: $e')),
       );
       return;
     }
 
     if (!mounted) return;
     Navigator.pop(context);
+  }
+
+  Future<void> _showProfileDialog(ResidentProfile resident) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        final condoCode = resident.condoCode ?? '';
+        final residentCode = resident.residentCode ?? '';
+        final inviteText =
+            'Condo code: $condoCode\nResident code: $residentCode';
+
+        return AlertDialog(
+          title: const Text('Resident Profile Created'),
+          content: SelectableText(
+            '${resident.name} can sign up, then enter these onboarding codes:\n\n'
+            '$inviteText',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: inviteText));
+                if (!context.mounted) return;
+                Navigator.pop(context);
+              },
+              child: const Text('Copy Codes'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -98,11 +141,21 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                     child: CircularProgressIndicator(),
                   ),
                 TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Full Name'),
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(labelText: 'First Name'),
                   validator: (value) {
                     if ((value ?? '').trim().isEmpty) {
-                      return 'Name is required';
+                      return 'First name is required';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _lastNameController,
+                  decoration: const InputDecoration(labelText: 'Last Name'),
+                  validator: (value) {
+                    if ((value ?? '').trim().isEmpty) {
+                      return 'Last name is required';
                     }
                     return null;
                   },
@@ -113,7 +166,13 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                       .map(
                         (unit) => DropdownMenuItem<int>(
                           value: unit.id,
-                          child: Text(unit.name),
+                          enabled: !unit.isFull,
+                          child: Text(
+                            '${unit.name} (${unit.capacityLabel})',
+                            style: TextStyle(
+                              color: unit.isFull ? Colors.black38 : null,
+                            ),
+                          ),
                         ),
                       )
                       .toList(),
@@ -132,14 +191,26 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isSaving || _isLoadingUnits || _units.isEmpty
+                    onPressed:
+                        _isSaving || _isLoadingUnits || _selectedUnitId == null
                         ? null
                         : _save,
                     child: _isSaving
                         ? const CircularProgressIndicator()
-                        : const Text('Create Resident Account'),
+                        : const Text('Create Resident Profile'),
                   ),
                 ),
+                if (!_isLoadingUnits &&
+                    _units.isNotEmpty &&
+                    _selectedUnitId == null)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Text(
+                      'All units are at maximum capacity. Add a unit or increase capacity in Manage Condo.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
               ],
             ),
           ),
