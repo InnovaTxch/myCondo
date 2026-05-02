@@ -12,18 +12,29 @@ class ManagerInboxScreen extends StatefulWidget {
 class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   final _service = MessagingService();
   Future<List<Map<String, dynamic>>>? _residentsFuture;
+  String? _managerId;
+  bool _isLoadingProfile = true;
 
   @override
   void initState() {
     super.initState();
-    final managerId = _service.currentUserId;
+    _loadManagerProfile();
+  }
+
+  Future<void> _loadManagerProfile() async {
+    final managerId = await _service.currentProfileId;
+    if (!mounted) return;
     if (managerId != null) {
       _residentsFuture = _service.fetchResidentsForManager(managerId);
     }
+    setState(() {
+      _managerId = managerId;
+      _isLoadingProfile = false;
+    });
   }
 
   Future<void> _refreshResidents() async {
-    final managerId = _service.currentUserId;
+    final managerId = _managerId;
     if (managerId == null) return;
 
     final future = _service.fetchResidentsForManager(managerId);
@@ -35,7 +46,11 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final managerId = _service.currentUserId;
+    if (_isLoadingProfile) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final managerId = _managerId;
     if (managerId == null) {
       return const Scaffold(body: Center(child: Text('Please log in.')));
     }

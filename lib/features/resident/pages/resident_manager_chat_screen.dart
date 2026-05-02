@@ -16,13 +16,8 @@ class _ResidentManagerChatScreenState
 
   @override
   Widget build(BuildContext context) {
-    final residentId = _service.currentUserId;
-    if (residentId == null) {
-      return const Scaffold(body: Center(child: Text('Please log in.')));
-    }
-
     return FutureBuilder<({int conversationId, String managerName})>(
-      future: _loadConversation(residentId),
+      future: _loadConversation(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(
@@ -45,9 +40,12 @@ class _ResidentManagerChatScreenState
     );
   }
 
-  Future<({int conversationId, String managerName})> _loadConversation(
-    String residentId,
-  ) async {
+  Future<({int conversationId, String managerName})> _loadConversation() async {
+    final residentId = await _service.currentProfileId;
+    if (residentId == null) {
+      throw StateError('Please log in.');
+    }
+
     final manager = await _service.fetchResidentManager(residentId);
     if (manager == null) {
       throw StateError('No manager found for this resident.');

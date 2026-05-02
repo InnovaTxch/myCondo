@@ -1,9 +1,13 @@
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MessagingService {
   final _supabase = Supabase.instance.client;
+  final _identity = ProfileIdentityService();
 
-  String? get currentUserId => _supabase.auth.currentUser?.id;
+  Future<String?> get currentProfileId async {
+    return (await _identity.getCurrentProfile())?.id;
+  }
 
   Future<List<Map<String, dynamic>>> fetchResidentsForManager(
     String managerId,
@@ -144,11 +148,11 @@ class MessagingService {
     required int conversationId,
     required String content,
   }) async {
-    final userId = _supabase.auth.currentUser!.id;
+    final profile = await _identity.requireCurrentProfile();
 
     await _supabase.from('messages').insert({
       'conversation_id': conversationId,
-      'sender_id': userId,
+      'sender_id': profile.id,
       'content': content,
     });
 

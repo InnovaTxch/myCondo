@@ -20,6 +20,19 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final _service = MessagingService();
+  String? _myProfileId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileId();
+  }
+
+  Future<void> _loadProfileId() async {
+    final profileId = await _service.currentProfileId;
+    if (!mounted) return;
+    setState(() => _myProfileId = profileId);
+  }
 
   void _sendMessage() async {
     final text = _controller.text.trim();
@@ -46,7 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myId = _service.currentUserId;
+    final myId = _myProfileId;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F4F4),
