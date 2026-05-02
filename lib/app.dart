@@ -16,6 +16,7 @@ import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 import 'package:mycondo/features/manager/pages/create_bill_page.dart';
 import 'package:mycondo/features/manager/pages/announcements_page.dart';
 import 'package:mycondo/features/manager/pages/approve_payments_screen.dart';
+import 'package:mycondo/features/manager/pages/manage_condo_page.dart';
 
 class MyCondoApp extends StatelessWidget {
   const MyCondoApp({super.key});
@@ -41,6 +42,7 @@ class MyCondoApp extends StatelessWidget {
         '/resident-bills': (context) => const ResidentBillsPage(),
         '/manager-announcements': (context) => const ManagerAnnouncementsPage(),
         '/approve-payments': (context) => const ApprovePaymentsScreen(),
+        '/manage-condo': (context) => const ManageCondoPage(),
         '/manage-residents': (context) => const ManageResidentsPage(),
         '/add-bills': (context) => const CreateBillPage(),
       },

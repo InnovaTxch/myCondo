@@ -17,9 +17,15 @@ class DashboardQuickActions extends StatelessWidget{
       children: [
         DashboardQuickActionTile(
           title: 'Manage Tenants',
-          subtitle: 'Add, edit, and delete tenants here.',
+          subtitle: 'View tenants by unit and capacity here.',
           icon: Icons.person_search_outlined,
           onTap: () => Navigator.pushNamed(context, '/manage-residents'),
+        ),
+        DashboardQuickActionTile(
+          title: 'Manage Condo',
+          subtitle: 'Add, edit, and delete condo units here.',
+          icon: Icons.apartment_outlined,
+          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
         ),
         DashboardQuickActionTile(
           title: 'Approve Payments',
