@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mycondo/data/models/shared/bill.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 
 class BillService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<void> generateAndSendBills({
     required String billType,
@@ -11,8 +13,9 @@ class BillService {
     required List<Bill> bills,
     required bool isAccountabilityShared,
   }) async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception("User not authenticated");
+    final manager = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final String accRepository = billType == "Monthly Bill" ? "monthly_bills" : "one_time_fees";
     final String foreignKey = billType == "Monthly Bill" ? "monthly_bill_id" : "one_time_fee_id";
@@ -20,7 +23,7 @@ class BillService {
     for (String residentId in residentIds) {
       final response = await _supabase.from(accRepository).insert({
         'received_by': residentId,
-        'posted_by': userId,
+        'posted_by': manager.id,
         'due_date': dueDate.toIso8601String(),
       }).select('id').single();
 

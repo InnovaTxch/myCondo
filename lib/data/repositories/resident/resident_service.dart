@@ -2,12 +2,14 @@ import 'package:mycondo/data/models/resident.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/models/unit.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/data/repositories/manager/resident_bill_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResidentService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ResidentBillRepository _billRepository = ResidentBillRepository.instance;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<ResidentDashboardData> fetchDashboardData() async {
     final context = await _requireResidentContext();
@@ -88,14 +90,14 @@ class ResidentService {
   }
 
   Future<List<Unit>?> fetchUnitsForManager() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return null;
+    final profile = await _identity.getCurrentProfile();
+    if (profile == null) return null;
 
     try {
       final condoData = await _supabase
           .from('managers')
           .select('condo_id')
-          .eq('id', userId)
+          .eq('id', profile.id)
           .single();
 
       final int condoId = condoData['condo_id'];
@@ -145,15 +147,14 @@ class ResidentService {
   }
 
   Future<_ResidentContext> _requireResidentContext() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated resident user found.');
-    }
+    final profileIdentity = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
 
     final resident = await _supabase
         .from('residents')
         .select('id, unit_id, units(name, condo_id), profiles(first_name)')
-        .eq('id', userId)
+        .eq('id', profileIdentity.id)
         .single();
 
     final unit = resident['units'] as Map<String, dynamic>? ?? {};
@@ -161,7 +162,7 @@ class ResidentService {
     final condoIdValue = unit['condo_id'];
 
     return _ResidentContext(
-      id: resident['id'] as String? ?? userId,
+      id: resident['id'] as String? ?? profileIdentity.id,
       firstName: (profile['first_name'] as String? ?? '').trim(),
       unitName: (unit['name'] as String? ?? '').trim(),
       condoId: condoIdValue is int ? condoIdValue : int.parse(condoIdValue.toString()),

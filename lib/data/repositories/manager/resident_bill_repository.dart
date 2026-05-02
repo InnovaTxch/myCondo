@@ -1,5 +1,6 @@
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/models/shared/bill.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResidentBillRepository {
@@ -8,6 +9,7 @@ class ResidentBillRepository {
   static final ResidentBillRepository instance = ResidentBillRepository._();
 
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<List<ResidentBillGroup>> getBillsForResident(String residentId) async {
     final monthlyRows = await _supabase
@@ -65,8 +67,9 @@ class ResidentBillRepository {
     required String residentId,
     required int amount,
   }) async {
-    final managerId = _supabase.auth.currentUser?.id;
-    if (managerId == null) throw Exception('User not authenticated');
+    final manager = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
     if (amount <= 0) throw Exception('Payment must be greater than zero.');
     if (amount > bill.outstandingAmount) {
       throw Exception('Payment cannot exceed the outstanding bill amount.');
@@ -76,7 +79,7 @@ class ResidentBillRepository {
     final nextStatus = nextPaidAmount >= bill.totalAmount ? 'paid' : 'partial';
     final payment = <String, dynamic>{
       'paid_by': residentId,
-      'validated_by': managerId,
+      'validated_by': manager.id,
       'amount': amount,
       'status': 'completed',
     };
@@ -105,8 +108,9 @@ class ResidentBillRepository {
     required DateTime dueDate,
     required List<Bill> bills,
   }) async {
-    final managerId = _supabase.auth.currentUser?.id;
-    if (managerId == null) throw Exception('User not authenticated');
+    final manager = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final parentTable =
         billType == 'Monthly Bill' ? 'monthly_bills' : 'one_time_fees';
@@ -115,7 +119,7 @@ class ResidentBillRepository {
 
     final parent = await _supabase.from(parentTable).insert({
       'received_by': residentId,
-      'posted_by': managerId,
+      'posted_by': manager.id,
       'due_date': dueDate.toIso8601String(),
       'status': 'unpaid',
     }).select('id').single();

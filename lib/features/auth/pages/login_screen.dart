@@ -47,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen>{
       final destination = switch (role) {
         'manager' => '/manager-dashboard',
         'resident' => '/resident-dashboard',
+        'unassigned' => '/onboarding',
         _ => '/onboarding',
       };
 

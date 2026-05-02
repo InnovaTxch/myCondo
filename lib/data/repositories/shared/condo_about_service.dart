@@ -1,8 +1,10 @@
 import 'package:mycondo/data/models/shared/condo_about.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CondoAboutService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<CondoAbout> fetchForManager() async {
     final condoId = await _getManagerCondoId();
@@ -33,15 +35,14 @@ class CondoAboutService {
   }
 
   Future<int> _getManagerCondoId() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated manager user found.');
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final manager = await _supabase
         .from('managers')
         .select('condo_id')
-        .eq('id', userId)
+        .eq('id', profile.id)
         .single();
 
     final value = manager['condo_id'];
@@ -49,15 +50,14 @@ class CondoAboutService {
   }
 
   Future<int> _getResidentCondoId() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated resident user found.');
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
 
     final resident = await _supabase
         .from('residents')
         .select('units(condo_id)')
-        .eq('id', userId)
+        .eq('id', profile.id)
         .single();
 
     final unit = resident['units'] as Map<String, dynamic>? ?? {};

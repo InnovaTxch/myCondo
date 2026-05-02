@@ -1,22 +1,15 @@
 import 'dart:io';
 
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<String?> getRole() async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return null;
-
-      final data = await _supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
-
-      return data?['role'] as String?;
+      return (await _identity.getCurrentProfile())?.role;
     } catch (_) {
       return null;
     }
@@ -27,6 +20,7 @@ class AuthService {
     String password,
   ) async {
     try {
+      // The trigger in the DB handles the profile creation automatically
       return await _supabase.auth.signUp(
         email: email,
         password: password,
@@ -34,7 +28,7 @@ class AuthService {
     } on AuthException catch (e) {
       throw e.message;
     } on SocketException {
-      throw "Cannot connect to Supabase. Check your internet and SUPABASE_URL in .env.";
+      throw "Cannot connect to Supabase. Check your internet.";
     } catch (e) {
       throw e.toString();
     }

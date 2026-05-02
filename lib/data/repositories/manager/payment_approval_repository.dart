@@ -1,8 +1,10 @@
 import 'package:mycondo/data/models/payment_item.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PaymentApprovalRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<List<PaymentItem>> getPayments(PaymentStatus status) async {
     return _getPaymentsForStatuses([_toDatabaseStatus(status)]);
@@ -212,20 +214,19 @@ class PaymentApprovalRepository {
   }
 
   Future<_ManagerContext> _requireManagerContext() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated manager user found.');
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final manager = await _supabase
         .from('managers')
         .select('id, condo_id')
-        .eq('id', userId)
+        .eq('id', profile.id)
         .single();
 
     final condoIdValue = manager['condo_id'];
     return _ManagerContext(
-      managerId: (manager['id'] as String?) ?? userId,
+      managerId: (manager['id'] as String?) ?? profile.id,
       condoId: condoIdValue is int
           ? condoIdValue
           : int.parse(condoIdValue.toString()),

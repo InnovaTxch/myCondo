@@ -46,6 +46,9 @@ class AuthGate extends StatelessWidget {
               if (role == 'resident') {
                 return const ResidentHomeScreen();
               }
+              if (role == 'unassigned') {
+                return const OnboardingPage();
+              }
               return const OnboardingPage();
             },
           );
