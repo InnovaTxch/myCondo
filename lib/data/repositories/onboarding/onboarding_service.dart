@@ -1,52 +1,116 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnboardingService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<void> setupManagerAccount(ManagerCondoSetupInput input) async {
     try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw "No user logged in";
+      final authResponse = await _signUpIfNeeded(
+        email: input.email,
+        password: input.password,
+      );
+      final authId = authResponse?.user?.id ?? _supabase.auth.currentUser?.id;
+      if (authId == null) throw "No user logged in";
 
-      await _supabase.from('profiles').upsert({
-        'id': userId,
-        'role': 'manager',
-      });
+      final existingProfile = await _supabase
+          .from('profiles')
+          .select('id')
+          .eq('auth_id', authId)
+          .maybeSingle();
+
+      final profile = existingProfile ??
+          await _supabase
+              .from('profiles')
+              .insert({
+                'auth_id': authId,
+                'first_name': input.firstName.trim(),
+                'last_name': input.lastName.trim(),
+                'role': 'manager',
+              })
+              .select('id')
+              .single();
+
+      if (existingProfile != null) {
+        await _supabase.from('profiles').update({
+          'first_name': input.firstName.trim(),
+          'last_name': input.lastName.trim(),
+          'role': 'manager',
+        }).eq('id', existingProfile['id']);
+      }
+
+      final profileId = profile['id'].toString();
 
       final code = await _generateCondoCode();
 
       final condo = await _supabase
           .from('condos')
           .insert({
-        'name': input.name.trim(),
-        'location': input.location.trim(),
-        'description': input.description.trim(),
-        'image_url': input.imageUrl.trim(),
-        'gallery_urls': input.galleryUrls
-            .map((url) => url.trim())
-            .where((url) => url.isNotEmpty)
-            .toList(),
-        'code': code,
-      })
+            'name': input.name.trim(),
+            'location': '',
+            'description': '',
+            'image_url': '',
+            'gallery_urls': <String>[],
+            'code': code,
+          })
           .select('id')
           .single();
 
-      final condoIdValue = condo['id'];
-      final condoId = condoIdValue is int
-          ? condoIdValue
-          : int.parse(condoIdValue.toString());
+      final condoId = condo['id'];
 
       await _supabase.from('managers').upsert({
-        'id': userId,
+        'id': profileId,
         'condo_id': condoId,
       });
+
     } catch (e) {
       debugPrint("Error in setupManagerAccount: $e");
       throw e.toString();
     }
+  }
+
+  Future<void> setupResidentAccount(ResidentClaimInput input) async {
+    try {
+      await _signUpIfNeeded(
+        email: input.email,
+        password: input.password,
+      );
+
+      await _supabase.rpc(
+        'claim_resident_profile',
+        params: {
+          'p_condo_code': input.condoCode.trim(),
+          'p_resident_code': input.residentCode.trim(),
+          'p_auth_id': _supabase.auth.currentUser?.id,
+        },
+      );
+      await _identity.requireCurrentProfile();
+    } catch (e) {
+      debugPrint("Error in setupResidentAccount: $e");
+      throw e.toString();
+    }
+  }
+
+  Future<AuthResponse?> _signUpIfNeeded({
+    String? email,
+    String? password,
+  }) async {
+    if (_supabase.auth.currentUser != null) return null;
+    if (email == null || email.trim().isEmpty) {
+      throw 'Missing signup email. Please sign up again.';
+    }
+    if (password == null || password.isEmpty) {
+      throw 'Missing signup password. Please sign up again.';
+    }
+
+    return _supabase.auth.signUp(
+      email: email.trim(),
+      password: password,
+    );
   }
 
   Future<String> _generateCondoCode() async {
@@ -81,16 +145,30 @@ class OnboardingService {
 
 class ManagerCondoSetupInput {
   const ManagerCondoSetupInput({
+    required this.email,
+    required this.password,
+    required this.firstName,
+    required this.lastName,
     required this.name,
-    required this.location,
-    required this.description,
-    required this.imageUrl,
-    required this.galleryUrls,
   });
 
+  final String email;
+  final String password;
+  final String firstName;
+  final String lastName;
   final String name;
-  final String location;
-  final String description;
-  final String imageUrl;
-  final List<String> galleryUrls;
+}
+
+class ResidentClaimInput {
+  const ResidentClaimInput({
+    required this.email,
+    required this.password,
+    required this.condoCode,
+    required this.residentCode,
+  });
+
+  final String email;
+  final String password;
+  final String condoCode;
+  final String residentCode;
 }

@@ -10,7 +10,7 @@ class SignupGateway extends StatelessWidget {
       alignment: WrapAlignment.center,
       children: [
         GatewayText(
-          text: "Want to start managing your condo? ",
+          text: "Need access to your condo? ",
           textColor: Colors.black.withValues(alpha: 0.6),
         ),
         GestureDetector(

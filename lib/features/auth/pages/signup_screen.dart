@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:mycondo/data/repositories/auth/auth_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mycondo/data/repositories/auth/pending_signup_credentials.dart';
 
 import 'package:mycondo/features/auth/widgets/signup_form.dart';
 import 'package:mycondo/features/auth/widgets/login_gateway.dart';
@@ -15,9 +13,6 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen>{
-  // get auth service
-  final authService = AuthService();
-
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
@@ -34,41 +29,10 @@ class _SignupScreenState extends State<SignupScreen>{
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    setState(() => _isLoading = true);
+    PendingSignupStore.save(email: email, password: password);
 
-    try {
-      await authService.signUpWithEmailPassword(email, password);
-      if(!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signup successful!")));
-      Navigator.pushReplacementNamed(context, '/onboarding');
-
-    } on SocketException {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No internet connection. Please check your network."),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
-      );
-    } catch (e) {
-      if(!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error signing up: $e"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    if(!mounted) return;
+    Navigator.pushReplacementNamed(context, '/onboarding');
 
   }
 
@@ -92,7 +56,7 @@ class _SignupScreenState extends State<SignupScreen>{
             const SizedBox(height: 60),
 
             Text(
-              "Create a\nmanager account.",
+              "Create an\naccount.",
               style: TextStyle(
                 fontFamily: "Urbanist",
                 fontSize: 45,
@@ -104,7 +68,7 @@ class _SignupScreenState extends State<SignupScreen>{
             const SizedBox(height: 12),
 
             Text(
-              "Resident accounts are created by condo managers after setup.",
+              "Managers can set up a condo. Residents can join with condo and resident codes.",
               style: TextStyle(
                 color: Colors.black.withValues(alpha: 0.6),
                 fontSize: 15,
