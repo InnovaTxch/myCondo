@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 
 class ManagerAnnouncementService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<List<Announcement>> getAnnouncements() async {
     final manager = await _requireManagerContext();
@@ -47,13 +49,13 @@ class ManagerAnnouncementService {
   }
 
   Future<String?> getManagerName() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return null;
+    final profile = await _identity.getCurrentProfile();
+    if (profile == null) return null;
 
     final data = await _supabase
         .from('profiles')
         .select('first_name, last_name')
-        .eq('id', userId)
+        .eq('id', profile.id)
         .single();
 
     final first = data['first_name'] as String? ?? '';
@@ -62,15 +64,14 @@ class ManagerAnnouncementService {
   }
 
   Future<_ManagerContext> _requireManagerContext() async {
-    final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No authenticated manager user found.');
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No manager profile is linked to this signed-in user.',
+    );
 
     final manager = await _supabase
         .from('managers')
         .select('id, condo_id')
-        .eq('id', userId)
+        .eq('id', profile.id)
         .single();
 
     final condoIdValue = manager['condo_id'];
@@ -79,7 +80,7 @@ class ManagerAnnouncementService {
         : int.parse(condoIdValue.toString());
 
     return _ManagerContext(
-      managerId: (manager['id'] as String?) ?? userId,
+      managerId: (manager['id'] as String?) ?? profile.id,
       condoId: condoId,
     );
   }
