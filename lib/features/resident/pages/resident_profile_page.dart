@@ -130,6 +130,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                             size: 40, color: Colors.grey),
                       ),
                       Positioned(
+                        top: -4,
                         right: 0,
                         bottom: 0,
                         child: Container(
@@ -145,7 +146,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                     ],
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
                   Text(
                     name,
@@ -155,7 +156,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
 
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -174,7 +175,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
 
                   Text(
                     email,
@@ -199,7 +200,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                 ('Help Center', Icons.help_outline),
                 ('Report an Issue', Icons.warning_amber_outlined),
                 ('Contact Administration', Icons.contact_mail_outlined),
-                ('About the app', Icons.info_outline),
+                // ('About the app', Icons.info_outline),
               ].map((item) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -244,16 +245,17 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                 );
               }),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
 
               // LOGOUT
               ElevatedButton(
                 onPressed: _isSigningOut ? null : _logout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  minimumSize: const Size.fromHeight(52),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(40),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
                 child: _isSigningOut
@@ -262,7 +264,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                     : const Text('LOGOUT'),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
             ],
           ),
         ),
