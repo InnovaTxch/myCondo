@@ -118,7 +118,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
 
               const SizedBox(height: 16),
 
-              // 👤 PROFILE HEADER
+              // PROFILE HEADER
               Column(
                 children: [
                   Stack(
@@ -188,7 +188,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
 
               const SizedBox(height: 30),
 
-              // 📋 MENU LIST
+              // MENU LIST
               ...[
                 ('Change Password', Icons.lock_outline),
                 ('Payment Methods', Icons.wallet_outlined),
@@ -246,7 +246,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
 
               const SizedBox(height: 30),
 
-              // 🔴 LOGOUT
+              // LOGOUT
               ElevatedButton(
                 onPressed: _isSigningOut ? null : _logout,
                 style: ElevatedButton.styleFrom(
