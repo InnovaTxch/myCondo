@@ -64,7 +64,20 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                 );
               }
 
-              final data = snapshot.data!;
+              final data = snapshot.data;
+              if (data == null) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    _ErrorCard(
+                      message: 'No dashboard data found.',
+                      onRetry: _refresh,
+                    ),
+                  ],
+                );
+              }
+
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -155,7 +168,7 @@ class _ResidentMatrix extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final nextDue = data.nextDueDate == null
-        ? 'None'
+        ? '--'
         : DateFormat('MMM d').format(data.nextDueDate!);
 
     return Container(
@@ -184,7 +197,7 @@ class _ResidentMatrix extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            currency.format(data.outstandingAmount / 100),
+            currency.format((data.outstandingAmount ?? 0) / 100),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
