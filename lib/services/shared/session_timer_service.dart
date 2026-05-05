@@ -8,23 +8,24 @@ class SessionTimerService {
   SessionTimerService._internal();
 
   Timer? _timer;
+  bool _isLoggingOut = false;
+
   // Ichange lang guys if ano gd man, hindi me kamaan abi hehe
   // If want niyo itest, change minutes to seconds
   static const Duration _managerTimeoutDuration = Duration(minutes: 10);
   static const Duration _residentTimeoutDuration = Duration(minutes: 15);
 
-  Duration _currentTimeoutDuration = _managerTimeoutDuration;
-
-  // Global key to allow navigation/dialogs without context
+  Duration _currentTimeoutDuration = _residentTimeoutDuration;
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   void startTimer(String userRole) {
+    _isLoggingOut = false;
     stopTimer();
-    if (userRole == 'manager') {
-      _currentTimeoutDuration = _managerTimeoutDuration;
-    } else {
-      _currentTimeoutDuration = _residentTimeoutDuration;
-    }
+
+    _currentTimeoutDuration = (userRole == 'manager')
+        ? _managerTimeoutDuration
+        : _residentTimeoutDuration;
+
     _timer = Timer(_currentTimeoutDuration, _onTimeout);
   }
 
@@ -34,17 +35,31 @@ class SessionTimerService {
   }
 
   void resetTimer() {
-    if (_timer == null) return;
+    if (_timer == null || _isLoggingOut) return;
+
     stopTimer();
     _timer = Timer(_currentTimeoutDuration, _onTimeout);
   }
 
   Future<void> _onTimeout() async {
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
+
     stopTimer();
-    await Supabase.instance.client.auth.signOut();
+
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      debugPrint("Auth error during timeout: $e");
+    }
 
     final context = navigatorKey.currentContext;
     if (context == null) return;
+
+    // Dismiss keyboard
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (!context.mounted) return;
 
     showDialog(
       context: context,
@@ -57,7 +72,7 @@ class SessionTimerService {
             onPressed: () {
               Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             },
-            child: const Text('OK'),
+            child: const Text('bye'),
           ),
         ],
       ),
