@@ -18,34 +18,42 @@ import 'package:mycondo/features/manager/pages/announcements_page.dart';
 import 'package:mycondo/features/manager/pages/approve_payments_screen.dart';
 import 'package:mycondo/features/manager/pages/manage_condo_page.dart';
 
+import 'package:mycondo/services/shared/session_timer_service.dart';
+
 class MyCondoApp extends StatelessWidget {
   const MyCondoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'myCondo',
-      debugShowCheckedModeBanner: false,
-
-      initialRoute: '/',
-
-      routes: {
-        '/': (context) => const AuthGate(),
-        '/splash': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/onboarding': (context) => const OnboardingPage(),
-        '/manager-dashboard': (context) => const ManagerHomeScreen(),
-        '/resident-dashboard': (context) => const ResidentHomeScreen(),
-        '/resident-announcements': (context) =>
-            const ResidentAnnouncementsPage(),
-        '/resident-bills': (context) => const ResidentBillsPage(),
-        '/manager-announcements': (context) => const ManagerAnnouncementsPage(),
-        '/approve-payments': (context) => const ApprovePaymentsScreen(),
-        '/manage-condo': (context) => const ManageCondoPage(),
-        '/manage-residents': (context) => const ManageResidentsPage(),
-        '/add-bills': (context) => const CreateBillPage(),
+    return Listener(
+      onPointerDown: (_) {
+        // This detects EVERY tap in the app and resets the timer
+        SessionTimerService().resetTimer();
       },
+      child: MaterialApp(
+        navigatorKey: SessionTimerService().navigatorKey,
+        title: 'myCondo',
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+
+        routes: {
+          '/': (context) => const AuthGate(),
+          '/splash': (context) => const SplashScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/signup': (context) => const SignupScreen(),
+          '/onboarding': (context) => const OnboardingPage(),
+          '/manager-dashboard': (context) => const ManagerHomeScreen(),
+          '/resident-dashboard': (context) => const ResidentHomeScreen(),
+          '/resident-announcements': (context) =>
+              const ResidentAnnouncementsPage(),
+          '/resident-bills': (context) => const ResidentBillsPage(),
+          '/manager-announcements': (context) => const ManagerAnnouncementsPage(),
+          '/approve-payments': (context) => const ApprovePaymentsScreen(),
+          '/manage-condo': (context) => const ManageCondoPage(),
+          '/manage-residents': (context) => const ManageResidentsPage(),
+          '/add-bills': (context) => const CreateBillPage(),
+        },
+      ),
     );
   }
 }

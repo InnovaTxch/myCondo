@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
+import 'package:mycondo/services/shared/session_timer_service.dart';
+
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({
@@ -24,6 +26,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   void initState() {
     super.initState();
     _dashboardFuture = _service.fetchDashboardData();
+    SessionTimerService().startTimer('resident');
   }
 
   Future<void> _refresh() async {
