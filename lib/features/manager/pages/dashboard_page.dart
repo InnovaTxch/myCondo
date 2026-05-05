@@ -10,6 +10,8 @@ import '../widgets/dashboard_greeting.dart';
 import '../widgets/dashboard_summary_card.dart';
 import '../widgets/dashboard_quick_actions.dart';
 
+import 'package:mycondo/services/shared/session_timer_service.dart';
+
 class ManagerDashboardPage extends StatefulWidget {
   const ManagerDashboardPage({super.key});
 
@@ -112,6 +114,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   void initState() {
     super.initState();
     _initializePage();
+    SessionTimerService().startTimer('manager');
   }
 
   @override

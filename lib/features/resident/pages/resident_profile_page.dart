@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
+import 'package:mycondo/services/shared/session_timer_service.dart';
 
 class ResidentProfilePage extends StatefulWidget {
   const ResidentProfilePage({super.key});
@@ -19,6 +20,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       await _authService.signOut();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      SessionTimerService().stopTimer();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

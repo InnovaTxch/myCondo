@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
+import 'package:mycondo/services/shared/session_timer_service.dart';
 
 class ManagerProfilePage extends StatefulWidget {
   const ManagerProfilePage({super.key});
@@ -47,6 +48,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     try {
       await _authService.signOut();
       if (!mounted) return;
+      SessionTimerService().stopTimer();
       Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     } catch (_) {
       if (!mounted) return;
