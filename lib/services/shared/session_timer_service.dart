@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SessionTimerService {
   static final SessionTimerService _instance = SessionTimerService._internal();
@@ -38,8 +39,9 @@ class SessionTimerService {
     _timer = Timer(_currentTimeoutDuration, _onTimeout);
   }
 
-  void _onTimeout() {
+  Future<void> _onTimeout() async {
     stopTimer();
+    await Supabase.instance.client.auth.signOut();
 
     final context = navigatorKey.currentContext;
     if (context == null) return;
