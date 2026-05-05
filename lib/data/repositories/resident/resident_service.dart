@@ -151,10 +151,12 @@ class ResidentService {
       missingMessage: 'No resident profile is linked to this signed-in user.',
     );
 
+    print("PROFILE ID USED: ${profileIdentity.id}");
+
     final resident = await _supabase
         .from('residents')
-        .select('id, unit_id, units(name, condo_id), profiles(first_name)')
-        .eq('id', profileIdentity.id)
+        .select('id, unit_id, units(name, condo_id), profiles!residents_profile_id_fkey(first_name)')
+        .eq('profile_id', profileIdentity.id)
         .single();
 
     final unit = resident['units'] as Map<String, dynamic>? ?? {};
