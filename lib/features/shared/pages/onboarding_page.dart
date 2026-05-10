@@ -61,10 +61,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (!mounted) return;
       PendingSignupStore.clear();
 
-      Navigator.pushReplacementNamed(
-        context,
-        _isManager ? '/manager-dashboard' : '/resident-dashboard',
-      );
+      // Let AuthGate handle routing based on the authenticated session + profile role.
+      // Pushing dashboards from here causes stacked home shells.
+      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
     } catch (e) {
       if (mounted) {
         context.showAppSnackBar(
