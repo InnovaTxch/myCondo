@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/shared/condo_about.dart';
 import 'package:mycondo/data/repositories/shared/condo_about_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class CondoAboutPage extends StatefulWidget {
   const CondoAboutPage({super.key, required this.canEdit});
@@ -48,9 +49,7 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
     if (!mounted) return;
     await _refresh();
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('About page updated.')));
+    context.showAppSnackBar(const SnackBar(content: Text('About page updated.')));
   }
 
   @override

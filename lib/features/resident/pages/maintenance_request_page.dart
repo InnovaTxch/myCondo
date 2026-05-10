@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class MaintenanceRequestPage extends StatefulWidget {
   const MaintenanceRequestPage({super.key});
@@ -61,7 +62,7 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Unable to load resident details.')),
       );
     }
@@ -84,16 +85,14 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Maintenance request submitted.')),
       );
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Submission failed: $e')));
+      context.showAppSnackBar(SnackBar(content: Text('Submission failed: $e')));
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentFormPage extends StatefulWidget {
   const ResidentFormPage({super.key});
@@ -49,16 +50,14 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoadingUnits = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load units: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Failed to load units: $e')));
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Please select a unit.')),
       );
       return;
@@ -79,7 +78,7 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text('Failed to create resident profile: $e')),
       );
       return;

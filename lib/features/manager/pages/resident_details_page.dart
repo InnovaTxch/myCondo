@@ -6,6 +6,7 @@ import 'package:mycondo/features/manager/widgets/resident_avatar.dart';
 import 'package:mycondo/features/manager/widgets/resident_bills_section.dart';
 import 'package:mycondo/features/manager/widgets/resident_details_header.dart';
 import 'package:mycondo/features/manager/widgets/resident_info_field.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentDetailsPage extends StatefulWidget {
   const ResidentDetailsPage({super.key, required this.residentId});
@@ -73,7 +74,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text('Failed to load resident: $e')),
       );
       setState(() => _isLoading = false);
@@ -83,7 +84,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedUnitId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Please select a unit.')),
       );
       return;
@@ -100,7 +101,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text('Failed to update resident: $e')),
       );
       return;
@@ -109,7 +110,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     if (!mounted) return;
     await _load();
     setState(() => _isEditing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       const SnackBar(content: Text('Resident profile updated.')),
     );
   }
@@ -153,7 +154,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         condoCode.isEmpty ||
         residentCode == null ||
         residentCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('No resident code found.')),
       );
       return;
@@ -166,7 +167,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       const SnackBar(content: Text('Onboarding codes copied.')),
     );
   }

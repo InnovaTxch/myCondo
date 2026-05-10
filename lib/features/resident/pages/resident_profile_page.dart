@@ -3,6 +3,7 @@ import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_profile_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_settings_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentProfilePage extends StatefulWidget {
   const ResidentProfilePage({super.key, this.onContactAdministration});
@@ -80,7 +81,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Could not sign out. Please try again.')),
       );
 
@@ -90,7 +91,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
 
   void _showPasswordError(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       SnackBar(content: Text('Could not update password: $error')),
     );
   }
@@ -119,14 +120,12 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         _firstName = updated.firstName;
         _lastName = updated.lastName;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
+      context.showAppSnackBar(const SnackBar(content: Text('Profile updated.')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not update profile: $e')));
+      context.showAppSnackBar(
+        SnackBar(content: Text('Could not update profile: $e')),
+      );
     }
   }
 
@@ -142,9 +141,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     );
 
     if (!mounted || updated != true) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Password updated.')));
+    context.showAppSnackBar(const SnackBar(content: Text('Password updated.')));
   }
 
   void _openHelpCenter() {
@@ -170,7 +167,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     await _settingsService.saveNotifications(updated);
     if (!mounted) return;
     setState(() => _notifications = updated);
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       const SnackBar(content: Text('Notification settings updated.')),
     );
   }
@@ -190,7 +187,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     await _settingsService.saveMessaging(updated);
     if (!mounted) return;
     setState(() => _messaging = updated);
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       const SnackBar(content: Text('Message preferences updated.')),
     );
   }
@@ -207,9 +204,9 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     await _settingsService.savePaymentMethods(updated);
     if (!mounted) return;
     setState(() => _paymentMethods = updated);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Payment methods updated.')));
+    context.showAppSnackBar(
+      const SnackBar(content: Text('Payment methods updated.')),
+    );
   }
 
   @override
@@ -1421,7 +1418,7 @@ class _PaymentMethodsSheetState extends State<_PaymentMethodsSheet> {
           method.accountName.isEmpty ||
           method.accountNumber.isEmpty,
     )) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(
           content: Text('Complete each payment method before saving.'),
         ),

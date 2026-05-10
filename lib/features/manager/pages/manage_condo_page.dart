@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManageCondoPage extends StatefulWidget {
   const ManageCondoPage({super.key});
@@ -84,7 +85,7 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
       await _loadUnits(showLoading: false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text('Failed to delete unit: $e')),
       );
     }
@@ -280,9 +281,7 @@ class _UnitFormSheetState extends State<_UnitFormSheet> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save unit: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Failed to save unit: $e')));
       setState(() => _isSaving = false);
     }
   }

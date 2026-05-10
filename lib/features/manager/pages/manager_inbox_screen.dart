@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerInboxScreen extends StatefulWidget {
   const ManagerInboxScreen({super.key});
@@ -449,9 +450,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 

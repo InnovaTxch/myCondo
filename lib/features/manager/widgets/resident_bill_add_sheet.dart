@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/shared/bill.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentBillAddSheet extends StatefulWidget {
   const ResidentBillAddSheet({
@@ -76,9 +77,7 @@ class _ResidentBillAddSheetState extends State<ResidentBillAddSheet> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bill creation failed: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Bill creation failed: $e')));
       setState(() => _isSaving = false);
     }
   }

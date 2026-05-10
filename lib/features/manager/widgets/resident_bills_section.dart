@@ -5,6 +5,7 @@ import 'package:mycondo/data/repositories/manager/resident_bill_repository.dart'
 import 'package:mycondo/features/manager/widgets/resident_bill_add_sheet.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_card.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_payment_sheet.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentBillsSection extends StatefulWidget {
   const ResidentBillsSection({
@@ -202,9 +203,7 @@ class _ResidentBillsSectionState extends State<ResidentBillsSection> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Delete failed: $e')));
     }
   }
 }

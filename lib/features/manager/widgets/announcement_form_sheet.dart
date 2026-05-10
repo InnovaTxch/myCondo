@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class AnnouncementFormSheet extends StatefulWidget {
   const AnnouncementFormSheet({
@@ -56,7 +57,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        context.showAppSnackBar(
           const SnackBar(content: Text('Failed to save. Please try again.')),
         );
       }

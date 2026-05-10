@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/auth/pending_signup_credentials.dart';
@@ -66,7 +67,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        context.showAppSnackBar(
           SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
@@ -105,7 +106,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        context.showAppSnackBar(
           SnackBar(
             content: Text("Error signing out: $e"),
             backgroundColor: Colors.red,

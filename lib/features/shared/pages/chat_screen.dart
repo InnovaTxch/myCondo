@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ChatScreen extends StatefulWidget {
   final String name;
@@ -59,8 +60,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Send failed: $e")));
+      context.showAppSnackBar(SnackBar(content: Text("Send failed: $e")));
     }
   }
 

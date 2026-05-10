@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 import 'package:mycondo/features/auth/widgets/login_form.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
@@ -36,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen>{
     await authService.signInWithEmailPassword(email, password);
     
     if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text("Login successful!")),
       );
       
@@ -71,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen>{
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    context.showAppSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.redAccent,

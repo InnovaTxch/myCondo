@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerProfilePage extends StatefulWidget {
   const ManagerProfilePage({super.key});
@@ -63,7 +64,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text('Could not sign out.')),
       );
 

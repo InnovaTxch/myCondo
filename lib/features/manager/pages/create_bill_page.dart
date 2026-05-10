@@ -3,6 +3,7 @@ import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 import '../widgets/bill_recipient_container.dart';
 import '../widgets/bill_details.dart';
@@ -86,7 +87,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
         );
       }).toList();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text("Sending $_selectedBillType...")),
       );
 
@@ -99,12 +100,12 @@ class _CreateBillPageState extends State<CreateBillPage> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         const SnackBar(content: Text("Bills sent successfully!")),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      context.showAppSnackBar(
         SnackBar(content: Text("Failed to send bills: $e")),
       );
     } finally {

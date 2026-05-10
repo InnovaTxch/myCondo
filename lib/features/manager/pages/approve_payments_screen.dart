@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ApprovePaymentsScreen extends StatefulWidget {
   const ApprovePaymentsScreen({super.key});
@@ -215,9 +216,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
       await _loadPayments();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Approve failed: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Approve failed: $e')));
     }
   }
 
@@ -245,9 +244,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
       await _loadPayments();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reject failed: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Reject failed: $e')));
     }
   }
 

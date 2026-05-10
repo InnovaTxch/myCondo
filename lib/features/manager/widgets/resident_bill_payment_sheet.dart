@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentBillPaymentSheet extends StatefulWidget {
   const ResidentBillPaymentSheet({
@@ -39,9 +40,7 @@ class _ResidentBillPaymentSheetState extends State<ResidentBillPaymentSheet> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment failed: $e')),
-      );
+      context.showAppSnackBar(SnackBar(content: Text('Payment failed: $e')));
       setState(() => _isSaving = false);
     }
   }
