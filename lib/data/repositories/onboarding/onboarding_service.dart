@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -43,29 +41,16 @@ class OnboardingService {
         }).eq('id', existingProfile['id']);
       }
 
-      final profileId = profile['id'].toString();
-
-      final code = await _generateCondoCode();
-
-      final condo = await _supabase
-          .from('condos')
-          .insert({
-            'name': input.name.trim(),
-            'location': '',
-            'description': '',
-            'image_url': '',
-            'gallery_urls': <String>[],
-            'code': code,
-          })
-          .select('id')
-          .single();
-
-      final condoId = condo['id'];
-
-      await _supabase.from('managers').upsert({
-        'id': profileId,
-        'condo_id': condoId,
-      });
+      await _supabase.rpc(
+        'setup_manager_condo',
+        params: {
+          'p_name': input.name.trim(),
+          'p_location': '',
+          'p_description': '',
+          'p_image_url': '',
+          'p_gallery_urls': <String>[],
+        },
+      );
 
     } catch (e) {
       debugPrint("Error in setupManagerAccount: $e");
@@ -113,34 +98,7 @@ class OnboardingService {
     );
   }
 
-  Future<String> _generateCondoCode() async {
-    bool isUnique = false;
-    String code = "";
 
-    while (!isUnique) {
-      code = _generateRandomString(8);
-
-      final response = await _supabase
-          .from('condos')
-          .select('code')
-          .eq('code', code)
-          .maybeSingle();
-
-      if (response == null) {
-        isUnique = true;
-      }
-    }
-
-    return code;
-  }
-
-  String _generateRandomString(int length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    Random rnd = Random();
-
-    return String.fromCharCodes(Iterable.generate(
-        length, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
-  }
 }
 
 class ManagerCondoSetupInput {
