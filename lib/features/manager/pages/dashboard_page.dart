@@ -36,15 +36,18 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
     try {
       final results = await Future.wait([
         dashboardService.getFirstName(),
+        dashboardService.getDashboardSummary(),
         announcementService.getAnnouncements(),
       ]);
 
       final name = results[0] as String?;
-      final announcements = results[1] as List<Announcement>;
+      final dashboardSummary = results[1] as DashboardSummary;
+      final announcements = results[2] as List<Announcement>;
 
       if (!mounted) return;
       setState(() {
         managerName = name;
+        summary = dashboardSummary;
         highlightedAnnouncement = _toHighlightedAnnouncement(announcements);
         isAnnouncementLoading = false;
       });

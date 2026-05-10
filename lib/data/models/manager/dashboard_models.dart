@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class DashboardSummary {
-  int? totalTenants;
-  int? pendingReports;
+  int? totalResidents;
+  int? totalUnits;
   int? paymentsToReview;
-  double? completionPercent;
+  double? occupancyPercent;
   String? progressLabel;
 }
 

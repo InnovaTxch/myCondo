@@ -37,12 +37,12 @@ class DashboardSummaryCard extends StatelessWidget {
                 children: [
                   _SummaryMetric(
                     label: 'Total Residents',
-                    value: summary.totalTenants?.toString(),
+                    value: summary.totalResidents?.toString(),
                   ),
                   const SizedBox(height: 26),
                   _SummaryMetric(
-                    label: 'Pending Reports',
-                    value: summary.pendingReports?.toString(),
+                    label: 'Units',
+                    value: summary.totalUnits?.toString(),
                   ),
                 ],
               ),
@@ -68,8 +68,8 @@ class DashboardSummaryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   _ProgressRing(
-                    progress: summary.completionPercent,
-                    label: summary.progressLabel ?? "NULL",
+                    progress: summary.occupancyPercent,
+                    label: summary.progressLabel ?? 'Capacity used',
                   ),
                 ],
               ),
