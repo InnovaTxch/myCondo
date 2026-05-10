@@ -27,14 +27,13 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       const ResidentBillsPage(showBackButton: false, paidOnly: true),
       const ResidentManagerChatScreen(),
       const CondoAboutPage(canEdit: false),
-      const ResidentProfilePage(),
+      ResidentProfilePage(
+        onContactAdministration: () => changeActivePageIndex(2),
+      ),
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _activePageIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _activePageIndex, children: pages),
       bottomNavigationBar: DashboardNavigationBar(
         currentIndex: _activePageIndex,
         changeActivePageIndex: changeActivePageIndex,

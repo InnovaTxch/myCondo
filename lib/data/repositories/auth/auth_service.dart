@@ -21,10 +21,7 @@ class AuthService {
   ) async {
     try {
       // The trigger in the DB handles the profile creation automatically
-      return await _supabase.auth.signUp(
-        email: email,
-        password: password,
-      );
+      return await _supabase.auth.signUp(email: email, password: password);
     } on AuthException catch (e) {
       throw e.message;
     } on SocketException {
@@ -48,6 +45,18 @@ class AuthService {
   //sign out
   Future<void> signOut() async {
     await _supabase.auth.signOut();
+  }
+
+  Future<void> updatePassword(String password) async {
+    try {
+      await _supabase.auth.updateUser(UserAttributes(password: password));
+    } on AuthException catch (e) {
+      throw e.message;
+    } on SocketException {
+      throw "Cannot connect to Supabase. Check your internet.";
+    } catch (e) {
+      throw e.toString();
+    }
   }
 
   String? getCurrentUserEmail() {

@@ -3,10 +3,7 @@ import 'package:mycondo/data/models/shared/condo_about.dart';
 import 'package:mycondo/data/repositories/shared/condo_about_service.dart';
 
 class CondoAboutPage extends StatefulWidget {
-  const CondoAboutPage({
-    super.key,
-    required this.canEdit,
-  });
+  const CondoAboutPage({super.key, required this.canEdit});
 
   final bool canEdit;
 
@@ -51,9 +48,9 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
     if (!mounted) return;
     await _refresh();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('About page updated.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('About page updated.')));
   }
 
   @override
@@ -77,97 +74,40 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 30),
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'About',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1A1A),
-                          ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                    decoration: BoxDecoration(
+                      color: const Color(0xEFFFFFFF),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _AboutHeader(),
+                        const SizedBox(height: 32),
+                        _CondoHeroStack(
+                          about: about,
+                          canEdit: widget.canEdit,
+                          onEdit: () => _edit(about),
                         ),
-                      ),
-                      if (widget.canEdit)
-                        IconButton(
-                          onPressed: () => _edit(about),
-                          icon: const Icon(Icons.edit_outlined),
+                        const SizedBox(height: 12),
+                        _DescriptionCard(
+                          description: about.description,
+                          canEdit: widget.canEdit,
+                          onEdit: () => _edit(about),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  _CondoHeroImage(imageUrl: about.imageUrl),
-                  const SizedBox(height: 18),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          about.name.isEmpty ? 'Condo Name' : about.name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black,
-                            height: 1.05,
-                          ),
+                        const SizedBox(height: 10),
+                        _GalleryCard(
+                          urls: about.galleryUrls,
+                          canEdit: widget.canEdit,
+                          onEdit: () => _edit(about),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Flexible(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.place_outlined,
-                              size: 18,
-                              color: Color(0xFF66737C),
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                about.location.isEmpty
-                                    ? 'Location'
-                                    : about.location,
-                                textAlign: TextAlign.right,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF66737C),
-                                  height: 1.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    about.description.isEmpty
-                        ? 'No description has been added yet.'
-                        : about.description,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.45,
-                      color: Color(0xFF4E565C),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 26),
-                  const Text(
-                    'Gallery',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _Gallery(urls: about.galleryUrls),
                 ],
               ),
             );
@@ -178,77 +118,367 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
   }
 }
 
-class _CondoHeroImage extends StatelessWidget {
-  const _CondoHeroImage({required this.imageUrl});
-
-  final String imageUrl;
+class _AboutHeader extends StatelessWidget {
+  const _AboutHeader();
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: _NetworkOrPlaceholder(
-          imageUrl: imageUrl,
-          icon: Icons.apartment_rounded,
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: 'About ',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 30,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+            children: [
+              TextSpan(
+                text: 'myCondo',
+                style: TextStyle(
+                  color: Color(0xFF55AEF5),
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Discover your condo unit better.',
+          style: TextStyle(
+            color: Color(0xFF5E6A72),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CondoHeroStack extends StatelessWidget {
+  const _CondoHeroStack({
+    required this.about,
+    required this.canEdit,
+    required this.onEdit,
+  });
+
+  final CondoAbout about;
+  final bool canEdit;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        AspectRatio(
+          aspectRatio: 1.12,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: _NetworkOrPlaceholder(
+              imageUrl: about.imageUrl,
+              icon: Icons.apartment_rounded,
+            ),
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: -48,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+            decoration: BoxDecoration(
+              color: const Color(0xEDEFF5F5),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(26),
+              ),
+              border: Border.all(color: Colors.white),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    about.name.isEmpty ? 'Condo Name' : about.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+                      height: 1.05,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Flexible(
+                  child: Text(
+                    about.location.isEmpty ? 'Location' : about.location,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF5E5E5E),
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (canEdit)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _EditIconButton(onPressed: onEdit),
+          ),
+        const SizedBox(height: 48),
+      ],
+    );
+  }
+}
+
+class _DescriptionCard extends StatelessWidget {
+  const _DescriptionCard({
+    required this.description,
+    required this.canEdit,
+    required this.onEdit,
+  });
+
+  final String description;
+  final bool canEdit;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
+      child: _SoftPanel(
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 2, 28, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Description',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF3D4650),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    description.isEmpty
+                        ? 'No description has been added yet.'
+                        : description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.26,
+                      color: Color(0xFF1F2428),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canEdit)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: _EditIconButton(onPressed: onEdit, compact: true),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Gallery extends StatelessWidget {
-  const _Gallery({required this.urls});
+class _GalleryCard extends StatelessWidget {
+  const _GalleryCard({
+    required this.urls,
+    required this.canEdit,
+    required this.onEdit,
+  });
 
   final List<String> urls;
+  final bool canEdit;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
-    if (urls.isEmpty) {
-      return Container(
-        height: 128,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE8E4DD)),
-        ),
-        child: const Text(
-          'No gallery photos yet.',
-          style: TextStyle(color: Color(0xFF777777)),
-        ),
-      );
-    }
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: urls.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1.2,
-      ),
-      itemBuilder: (context, index) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: _NetworkOrPlaceholder(
-            imageUrl: urls[index],
-            icon: Icons.image_outlined,
+    return _SoftPanel(
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEAF4FB),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.home_outlined,
+                      color: Color(0xFF4A5158),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 52,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: const Color(0xFFE1EEF7)),
+                    ),
+                    child: const Text(
+                      'Gallery',
+                      style: TextStyle(
+                        color: Color(0xFF4A5158),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (canEdit)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: _EditIconButton(onPressed: onEdit, compact: true),
+                ),
+            ],
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          if (urls.isEmpty)
+            Container(
+              height: 128,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE8E4DD)),
+              ),
+              child: const Text(
+                'No gallery photos yet.',
+                style: TextStyle(color: Color(0xFF777777)),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: urls.length.clamp(0, 6),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1.08,
+              ),
+              itemBuilder: (context, index) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _NetworkOrPlaceholder(
+                        imageUrl: urls[index],
+                        icon: Icons.image_outlined,
+                      ),
+                      if (index == 0 || index == 1 || index == 3)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Rm ${index + 1}'.padLeft(5, '0'),
+                              style: const TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF66737C),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoftPanel extends StatelessWidget {
+  const _SoftPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      decoration: BoxDecoration(
+        color: const Color(0xF2F8FCFF),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _EditIconButton extends StatelessWidget {
+  const _EditIconButton({required this.onPressed, this.compact = false});
+
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF7BC3FA),
+        minimumSize: Size.square(compact ? 34 : 42),
+      ),
+      icon: Icon(Icons.edit_outlined, size: compact ? 24 : 26),
+      tooltip: 'Edit about page',
     );
   }
 }
 
 class _NetworkOrPlaceholder extends StatelessWidget {
-  const _NetworkOrPlaceholder({
-    required this.imageUrl,
-    required this.icon,
-  });
+  const _NetworkOrPlaceholder({required this.imageUrl, required this.icon});
 
   final String imageUrl;
   final IconData icon;
@@ -277,11 +507,7 @@ class _PlaceholderImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFFEAF4FB),
-      child: Icon(
-        icon,
-        size: 42,
-        color: const Color(0xFF6D879B),
-      ),
+      child: Icon(icon, size: 42, color: const Color(0xFF6D879B)),
     );
   }
 }
@@ -307,8 +533,9 @@ class _EditCondoAboutSheetState extends State<_EditCondoAboutSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.about.name);
     _locationController = TextEditingController(text: widget.about.location);
-    _descriptionController =
-        TextEditingController(text: widget.about.description);
+    _descriptionController = TextEditingController(
+      text: widget.about.description,
+    );
     _imageUrlController = TextEditingController(text: widget.about.imageUrl);
     _galleryController = TextEditingController(
       text: widget.about.galleryUrls.join('\n'),
