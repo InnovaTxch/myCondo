@@ -5,12 +5,8 @@ import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 
-
 class ResidentDashboard extends StatefulWidget {
-  const ResidentDashboard({
-    super.key,
-    this.onOpenMessages,
-  });
+  const ResidentDashboard({super.key, this.onOpenMessages});
 
   final VoidCallback? onOpenMessages;
 
@@ -105,10 +101,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
 }
 
 class _ResidentGreeting extends StatelessWidget {
-  const _ResidentGreeting({
-    required this.firstName,
-    required this.unitName,
-  });
+  const _ResidentGreeting({required this.firstName, required this.unitName});
 
   final String firstName;
   final String unitName;
@@ -124,26 +117,30 @@ class _ResidentGreeting extends StatelessWidget {
         Text(
           'Welcome back,',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
-                color: Colors.black,
-                height: 1.1,
-              ),
+            fontSize: 20,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+            height: 1.1,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           displayName,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-                height: 1.05,
-              ),
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+            height: 1.05,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            const Icon(Icons.apartment_rounded, size: 16, color: Color(0xFF5E6A72)),
+            const Icon(
+              Icons.apartment_rounded,
+              size: 16,
+              color: Color(0xFF5E6A72),
+            ),
             const SizedBox(width: 6),
             Text(
               displayUnit,
@@ -197,7 +194,7 @@ class _ResidentMatrix extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            currency.format((data.outstandingAmount ?? 0) / 100),
+            currency.format(data.outstandingAmount / 100),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -342,7 +339,10 @@ class _PaymentBreakdownSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
-    final total = bills.fold<int>(0, (sum, bill) => sum + bill.outstandingAmount);
+    final total = bills.fold<int>(
+      0,
+      (sum, bill) => sum + bill.outstandingAmount,
+    );
 
     return SafeArea(
       child: Padding(
@@ -370,10 +370,7 @@ class _PaymentBreakdownSheet extends StatelessWidget {
                   shrinkWrap: true,
                   children: [
                     ...bills.map(
-                      (bill) => _BreakdownBill(
-                        bill: bill,
-                        currency: currency,
-                      ),
+                      (bill) => _BreakdownBill(bill: bill, currency: currency),
                     ),
                   ],
                 ),
@@ -423,10 +420,7 @@ class _PaymentBreakdownSheet extends StatelessWidget {
 }
 
 class _BreakdownBill extends StatelessWidget {
-  const _BreakdownBill({
-    required this.bill,
-    required this.currency,
-  });
+  const _BreakdownBill({required this.bill, required this.currency});
 
   final ResidentBillGroup bill;
   final NumberFormat currency;
@@ -547,7 +541,9 @@ class _AnnouncementPreview extends StatelessWidget {
     return '${normalized.substring(0, 93)}...';
   }
 
-  ({IconData icon, Color tint, Color background}) _categoryStyle(String category) {
+  ({IconData icon, Color tint, Color background}) _categoryStyle(
+    String category,
+  ) {
     switch (category) {
       case 'urgent':
         return (
@@ -592,6 +588,14 @@ class _QuickActions extends StatelessWidget {
           subtitle: 'Ask about dues, repairs, or building updates.',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: onOpenMessages ?? () {},
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
+          title: 'Request Maintenance',
+          subtitle: 'Report repairs or unit issues to management.',
+          icon: Icons.build_circle_outlined,
+          onTap: () =>
+              Navigator.pushNamed(context, '/resident-maintenance-request'),
         ),
       ],
     );
@@ -670,17 +674,17 @@ class _DashboardLoading extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       children: const [
-        SizedBox(height: 260, child: Center(child: CircularProgressIndicator())),
+        SizedBox(
+          height: 260,
+          child: Center(child: CircularProgressIndicator()),
+        ),
       ],
     );
   }
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorCard({required this.message, required this.onRetry});
 
   final String message;
   final Future<void> Function() onRetry;
@@ -697,10 +701,7 @@ class _ErrorCard extends StatelessWidget {
         children: [
           Text(message, style: const TextStyle(color: Color(0xFFB3261E))),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onRetry,
-            child: const Text('Try Again'),
-          ),
+          OutlinedButton(onPressed: onRetry, child: const Text('Try Again')),
         ],
       ),
     );
