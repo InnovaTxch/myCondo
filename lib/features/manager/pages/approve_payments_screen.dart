@@ -3,6 +3,7 @@ import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ApprovePaymentsScreen extends StatefulWidget {
   const ApprovePaymentsScreen({super.key});
@@ -92,34 +93,25 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
+                              return const AppLoadingState();
                             }
 
                             if (snapshot.hasError) {
-                              return Center(
-                                child: Text(
-                                  'Unable to load payments: ${snapshot.error}',
-                                  textAlign: TextAlign.center,
-                                ),
+                              return AppErrorState(
+                                message: 'Unable to load payments. Try again.',
+                                details: '${snapshot.error}',
+                                onRetry: _loadPayments,
                               );
                             }
 
                             final payments =
                                 snapshot.data ?? const <PaymentItem>[];
                             if (payments.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  'No payments found.',
-                                  style: TextStyle(
-                                    fontFamily: "Urbanist",
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                    height: 1.0,
-                                  ),
-                                ),
+                              return const AppEmptyState(
+                                icon: Icons.payments_outlined,
+                                title: 'No payments found',
+                                message: 'Payments will appear here when residents submit them.',
+                                card: false,
                               );
                             }
 

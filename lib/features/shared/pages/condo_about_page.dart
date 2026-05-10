@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/shared/condo_about.dart';
 import 'package:mycondo/data/repositories/shared/condo_about_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class CondoAboutPage extends StatefulWidget {
   const CondoAboutPage({super.key, required this.canEdit});
@@ -61,11 +62,14 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
           future: _aboutFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const AppLoadingState();
             }
 
             if (snapshot.hasError) {
-              return _ErrorState(onRetry: _refresh);
+              return AppErrorState(
+                message: 'Unable to load condo details. Try again.',
+                onRetry: _refresh,
+              );
             }
 
             final about = snapshot.data!;
@@ -650,18 +654,3 @@ class _EditCondoAboutSheetState extends State<_EditCondoAboutSheet> {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
-
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: OutlinedButton(
-        onPressed: onRetry,
-        child: const Text('Unable to load condo details. Try again.'),
-      ),
-    );
-  }
-}

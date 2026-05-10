@@ -4,6 +4,7 @@ import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/manager/pages/resident_form_page.dart';
 import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -115,32 +116,14 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                 onRefresh: () => _loadResidents(showLoading: false),
                 child: _isLoading
                     ? _buildScrollableMessage(
-                        child: const CircularProgressIndicator(),
+                        child: const AppLoadingState(),
                       )
                     : _errorMessage != null
                         ? _buildScrollableMessage(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  'Unable to load residents from Supabase.',
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _errorMessage!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                OutlinedButton(
-                                  onPressed: _loadResidents,
-                                  child: const Text('Retry'),
-                                ),
-                              ],
+                            child: AppErrorState(
+                              message: 'Unable to load residents. Try again.',
+                              details: _errorMessage,
+                              onRetry: () => _loadResidents(),
                             ),
                           )
                         : ValueListenableBuilder<List<UnitResidentGroup>>(
@@ -150,9 +133,11 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
 
                               if (filtered.isEmpty) {
                                 return _buildScrollableMessage(
-                                  child: const Text(
-                                    'No units or residents match your search.',
-                                    textAlign: TextAlign.center,
+                                  child: const AppEmptyState(
+                                    icon: Icons.search_rounded,
+                                    title: 'No results',
+                                    message: 'No units or residents match your search.',
+                                    card: false,
                                   ),
                                 );
                               }

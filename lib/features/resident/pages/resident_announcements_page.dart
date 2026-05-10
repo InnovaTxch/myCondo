@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentAnnouncementsPage extends StatefulWidget {
   const ResidentAnnouncementsPage({
@@ -87,11 +88,14 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
                 future: _announcementsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const AppLoadingState();
                   }
 
                   if (snapshot.hasError) {
-                    return _ErrorState(onRetry: _refresh);
+                    return AppErrorState(
+                      message: 'Unable to load announcements. Try again.',
+                      onRetry: _refresh,
+                    );
                   }
 
                   final announcements = snapshot.data ?? const <Announcement>[];
@@ -101,7 +105,13 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(20, 80, 20, 24),
-                        children: const [_EmptyState()],
+                        children: const [
+                          AppEmptyState(
+                            icon: Icons.campaign_outlined,
+                            title: 'No announcements yet',
+                            message: 'Management updates will appear here.',
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -257,53 +267,6 @@ class _GroupLabel extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: Color(0xFF666666),
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: const Column(
-        children: [
-          Icon(Icons.campaign_outlined, size: 40, color: Color(0xFF999999)),
-          SizedBox(height: 12),
-          Text(
-            'No announcements yet',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Management updates will appear here.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF777777)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
-
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: OutlinedButton(
-        onPressed: onRetry,
-        child: const Text('Unable to load announcements. Try again.'),
       ),
     );
   }

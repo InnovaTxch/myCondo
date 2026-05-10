@@ -6,6 +6,7 @@ import 'package:mycondo/features/manager/widgets/resident_bill_add_sheet.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_card.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_payment_sheet.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentBillsSection extends StatefulWidget {
   const ResidentBillsSection({
@@ -45,14 +46,15 @@ class _ResidentBillsSectionState extends State<ResidentBillsSection> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
+            child: AppLoadingState(),
           );
         }
 
         if (snapshot.hasError) {
-          return Text(
-            'Unable to load bills: ${snapshot.error}',
-            style: const TextStyle(color: Color(0xFFB3261E)),
+          return AppErrorState(
+            message: 'Unable to load bills. Try again.',
+            details: '${snapshot.error}',
+            onRetry: _refresh,
           );
         }
 
@@ -66,9 +68,11 @@ class _ResidentBillsSectionState extends State<ResidentBillsSection> {
             children: [
               _buildHeader(),
               const SizedBox(height: 10),
-              const Text(
-                'No bills attached to this resident yet.',
-                style: TextStyle(color: Colors.black54),
+              const AppEmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: 'No bills yet',
+                message: 'No bills attached to this resident yet.',
+                card: false,
               ),
             ],
           );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ChatScreen extends StatefulWidget {
   final String name;
@@ -106,61 +107,25 @@ class _ChatScreenState extends State<ChatScreen> {
               stream: _service.messagesStream(widget.conversationId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.wifi_off_rounded,
-                            size: 48, color: Colors.grey[400]),
-                        const SizedBox(height: 12),
-                        Text("Connection Error",
-                            style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w600)),
-                        Text("Check Realtime settings",
-                            style: TextStyle(
-                                color: Colors.grey[400], fontSize: 12)),
-                      ],
-                    ),
+                  return const AppErrorState(
+                    message: 'Connection error. Check Realtime settings.',
                   );
                 }
                 if (!snapshot.hasData) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: primaryBlue,
-                      strokeWidth: 2,
-                    ),
+                  return const AppLoadingState(
+                    color: primaryBlue,
+                    strokeWidth: 2,
                   );
                 }
 
                 final messages = snapshot.data!;
 
                 if (messages.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: primaryBlue.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.chat_bubble_outline_rounded,
-                              size: 40, color: primaryBlue),
-                        ),
-                        const SizedBox(height: 16),
-                        Text("No messages yet",
-                            style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16)),
-                        const SizedBox(height: 4),
-                        Text("Say hello! 👋",
-                            style: TextStyle(
-                                color: Colors.grey[400], fontSize: 13)),
-                      ],
-                    ),
+                  return const AppEmptyState(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    title: 'No messages yet',
+                    message: 'Say hello!',
+                    card: false,
                   );
                 }
 

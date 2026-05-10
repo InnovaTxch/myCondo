@@ -4,6 +4,7 @@ import 'package:mycondo/data/repositories/resident/resident_profile_service.dart
 import 'package:mycondo/data/repositories/resident/resident_settings_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentProfilePage extends StatefulWidget {
   const ResidentProfilePage({super.key, this.onContactAdministration});
@@ -227,7 +228,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                   children: [
                     SizedBox(
                       height: MediaQuery.sizeOf(context).height * 0.65,
-                      child: const Center(child: CircularProgressIndicator()),
+                      child: const AppLoadingState(),
                     ),
                   ],
                 )

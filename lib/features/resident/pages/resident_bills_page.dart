@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentBillsPage extends StatefulWidget {
   const ResidentBillsPage({
@@ -71,11 +72,14 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
                 future: _billsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const AppLoadingState();
                   }
 
                   if (snapshot.hasError) {
-                    return _ErrorState(onRetry: _refresh);
+                    return AppErrorState(
+                      message: 'Unable to load bills. Try again.',
+                      onRetry: _refresh,
+                    );
                   }
 
                   final bills = snapshot.data ?? const <ResidentBillGroup>[];
@@ -92,7 +96,9 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
                         children: [
-                          _EmptyState(
+                          AppEmptyState(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'No bills yet',
                             message: widget.paidOnly
                                 ? 'Paid bills will appear here after approval.'
                                 : 'Bills from management will appear here.',
@@ -901,55 +907,3 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.receipt_long_outlined,
-            size: 40,
-            color: Color(0xFF999999),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'No bills yet',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF777777)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.onRetry});
-
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: OutlinedButton(
-        onPressed: onRetry,
-        child: const Text('Unable to load bills. Try again.'),
-      ),
-    );
-  }
-}

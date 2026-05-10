@@ -4,6 +4,7 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({super.key, this.onOpenMessages});
@@ -52,9 +53,13 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   children: [
-                    _ErrorCard(
-                      message: 'Unable to load your dashboard.',
-                      onRetry: _refresh,
+                    SizedBox(
+                      height: 260,
+                      child: AppErrorState(
+                        message: 'Unable to load your dashboard. Try again.',
+                        details: '${snapshot.error}',
+                        onRetry: _refresh,
+                      ),
                     ),
                   ],
                 );
@@ -66,9 +71,12 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(24),
                   children: [
-                    _ErrorCard(
-                      message: 'No dashboard data found.',
-                      onRetry: _refresh,
+                    SizedBox(
+                      height: 260,
+                      child: AppErrorState(
+                        message: 'No dashboard data found. Try again.',
+                        onRetry: _refresh,
+                      ),
                     ),
                   ],
                 );
@@ -676,34 +684,9 @@ class _DashboardLoading extends StatelessWidget {
       children: const [
         SizedBox(
           height: 260,
-          child: Center(child: CircularProgressIndicator()),
+          child: AppLoadingState(),
         ),
       ],
-    );
-  }
-}
-
-class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          Text(message, style: const TextStyle(color: Color(0xFFB3261E))),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Try Again')),
-        ],
-      ),
     );
   }
 }

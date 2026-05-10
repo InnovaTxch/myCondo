@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManagerTransactionHistoryPage extends StatefulWidget {
   const ManagerTransactionHistoryPage({super.key});
@@ -59,15 +60,12 @@ class _ManagerTransactionHistoryPageState
                   future: _paymentsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const AppLoadingState();
                     }
 
                     if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'Unable to load transactions: ${snapshot.error}',
-                          textAlign: TextAlign.center,
-                        ),
+                      return AppErrorState(
+                        message: 'Unable to load transactions: ${snapshot.error}',
                       );
                     }
 
@@ -79,11 +77,11 @@ class _ManagerTransactionHistoryPageState
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
                             SizedBox(height: 120),
-                            Center(
-                              child: Text(
-                                'No processed payments yet.',
-                                style: TextStyle(color: Color(0xFF777777)),
-                              ),
+                            AppEmptyState(
+                              title: 'No payments yet',
+                              message: 'No processed payments yet.',
+                              icon: Icons.receipt_long_outlined,
+                              card: false,
                             ),
                           ],
                         ),

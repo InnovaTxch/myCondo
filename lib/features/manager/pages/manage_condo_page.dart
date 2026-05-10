@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManageCondoPage extends StatefulWidget {
   const ManageCondoPage({super.key});
@@ -109,20 +110,23 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
         onRefresh: () => _loadUnits(showLoading: false),
         child: _isLoading
             ? _buildScrollableMessage(
-                child: const CircularProgressIndicator(),
+                child: const AppLoadingState(),
               )
             : _errorMessage != null
                 ? _buildScrollableMessage(
-                    child: Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
+                    child: AppErrorState(
+                      message: 'Unable to load units. Try again.',
+                      details: _errorMessage,
+                      onRetry: () => _loadUnits(showLoading: false),
                     ),
                   )
                 : _units.isEmpty
                     ? _buildScrollableMessage(
-                        child: const Text(
-                          'No units yet. Add your first condo unit.',
-                          textAlign: TextAlign.center,
+                        child: const AppEmptyState(
+                          icon: Icons.apartment_outlined,
+                          title: 'No units yet',
+                          message: 'Add your first condo unit.',
+                          card: false,
                         ),
                       )
                     : ListView.separated(

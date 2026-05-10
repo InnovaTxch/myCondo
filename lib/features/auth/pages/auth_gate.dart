@@ -4,6 +4,7 @@ import 'package:mycondo/features/auth/pages/login_screen.dart';
 import 'package:mycondo/features/manager/pages/manager_home_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /*
@@ -35,7 +36,7 @@ class AuthGate extends StatelessWidget {
             builder: (context, roleSnapshot) {
               if (roleSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
+                  body: AppLoadingState(),
                 );
               }
 

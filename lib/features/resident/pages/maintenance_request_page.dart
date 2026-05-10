@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class MaintenanceRequestPage extends StatefulWidget {
   const MaintenanceRequestPage({super.key});
@@ -102,7 +103,7 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
       backgroundColor: const Color(0xFFDCECF5),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const AppLoadingState()
             : ListView(
                 padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
                 children: [

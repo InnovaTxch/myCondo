@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -89,13 +90,18 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return _buildScrollableMessage(
-                        child: Text('Error: ${snapshot.error}'),
+                        child: AppErrorState(
+                          message: 'Unable to load residents. Try again.',
+                          details: '${snapshot.error}',
+                          onRetry: _refreshResidents,
+                        ),
                       );
                     }
                     if (!snapshot.hasData) {
                       return _buildScrollableMessage(
-                        child: const CircularProgressIndicator(
+                        child: const AppLoadingState(
                           color: primaryBlue,
+                          strokeWidth: 2,
                         ),
                       );
                     }
@@ -112,24 +118,13 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
 
                     if (filtered.isEmpty) {
                       return _buildScrollableMessage(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.inbox_outlined,
-                                size: 56,
-                                color: midBlue),
-                            const SizedBox(height: 12),
-                            Text(
-                              _searchQuery.isNotEmpty
-                                  ? 'No residents match your search.'
-                                  : 'No residents available.',
-                              style: const TextStyle(
-                                fontFamily: 'Urbanist',
-                                color: Color(0xFF64748B),
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
+                        child: AppEmptyState(
+                          icon: Icons.inbox_outlined,
+                          title: _searchQuery.isNotEmpty ? 'No results' : 'No residents',
+                          message: _searchQuery.isNotEmpty
+                              ? 'No residents match your search.'
+                              : 'No residents available.',
+                          card: false,
                         ),
                       );
                     }

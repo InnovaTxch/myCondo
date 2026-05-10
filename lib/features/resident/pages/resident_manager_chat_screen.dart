@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 
 class ResidentManagerChatScreen extends StatefulWidget {
@@ -21,12 +22,15 @@ class _ResidentManagerChatScreenState
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Scaffold(
-            body: Center(child: Text('Unable to open chat: ${snapshot.error}')),
+            body: AppErrorState(
+              message: 'Unable to open chat. Try again.',
+              details: '${snapshot.error}',
+            ),
           );
         }
         if (!snapshot.hasData) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: AppLoadingState(),
           );
         }
 

@@ -3,6 +3,7 @@ import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManagerProfilePage extends StatefulWidget {
   const ManagerProfilePage({super.key});
@@ -91,9 +92,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
             children: [
               SizedBox(
                 height: MediaQuery.sizeOf(context).height * 0.65,
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const AppLoadingState(),
               ),
             ],
           )

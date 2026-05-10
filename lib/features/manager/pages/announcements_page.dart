@@ -5,6 +5,7 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/manager/manager_announcement_service.dart';
 import 'package:mycondo/features/manager/widgets/announcement_card.dart';
 import 'package:mycondo/features/manager/widgets/announcement_form_sheet.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManagerAnnouncementsPage extends StatefulWidget {
   const ManagerAnnouncementsPage({super.key});
@@ -181,9 +182,10 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
             // ─── Body ─────────────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Color(0xFF3A8FE8)))
+                  ? const AppLoadingState(
+                      strokeWidth: 2,
+                      color: Color(0xFF3A8FE8),
+                    )
                   : _announcements.isEmpty
                       ? RefreshIndicator(
                           onRefresh: _refresh,
@@ -193,8 +195,13 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
                             children: [
                               SizedBox(
                                 height: MediaQuery.sizeOf(context).height * 0.6,
-                                child: _EmptyState(
-                                  onPost: () => _openPostForm(),
+                                child: AppEmptyState(
+                                  icon: Icons.campaign_outlined,
+                                  title: 'No announcements yet',
+                                  message: 'Tap "Post New" to create one.',
+                                  actionLabel: '+ Post New',
+                                  onAction: () => _openPostForm(),
+                                  card: false,
                                 ),
                               ),
                             ],
@@ -286,67 +293,3 @@ class _GroupLabel extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onPost});
-  final VoidCallback onPost;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                    color: Color(0x15000000),
-                    blurRadius: 16,
-                    offset: Offset(0, 4))
-              ],
-            ),
-            child: const Icon(Icons.campaign_outlined,
-                size: 36, color: Color(0xFFAAAAAA)),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'No announcements yet',
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF666666)),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Tap "Post New" to create one.',
-            style:
-                TextStyle(fontSize: 13, color: Color(0xFF999999)),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: onPost,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 22, vertical: 11),
-              decoration: BoxDecoration(
-                color: const Color(0xFF3A8FE8),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                '+ Post New',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -7,6 +7,7 @@ import 'package:mycondo/features/manager/widgets/resident_bills_section.dart';
 import 'package:mycondo/features/manager/widgets/resident_details_header.dart';
 import 'package:mycondo/features/manager/widgets/resident_info_field.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentDetailsPage extends StatefulWidget {
   const ResidentDetailsPage({super.key, required this.residentId});
@@ -177,15 +178,18 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFFF3F1EC),
-        body: Center(child: CircularProgressIndicator()),
+        body: AppLoadingState(),
       );
     }
 
     if (_notFound) {
       return Scaffold(
         appBar: AppBar(title: const Text('Resident Details')),
-        body: const Center(
-          child: Text('Resident no longer exists in Supabase.'),
+        body: const AppEmptyState(
+          icon: Icons.person_off_outlined,
+          title: 'Resident not found',
+          message: 'Resident no longer exists in Supabase.',
+          card: false,
         ),
       );
     }
