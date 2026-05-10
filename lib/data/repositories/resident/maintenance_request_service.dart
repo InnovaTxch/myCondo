@@ -43,9 +43,9 @@ class MaintenanceRequestService {
         .from('residents')
         .select(
           'id, unit_id, units(name, condo_id), '
-          'profiles!residents_profile_id_fkey(first_name, last_name)',
+          'profiles!residents_id_fkey(first_name, last_name)',
         )
-        .eq('profile_id', profileIdentity.id)
+        .eq('id', profileIdentity.id)
         .single();
 
     final unit = resident['units'] as Map<String, dynamic>? ?? {};
