@@ -30,6 +30,15 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   bool isAnnouncementLoading = true;
   int selectedNavigationIndex = 0;
 
+  Future<void> _openAnnouncements() async {
+    final changed =
+        await Navigator.pushNamed(context, '/manager-announcements');
+    if (!mounted) return;
+    if (changed == true) {
+      await _initializePage();
+    }
+  }
+
   Future<void> _initializePage() async {
     setState(() => isAnnouncementLoading = true);
 
@@ -80,7 +89,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
       icon: colorScheme.icon,
       tint: colorScheme.tint,
       backgroundColor: colorScheme.background,
-      onTap: () => Navigator.pushNamed(context, '/manager-announcements'),
+      onTap: _openAnnouncements,
     );
   }
 
@@ -140,8 +149,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
                 DashboardAnnouncementSection(
                   announcement: highlightedAnnouncement,
                   isLoading: isAnnouncementLoading,
-                  onOpenAnnouncements: () =>
-                      Navigator.pushNamed(context, '/manager-announcements'),
+                  onOpenAnnouncements: _openAnnouncements,
                 ),
                 const SizedBox(height: 18),
 
