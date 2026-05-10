@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/app_page.dart';
 
 class ResidentAnnouncementsPage extends StatefulWidget {
   const ResidentAnnouncementsPage({
@@ -56,12 +57,11 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppPageScaffold(
       backgroundColor: const Color(0xFFDCECF5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
+      body: Column(
+        children: [
+          Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 20, 8),
               child: Row(
                 children: [
@@ -137,8 +137,7 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
                 },
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

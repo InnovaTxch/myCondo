@@ -5,6 +5,7 @@ import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/manager/pages/resident_form_page.dart';
 import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/app_page.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -75,13 +76,14 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppPageScaffold(
       backgroundColor: const Color(0xFFDDF1FF),
       appBar: AppBar(
         backgroundColor: const Color(0xFFDDF1FF),
         elevation: 0,
         title: const Text('Manage Residents'),
       ),
+      onRefresh: () => _loadResidents(showLoading: false),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
         child: Column(
@@ -112,64 +114,47 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             ),
             const SizedBox(height: 14),
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => _loadResidents(showLoading: false),
-                child: _isLoading
-                    ? _buildScrollableMessage(
-                        child: const AppLoadingState(),
-                      )
-                    : _errorMessage != null
-                        ? _buildScrollableMessage(
-                            child: AppErrorState(
-                              message: 'Unable to load residents. Try again.',
-                              details: _errorMessage,
-                              onRetry: () => _loadResidents(),
-                            ),
-                          )
-                        : ValueListenableBuilder<List<UnitResidentGroup>>(
-                            valueListenable: _repository.unitGroupsNotifier,
-                            builder: (context, groups, _) {
-                              final filtered = _filterGroups(groups);
-
-                              if (filtered.isEmpty) {
-                                return _buildScrollableMessage(
-                                  child: const AppEmptyState(
-                                    icon: Icons.search_rounded,
-                                    title: 'No results',
-                                    message: 'No units or residents match your search.',
-                                    card: false,
-                                  ),
-                                );
-                              }
-
-                              return ListView.separated(
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                itemCount: filtered.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: 10),
-                                itemBuilder: (context, index) =>
-                                    _buildUnitGroup(filtered[index]),
-                              );
-                            },
+              child: _isLoading
+                  ? const AppScrollableCentered(child: AppLoadingState())
+                  : _errorMessage != null
+                      ? AppScrollableCentered(
+                          child: AppErrorState(
+                            message: 'Unable to load residents. Try again.',
+                            details: _errorMessage,
+                            onRetry: () => _loadResidents(),
                           ),
-              ),
+                        )
+                      : ValueListenableBuilder<List<UnitResidentGroup>>(
+                          valueListenable: _repository.unitGroupsNotifier,
+                          builder: (context, groups, _) {
+                            final filtered = _filterGroups(groups);
+
+                            if (filtered.isEmpty) {
+                              return const AppScrollableCentered(
+                                child: AppEmptyState(
+                                  icon: Icons.search_rounded,
+                                  title: 'No results',
+                                  message:
+                                      'No units or residents match your search.',
+                                  card: false,
+                                ),
+                              );
+                            }
+
+                            return ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: filtered.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) =>
+                                  _buildUnitGroup(filtered[index]),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildScrollableMessage({required Widget child}) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: 360,
-          child: Center(child: child),
-        ),
-      ],
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -55,100 +56,97 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingProfile) {
-      return const Scaffold(
+      return const AppPageScaffold(
         backgroundColor: bgColor,
-        body: Center(
-          child: CircularProgressIndicator(color: primaryBlue),
-        ),
+        body: AppLoadingState(color: primaryBlue, strokeWidth: 2),
       );
     }
 
     final managerId = _managerId;
     if (managerId == null) {
-      return const Scaffold(
+      return const AppPageScaffold(
         backgroundColor: bgColor,
-        body: Center(child: Text('Please log in.')),
+        body: AppEmptyState(
+          icon: Icons.login_rounded,
+          title: 'Please log in',
+          message: 'Sign in to view resident messages.',
+          card: false,
+        ),
       );
     }
 
-    return Scaffold(
+    return AppPageScaffold(
       backgroundColor: bgColor,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            _buildSearchBar(),
-            _buildSectionLabel(),
-            Expanded(
-              child: RefreshIndicator(
-                color: primaryBlue,
-                onRefresh: _refreshResidents,
-                child: FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _residentsFuture ??
-                      _service.fetchResidentsForManager(managerId),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return _buildScrollableMessage(
-                        child: AppErrorState(
-                          message: 'Unable to load residents. Try again.',
-                          details: '${snapshot.error}',
-                          onRetry: _refreshResidents,
-                        ),
-                      );
-                    }
-                    if (!snapshot.hasData) {
-                      return _buildScrollableMessage(
-                        child: const AppLoadingState(
-                          color: primaryBlue,
-                          strokeWidth: 2,
-                        ),
-                      );
-                    }
+      onRefresh: _refreshResidents,
+      refreshIndicatorColor: primaryBlue,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          _buildSearchBar(),
+          _buildSectionLabel(),
+          Expanded(
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future:
+                  _residentsFuture ?? _service.fetchResidentsForManager(managerId),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return AppScrollableCentered(
+                    heightFactor: 0.5,
+                    child: AppErrorState(
+                      message: 'Unable to load residents. Try again.',
+                      details: '${snapshot.error}',
+                      onRetry: _refreshResidents,
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const AppScrollableCentered(
+                    heightFactor: 0.5,
+                    child: AppLoadingState(
+                      color: primaryBlue,
+                      strokeWidth: 2,
+                    ),
+                  );
+                }
 
-                    final residents = snapshot.data!;
-                    final filtered = _searchQuery.isEmpty
-                        ? residents
-                        : residents.where((r) {
-                            final name =
-                                _displayName(r).toLowerCase();
-                            return name.contains(
-                                _searchQuery.toLowerCase());
-                          }).toList();
+                final residents = snapshot.data!;
+                final filtered = _searchQuery.isEmpty
+                    ? residents
+                    : residents.where((r) {
+                        final name = _displayName(r).toLowerCase();
+                        return name.contains(_searchQuery.toLowerCase());
+                      }).toList();
 
-                    if (filtered.isEmpty) {
-                      return _buildScrollableMessage(
-                        child: AppEmptyState(
-                          icon: Icons.inbox_outlined,
-                          title: _searchQuery.isNotEmpty ? 'No results' : 'No residents',
-                          message: _searchQuery.isNotEmpty
-                              ? 'No residents match your search.'
-                              : 'No residents available.',
-                          card: false,
-                        ),
-                      );
-                    }
+                if (filtered.isEmpty) {
+                  return AppScrollableCentered(
+                    heightFactor: 0.5,
+                    child: AppEmptyState(
+                      icon: Icons.inbox_outlined,
+                      title: _searchQuery.isNotEmpty ? 'No results' : 'No residents',
+                      message: _searchQuery.isNotEmpty
+                          ? 'No residents match your search.'
+                          : 'No residents available.',
+                      card: false,
+                    ),
+                  );
+                }
 
-                    return ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(
-                          top: 4, bottom: 24),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final resident = filtered[index];
-                        final residentId =
-                            resident['id'].toString();
-                        final name = _displayName(resident);
-                        return _buildResidentTile(
-                            residentId: residentId, name: name);
-                      },
-                    );
+                return ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 4, bottom: 24),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final resident = filtered[index];
+                    final residentId = resident['id'].toString();
+                    final name = _displayName(resident);
+                    return _buildResidentTile(residentId: residentId, name: name);
                   },
-                ),
-              ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -464,15 +462,4 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     return name.isNotEmpty ? name[0].toUpperCase() : 'R';
   }
 
-  Widget _buildScrollableMessage({required Widget child}) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.5,
-          child: Center(child: child),
-        ),
-      ],
-    );
-  }
 }

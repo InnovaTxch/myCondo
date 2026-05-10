@@ -4,6 +4,7 @@ import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/app_page.dart';
 
 class ResidentBillsPage extends StatefulWidget {
   const ResidentBillsPage({
@@ -39,10 +40,9 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppPageScaffold(
       backgroundColor: const Color(0xFFF8F7F4),
-      body: SafeArea(
-        child: Column(
+      body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -149,7 +149,6 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
             ),
           ],
         ),
-      ),
     );
   }
 

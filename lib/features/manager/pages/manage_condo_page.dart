@@ -3,6 +3,7 @@ import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/app_page.dart';
 
 class ManageCondoPage extends StatefulWidget {
   const ManageCondoPage({super.key});
@@ -94,7 +95,7 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppPageScaffold(
       backgroundColor: const Color(0xFFF3F1EC),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF3F1EC),
@@ -106,57 +107,41 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
         icon: const Icon(Icons.add_home_work_outlined),
         label: const Text('Add Unit'),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadUnits(showLoading: false),
-        child: _isLoading
-            ? _buildScrollableMessage(
-                child: const AppLoadingState(),
-              )
-            : _errorMessage != null
-                ? _buildScrollableMessage(
-                    child: AppErrorState(
-                      message: 'Unable to load units. Try again.',
-                      details: _errorMessage,
-                      onRetry: () => _loadUnits(showLoading: false),
-                    ),
-                  )
-                : _units.isEmpty
-                    ? _buildScrollableMessage(
-                        child: const AppEmptyState(
-                          icon: Icons.apartment_outlined,
-                          title: 'No units yet',
-                          message: 'Add your first condo unit.',
-                          card: false,
-                        ),
-                      )
-                    : ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                        itemCount: _units.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final unit = _units[index];
-                          return _UnitCard(
-                            unit: unit,
-                            onEdit: () => _openUnitSheet(unit),
-                            onDelete: () => _deleteUnit(unit),
-                          );
-                        },
+      onRefresh: () => _loadUnits(showLoading: false),
+      body: _isLoading
+          ? const AppScrollableCentered(child: AppLoadingState())
+          : _errorMessage != null
+              ? AppScrollableCentered(
+                  child: AppErrorState(
+                    message: 'Unable to load units. Try again.',
+                    details: _errorMessage,
+                    onRetry: () => _loadUnits(showLoading: false),
+                  ),
+                )
+              : _units.isEmpty
+                  ? const AppScrollableCentered(
+                      child: AppEmptyState(
+                        icon: Icons.apartment_outlined,
+                        title: 'No units yet',
+                        message: 'Add your first condo unit.',
+                        card: false,
                       ),
-      ),
-    );
-  }
-
-  Widget _buildScrollableMessage({required Widget child}) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(
-          height: 360,
-          child: Center(child: child),
-        ),
-      ],
+                    )
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                      itemCount: _units.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final unit = _units[index];
+                        return _UnitCard(
+                          unit: unit,
+                          onEdit: () => _openUnitSheet(unit),
+                          onDelete: () => _deleteUnit(unit),
+                        );
+                      },
+                    ),
     );
   }
 }
