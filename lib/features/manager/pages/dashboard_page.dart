@@ -60,10 +60,18 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
         highlightedAnnouncement = _toHighlightedAnnouncement(announcements);
         isAnnouncementLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         isAnnouncementLoading = false;
+        highlightedAnnouncement = DashboardAnnouncement(
+          title: 'Dashboard unavailable',
+          message: e.toString(),
+          icon: Icons.error_outline_rounded,
+          tint: const Color(0xFFB3261E),
+          backgroundColor: const Color(0xFFFFEDEA),
+          onTap: () {},
+        );
       });
     }
   }

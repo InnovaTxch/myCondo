@@ -14,8 +14,9 @@ class ManagerDashboardService {
         .from('profiles')
         .select('first_name')
         .eq('id', profile.id)
-        .single();
+        .maybeSingle();
 
+    if (data == null) return null;
     return data['first_name'] as String?;
   }
 
@@ -87,7 +88,13 @@ class ManagerDashboardService {
         .from('managers')
         .select('id, condo_id')
         .eq('id', profile.id)
-        .single();
+        .maybeSingle();
+
+    if (manager == null) {
+      throw StateError(
+        'Manager account setup is incomplete (missing managers row). Please sign out and complete onboarding again.',
+      );
+    }
 
     final condoIdValue = manager['condo_id'];
     final condoId = condoIdValue is int
