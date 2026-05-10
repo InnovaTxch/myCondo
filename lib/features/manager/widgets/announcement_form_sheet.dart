@@ -49,10 +49,16 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
   Future<void> _submit() async {
     final title = _titleCtrl.text.trim();
     final message = _messageCtrl.text.trim();
-    if (title.isEmpty || message.isEmpty) return;
+    if (title.isEmpty) {
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Title is required.')),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
     try {
+      // `announcements.content` is NOT NULL in Supabase, so use empty string when omitted.
       await widget.onSave(title, message, _category);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
@@ -160,6 +166,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
               controller: _titleCtrl,
               textCapitalization: TextCapitalization.words,
               decoration: _inputDecoration('e.g. Power Outage Notice'),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 14),
             // Message field
@@ -169,19 +176,20 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
               controller: _messageCtrl,
               maxLines: 3,
               decoration: _inputDecoration('Write your announcement here...'),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 22),
             // Submit button
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A1A),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                child: ElevatedButton(
+                  onPressed: _saving || _titleCtrl.text.trim().isEmpty ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),

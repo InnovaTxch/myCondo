@@ -6,6 +6,7 @@ import 'package:mycondo/data/repositories/manager/manager_announcement_service.d
 import 'package:mycondo/features/manager/widgets/announcement_card.dart';
 import 'package:mycondo/features/manager/widgets/announcement_form_sheet.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerAnnouncementsPage extends StatefulWidget {
   const ManagerAnnouncementsPage({super.key});
@@ -21,6 +22,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
   List<Announcement> _announcements = [];
   String _managerName = '';
   bool _loading = true;
+  bool _didMutate = false;
 
   @override
   void initState() {
@@ -54,8 +56,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
         managerName: _managerName,
         onSave: (title, message, category) async {
           if (existing != null) {
-            await _service.updateAnnouncement(
-                existing.id, title, message, category);
+            await _service.updateAnnouncement(existing.id, title, message, category);
           } else {
             await _service.createAnnouncement(
               Announcement(
@@ -68,39 +69,103 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
               ),
             );
           }
+          _didMutate = true;
           await _loadData();
         },
       ),
     );
   }
 
-  Future<void> _deleteAnnouncement(Announcement ann) async {
-    final confirmed = await showDialog<bool>(
+  Future<bool> _confirmDeleteAnnouncement() async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Announcement',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        content: const Text(
-            'Are you sure you want to delete this announcement? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF888888))),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: false,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Delete Announcement',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Are you sure you want to delete this announcement? This cannot be undone.',
+                  style: TextStyle(color: Color(0xFF666666), height: 1.35),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF444444),
+                          side: const BorderSide(color: Color(0xFFE3E3E3)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFCC3333),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete',
-                style: TextStyle(color: Color(0xFFCC3333))),
-          ),
-        ],
-      ),
+        );
+      },
     );
+    return result ?? false;
+  }
 
-    if (confirmed == true) {
-      await _service.deleteAnnouncement(ann.id);
-      await _loadData();
+  Future<void> _deleteAnnouncement(Announcement ann) async {
+    final confirmed = await _confirmDeleteAnnouncement();
+    if (confirmed) {
+      try {
+        await _service.deleteAnnouncement(ann.id);
+        _didMutate = true;
+        await _loadData();
+      } catch (e) {
+        if (!mounted) return;
+        context.showAppSnackBar(
+          SnackBar(content: Text('Failed to delete announcement: $e')),
+        );
+      }
     }
   }
 
@@ -129,9 +194,14 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFDCECF5),
-      body: SafeArea(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(_didMutate);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFDCECF5),
+        body: SafeArea(
         child: Column(
           children: [
             // ─── Header ───────────────────────────────────────────────
@@ -140,7 +210,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () => Navigator.of(context).pop(_didMutate),
                     child: const Row(
                       children: [
                         Icon(Icons.chevron_left_rounded,
@@ -231,6 +301,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
             ),
           ],
         ),
+        ),
       ),
     );
   }
@@ -244,29 +315,30 @@ class _PostNewButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF3A8FE8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add, color: Colors.white, size: 16),
-            SizedBox(width: 4),
-            Text(
-              'Post New',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+    return Material(
+      color: const Color(0xFF3A8FE8),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        mouseCursor: SystemMouseCursors.click,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add, color: Colors.white, size: 16),
+              SizedBox(width: 4),
+              Text(
+                'Post New',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
