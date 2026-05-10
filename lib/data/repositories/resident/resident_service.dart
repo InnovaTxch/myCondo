@@ -103,11 +103,11 @@ class ResidentService {
       final int condoId = condoData['condo_id'];
       final List<dynamic> data = await _supabase
           .from('units')
-          .select('id, name, residents(id, profiles(first_name))')
+          .select('id, name, residents(id, status, profiles!residents_id_fkey(first_name))')
           .eq('condo_id', condoId);
 
       return data.map((unitRow) {
-        final List<dynamic> residentRows = unitRow['residents'] ?? [];
+        final List<dynamic> residentRows = (unitRow['residents'] as List?) ?? [];
 
         return Unit(
           id: unitRow['id'] as int,
@@ -116,7 +116,7 @@ class ResidentService {
               .map(
                 (resRow) => Resident(
                   id: resRow['id'] as String,
-                  name: resRow['profiles']['first_name'] as String,
+                  name: ((resRow['profiles']?['first_name']) as String? ?? 'Resident').trim(),
                   unitName: unitRow['name'] as String,
                 ),
               )
@@ -124,8 +124,8 @@ class ResidentService {
         );
       }).toList();
     } catch (e) {
-      print("Error fetching units: $e");
-      return [];
+      print("Error fetching units for manager: $e");
+      return <Unit>[];
     }
   }
 
