@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
@@ -173,32 +171,19 @@ class ResidentRepository {
 
   Future<ResidentProfile> addResident(ResidentUpsertInput input) async {
     final context = await _requireManagerContext();
-    final code = await _generateResidentCode(context.condoId);
 
-    final profile = await _supabase
-        .from('profiles')
-        .insert({
-          'first_name': input.firstName.trim(),
-          'last_name': input.lastName.trim(),
-          'role': 'resident',
-        })
-        .select('id')
-        .single();
-
-    final profileId = profile['id'].toString();
-    final now = DateTime.now().toUtc().toIso8601String();
-
-    await _supabase.from('residents').insert(
-      {
-        'id': profileId,
-        'unit_id': input.unitId,
-        'status': 'active',
-        'requested_at': now,
-        'approved_at': now,
-        'left_at': null,
-        'code': code,
+    final created = await _supabase.rpc(
+      'create_resident_profile',
+      params: {
+        'p_first_name': input.firstName.trim(),
+        'p_last_name': input.lastName.trim(),
+        'p_unit_id': input.unitId,
       },
     );
+
+    final createdRow = (created as List).isNotEmpty ? created.first as Map : null;
+    final profileId = (createdRow?['resident_id'] ?? '').toString();
+    final code = (createdRow?['resident_code'] ?? '').toString();
 
     await refreshResidents();
     final resident = (await getResidentById(profileId)) ??
@@ -287,40 +272,7 @@ class ResidentRepository {
     );
   }
 
-  Future<String> _generateResidentCode(int condoId) async {
-    final unitsData = await _supabase
-        .from('units')
-        .select('id')
-        .eq('condo_id', condoId);
-    final unitIds = (unitsData as List).map((row) => row['id'] as int).toList();
 
-    for (var attempt = 0; attempt < 20; attempt++) {
-      final code = _randomCode(8);
-      if (unitIds.isEmpty) return code;
-
-      final existing = await _supabase
-          .from('residents')
-          .select('id')
-          .inFilter('unit_id', unitIds)
-          .eq('code', code)
-          .maybeSingle();
-
-      if (existing == null) return code;
-    }
-
-    throw StateError('Could not generate a unique resident code.');
-  }
-
-  String _randomCode(int length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    final random = Random.secure();
-    return String.fromCharCodes(
-      Iterable.generate(
-        length,
-        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
-      ),
-    );
-  }
 }
 
 class _ManagerContext {
