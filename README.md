@@ -2,6 +2,18 @@
 
 myCondo is a Flutter condo management app for property managers and residents. It uses Supabase for authentication, PostgreSQL data storage, and role-based access to condo, billing, resident, announcement, and messaging data.
 
+## Table of Contents
+
+- [Current App State](#current-app-state)
+- [Known Limitations / Out of Scope (Current)](#known-limitations--out-of-scope-current)
+- [Run Options](#run-options)
+- [Tech Stack](#tech-stack)
+- [Important Payment Status Values](#important-payment-status-values)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [User Manual](#user-manual)
+- [Group Members](#group-members)
+
 ## Group Members
 
 - Kent Francis Genilo
@@ -14,13 +26,12 @@ myCondo is a Flutter condo management app for property managers and residents. I
 
 ### Manager Side
 
-- Dashboard with manager greeting, summary cards, highlighted announcements, and quick actions.
+- Dashboard with manager greeting, summary cards (residents, units, payments to review, capacity used), highlighted announcements, and quick actions.
 - Resident management with unit grouping, resident profiles, add/edit/vacate flows, and resident detail pages.
 - Bill creation for selected residents or units.
 - Per-resident bill management from resident details.
 - Announcements with create, edit, delete, and category styling.
 - Payment approval queue backed by Supabase:
-  - pending resident payment submissions
   - approve confirmation before applying payment
   - deny flow requiring a rejection reason
   - approved payments update bill status to `partial` or `paid`
@@ -34,20 +45,20 @@ myCondo is a Flutter condo management app for property managers and residents. I
 
 ### Resident Side
 
-- Resident dashboard with a GCash-style amount due summary.
+- Resident dashboard with amount due summary.
 - Resident metrics for open bills, next due date, and overdue bills.
-- Payment breakdown sheet from dashboard.
-- Pay bill flow:
-  - amount
-  - proof of payment link/reference
-  - optional remark
-  - submitted payments wait for manager approval
-- Resident bill cards show pending payment status and denial reason when applicable.
-- Transaction history showing paid bills only.
+- Bills list and bill details view (read-only).
+- Payment history (read-only, for completed/approved payments recorded in the system).
 - Read-only announcements page.
 - Manager chat entry point.
 - Read-only condo About page.
 - Resident profile and logout.
+
+## Known Limitations / Out of Scope (Current)
+
+- Resident online payments are not integrated (no real payment gateway / GCash API integration yet).
+- Demo credentials are not publicly listed in the repo (ask the maintainer for access).
+- Some flows require seeded/demo data in Supabase to avoid empty dashboards and lists.
 
 ## Tech Stack
 
@@ -57,7 +68,15 @@ myCondo is a Flutter condo management app for property managers and residents. I
 - Supabase Postgres
 - Supabase Row Level Security
 
-## Setup
+## Run Options
+
+### Option A: Use the Web Deployment (Fastest)
+
+- Open: https://innovatxch.github.io/myCondo/
+- Demo credentials: Ask the maintainer for credentials.
+- Demo seed data reference: `docs/DEMO.md`
+
+### Option B: Run Locally (Full Flutter Setup)
 
 1. Install Flutter and Android tooling.
 2. Use a supported JDK for Android builds, preferably JDK 17.
@@ -81,12 +100,16 @@ flutter pub get
 flutter run
 ```
 
-## Supabase Migrations
+#### Run Locally (Web)
 
-Migration files live in:
+```bash
+flutter run -d chrome
+```
 
-```text
-supabase/migrations/
+#### Run Locally (Android)
+
+```bash
+flutter run -d android
 ```
 
 ## Important Payment Status Values
@@ -142,6 +165,10 @@ The app follows a feature-first structure with a shared data layer:
 - `data/models/` contains Dart models for Supabase rows.
 - `data/repositories/` contains Supabase queries and mutations.
 - `services/` contains cross-feature services such as chat.
+
+## User Manual
+
+For basic demo steps (accounts, condo codes, sample residents, and sample bills), see `docs/DEMO.md`.
 
 ## Logical View
 
