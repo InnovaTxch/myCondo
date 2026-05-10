@@ -66,7 +66,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
       if (!mounted) return;
 
       context.showAppSnackBar(
-        const SnackBar(content: Text('Could not sign out.')),
+        const SnackBar(content: Text('Could not log out.')),
       );
 
       setState(() => _isSigningOut = false);

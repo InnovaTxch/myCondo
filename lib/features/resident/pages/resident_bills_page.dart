@@ -57,7 +57,7 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
                   else
                     const SizedBox(width: 12),
                   Text(
-                    widget.paidOnly ? 'Transaction History' : 'Pay Bill',
+                    widget.paidOnly ? 'Payment History' : 'Pay Bill',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,

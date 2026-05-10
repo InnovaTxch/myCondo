@@ -468,7 +468,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Add Dues'),
+                  child: const Text('Add Bills'),
                 ),
               ),
             ),

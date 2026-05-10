@@ -526,7 +526,7 @@ class _AnnouncementPreview extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     announcement == null
-                        ? 'Updates from management will appear here.'
+                        ? 'Announcements from management will appear here.'
                         : _summarize(announcement!.message),
                     style: const TextStyle(
                       color: Color(0xFF6A6A6A),
@@ -586,14 +586,14 @@ class _QuickActions extends StatelessWidget {
       children: [
         _ActionTile(
           title: 'Pay Bill',
-          subtitle: 'Review dues and submit payment for approval.',
+          subtitle: 'Review bills and submit payment for approval.',
           icon: Icons.payments_outlined,
           onTap: () => Navigator.pushNamed(context, '/resident-bills'),
         ),
         const SizedBox(height: 10),
         _ActionTile(
           title: 'Message Manager',
-          subtitle: 'Ask about dues, repairs, or building updates.',
+          subtitle: 'Ask about bills, repairs, or announcements.',
           icon: Icons.chat_bubble_outline_rounded,
           onTap: onOpenMessages ?? () {},
         ),

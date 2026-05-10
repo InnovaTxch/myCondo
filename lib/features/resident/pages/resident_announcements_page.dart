@@ -109,7 +109,7 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
                           AppEmptyState(
                             icon: Icons.campaign_outlined,
                             title: 'No announcements yet',
-                            message: 'Management updates will appear here.',
+                            message: 'Announcements from management will appear here.',
                           ),
                         ],
                       ),

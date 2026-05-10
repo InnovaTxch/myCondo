@@ -79,7 +79,7 @@ class CondoUnitRepository {
 
     if (capacity < unit.occupied) {
       throw StateError(
-        'Capacity cannot be lower than the ${unit.occupied} current tenants.',
+        'Capacity cannot be lower than the ${unit.occupied} current residents.',
       );
     }
 
@@ -92,7 +92,7 @@ class CondoUnitRepository {
   Future<void> deleteUnit(UnitOption unit) async {
     final condoId = await _requireManagerCondoId();
     if (unit.occupied > 0) {
-      throw StateError('Move or remove tenants before deleting this unit.');
+      throw StateError('Move or remove residents before deleting this unit.');
     }
 
     await _supabase.from('units').delete().eq('id', unit.id).eq(

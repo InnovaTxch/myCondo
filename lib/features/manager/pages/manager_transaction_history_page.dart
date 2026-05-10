@@ -42,7 +42,7 @@ class _ManagerTransactionHistoryPageState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Transaction History',
+                'Payment History',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,

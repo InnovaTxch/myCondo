@@ -36,7 +36,7 @@ class DashboardSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SummaryMetric(
-                    label: 'Total Tenants',
+                    label: 'Total Residents',
                     value: summary.totalTenants?.toString(),
                   ),
                   const SizedBox(height: 26),

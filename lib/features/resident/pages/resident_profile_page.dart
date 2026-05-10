@@ -83,7 +83,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       if (!mounted) return;
 
       context.showAppSnackBar(
-        const SnackBar(content: Text('Could not sign out. Please try again.')),
+        const SnackBar(content: Text('Could not log out. Please try again.')),
       );
 
       setState(() => _isSigningOut = false);
@@ -334,7 +334,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                               ),
                             )
                           : const Icon(Icons.logout_rounded, size: 18),
-                      label: Text(_isSigningOut ? 'Signing out...' : 'Logout'),
+                      label: Text(_isSigningOut ? 'Logging out...' : 'Log out'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -361,7 +361,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
   String get _notificationsSummary {
     final settings = _notifications;
     if (settings == null) {
-      return 'Manage alerts for dues, messages, and updates.';
+      return 'Manage alerts for bills, messages, and announcements.';
     }
     final enabled = [
       settings.paymentReminders,
@@ -1171,7 +1171,7 @@ class _NotificationSettingsSheetState
         children: [
           _SettingsSwitchTile(
             title: 'Payment Reminders',
-            subtitle: 'Get reminders for upcoming or overdue dues.',
+            subtitle: 'Get reminders for upcoming or overdue bills.',
             value: _settings.paymentReminders,
             onChanged: (value) => setState(
               () => _settings = _settings.copyWith(paymentReminders: value),
@@ -1179,7 +1179,7 @@ class _NotificationSettingsSheetState
           ),
           _SettingsSwitchTile(
             title: 'Announcement Alerts',
-            subtitle: 'Stay updated on building notices and updates.',
+            subtitle: 'Stay updated on building notices and announcements.',
             value: _settings.announcementAlerts,
             onChanged: (value) => setState(
               () => _settings = _settings.copyWith(announcementAlerts: value),
@@ -1440,7 +1440,7 @@ class _PaymentMethodsSheetState extends State<_PaymentMethodsSheet> {
   Widget build(BuildContext context) {
     return _SettingsSheetFrame(
       title: 'Payment Methods',
-      subtitle: 'Save the payment account details you want to use for dues.',
+      subtitle: 'Save the payment account details you want to use for bills.',
       icon: Icons.account_balance_wallet_outlined,
       actionLabel: 'Save Methods',
       onSave: _save,

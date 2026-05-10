@@ -164,7 +164,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                     ),
                     const SizedBox(width: 4),
                     const Text(
-                      "Add Dues",
+                      "Add Bills",
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
@@ -223,7 +223,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Total Bill Amount",
+                        "Total Amount Due",
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                       const SizedBox(height: 6),

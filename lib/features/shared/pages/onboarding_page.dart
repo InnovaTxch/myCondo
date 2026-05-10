@@ -144,7 +144,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: TextButton.icon(
                   onPressed: _isLoading ? null : _handleSignOut,
                   icon: const Icon(Icons.logout, size: 18),
-                  label: const Text("Sign out"),
+                  label: const Text("Log out"),
                 ),
               ),
               const SizedBox(height: 12),
@@ -166,7 +166,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
               RoleCard(
                 title: "I am a Manager",
-                description: "I manage units, tenants, bills, and payments.",
+                description: "I manage units, residents, bills, and payments.",
                 icon: Icons.admin_panel_settings_outlined,
                 isSelected: _isManager,
                 onTap: () => _selectRole('manager'),

@@ -179,7 +179,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
         ),
         subtitle: Text(
           unit.capacity == null
-              ? '${unit.occupied} tenants'
+              ? '${unit.occupied} residents'
               : '${unit.occupied} of ${unit.capacity} capacity',
           style: TextStyle(
             color: isFull ? Colors.redAccent : Colors.black54,
@@ -192,7 +192,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'No tenants in this unit yet.',
+                  'No residents in this unit yet.',
                   style: TextStyle(color: Colors.black54),
                 ),
               ),

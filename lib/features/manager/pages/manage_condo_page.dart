@@ -63,7 +63,7 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
         title: Text('Delete Unit ${unit.name}?'),
         content: Text(
           unit.occupied > 0
-              ? 'This unit has tenants. Move or remove them before deleting it.'
+              ? 'This unit has residents. Move or remove them before deleting it.'
               : 'This cannot be undone.',
         ),
         actions: [
@@ -186,7 +186,7 @@ class _UnitCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     unit.capacity == null
-                        ? '${unit.occupied} tenants'
+                        ? '${unit.occupied} residents'
                         : '${unit.occupied} of ${unit.capacity} capacity',
                     style: TextStyle(
                       color: isFull ? Colors.redAccent : Colors.black54,
@@ -324,7 +324,7 @@ class _UnitFormSheetState extends State<_UnitFormSheet> {
                   }
                   final occupied = widget.unit?.occupied ?? 0;
                   if (capacity < occupied) {
-                    return 'Capacity cannot be below current tenants';
+                    return 'Capacity cannot be below current residents';
                   }
                   return null;
                 },

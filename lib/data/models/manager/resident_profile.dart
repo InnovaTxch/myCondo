@@ -146,8 +146,8 @@ class UnitOption {
   bool get isFull => capacity != null && occupied >= capacity!;
 
   String get capacityLabel {
-    if (capacity == null) return '$occupied tenants';
-    return '$occupied/$capacity tenants';
+    if (capacity == null) return '$occupied residents';
+    return '$occupied/$capacity residents';
   }
 }
 
