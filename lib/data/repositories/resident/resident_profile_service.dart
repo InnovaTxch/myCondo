@@ -1,25 +1,25 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 
 class ResidentProfileService {
   final supabase = Supabase.instance.client;
+  final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<Map<String, dynamic>> getProfile() async {
-    final user = supabase.auth.currentUser;
-
-    if (user == null) {
-      throw Exception("No user logged in");
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
 
     final data = await supabase
         .from('profiles')
         .select()
-        .eq('id', user.id)
+        .eq('id', profile.id)
         .single();
 
     final resident = await supabase
         .from('residents')
         .select('code, status, units(name)')
-        .eq('profile_id', data['id'])
+        .eq('id', profile.id)
         .maybeSingle();
 
     final unit = resident?['units'] as Map<String, dynamic>?;
@@ -36,15 +36,13 @@ class ResidentProfileService {
     required String firstName,
     required String lastName,
   }) async {
-    final user = supabase.auth.currentUser;
-
-    if (user == null) {
-      throw Exception("No user logged in");
-    }
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
 
     await supabase
         .from('profiles')
         .update({'first_name': firstName.trim(), 'last_name': lastName.trim()})
-        .eq('id', user.id);
+        .eq('id', profile.id);
   }
 }

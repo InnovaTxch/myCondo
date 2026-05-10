@@ -40,19 +40,10 @@ class _LoginScreenState extends State<LoginScreen>{
       context.showAppSnackBar(
         const SnackBar(content: Text("Login successful!")),
       );
-      
-      String? role = await authService.getRole();
 
-      if (!mounted) return;
-
-      final destination = switch (role) {
-        'manager' => '/manager-dashboard',
-        'resident' => '/resident-dashboard',
-        'unassigned' => '/onboarding',
-        _ => '/onboarding',
-      };
-
-      Navigator.pushReplacementNamed(context, destination);
+      // Let AuthGate handle routing based on the authenticated session + profile role.
+      // Pushing dashboards from here causes stacked home shells.
+      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
 
     } on SocketException {
       if (!mounted) return;

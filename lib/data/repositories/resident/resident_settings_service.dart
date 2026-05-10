@@ -103,7 +103,7 @@ class ResidentSettingsService {
     final resident = await _supabase
         .from('residents')
         .select('id')
-        .eq('profile_id', profile.id)
+        .eq('id', profile.id)
         .single();
 
     return resident['id'].toString();
