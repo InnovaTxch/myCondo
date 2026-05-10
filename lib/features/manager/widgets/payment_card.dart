@@ -139,13 +139,13 @@ class PaymentCard extends StatelessWidget {
         return _filledButton(
           label: 'Approved',
           onTap: null,
-          width: 110,
+          minWidth: 110,
         );
       case PaymentStatus.rejected:
         return _outlineButton(
           label: 'Denied',
           onTap: null,
-          width: 100,
+          minWidth: 100,
         );
     }
   }
@@ -153,23 +153,26 @@ class PaymentCard extends StatelessWidget {
   Widget _filledButton({
     required String label,
     VoidCallback? onTap,
-    double width = 100,
+    double minWidth = 100,
   }) {
-    return SizedBox(
-      width: width,
-      height: 32,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minWidth: minWidth, minHeight: 32),
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: const Color(0xFF53B1FD),
           foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
           ),
         ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
           style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
@@ -185,22 +188,25 @@ class PaymentCard extends StatelessWidget {
   Widget _outlineButton({
     required String label,
     VoidCallback? onTap,
-    double width = 100,
+    double minWidth = 100,
   }) {
-    return SizedBox(
-      width: width,
-      height: 32,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minWidth: minWidth, minHeight: 32),
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: const Color(0xFF53B1FD),
           side: const BorderSide(color: Color(0xFF53B1FD)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
           ),
         ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
           style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
