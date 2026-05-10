@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/app_routes.dart';
 import 'package:mycondo/features/resident/pages/resident_bills_page.dart';
 import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_profile_page.dart';
 import 'package:mycondo/features/shared/pages/condo_about_page.dart';
 import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
+import 'package:mycondo/features/shared/widgets/dashboard_tab_scaffold.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -22,22 +24,35 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      ResidentDashboard(onOpenMessages: () => changeActivePageIndex(2)),
-      const ResidentBillsPage(showBackButton: false, paidOnly: true),
-      const ResidentManagerChatScreen(),
-      const CondoAboutPage(canEdit: false),
-      ResidentProfilePage(
-        onContactAdministration: () => changeActivePageIndex(2),
-      ),
-    ];
-
-    return Scaffold(
-      body: IndexedStack(index: _activePageIndex, children: pages),
-      bottomNavigationBar: DashboardNavigationBar(
-        currentIndex: _activePageIndex,
-        changeActivePageIndex: changeActivePageIndex,
-      ),
+    return DashboardTabScaffold(
+      currentIndex: _activePageIndex,
+      onIndexChanged: changeActivePageIndex,
+      routes: AppRoutes.routes,
+      tabs: [
+        DashboardTabItem(
+          root: ResidentDashboard(onOpenMessages: () => changeActivePageIndex(2)),
+        ),
+        const DashboardTabItem(
+          root: ResidentBillsPage(showBackButton: false, paidOnly: true),
+        ),
+        const DashboardTabItem(
+          root: ResidentManagerChatScreen(),
+        ),
+        const DashboardTabItem(
+          root: CondoAboutPage(canEdit: false),
+        ),
+        DashboardTabItem(
+          root: ResidentProfilePage(
+            onContactAdministration: () => changeActivePageIndex(2),
+          ),
+        ),
+      ],
+      bottomNavigationBar: (currentIndex, onIndexChanged) {
+        return DashboardNavigationBar(
+          currentIndex: currentIndex,
+          changeActivePageIndex: onIndexChanged,
+        );
+      },
     );
   }
 }

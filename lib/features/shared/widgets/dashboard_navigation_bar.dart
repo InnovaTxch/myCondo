@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class DashboardNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -10,55 +12,106 @@ class DashboardNavigationBar extends StatelessWidget {
     required this.changeActivePageIndex,
   });
 
-  final List<IconData> navigationItems = const [
+  static const _labels = <String>[
+    'Home',
+    'Payments',
+    'Messages',
+    'About',
+    'Profile',
+  ];
+
+  static const _icons = <IconData>[
     Icons.home_outlined,
-    Icons.access_time_outlined,
+    Icons.payments_outlined,
     Icons.chat_bubble_outline_rounded,
     Icons.info_outline_rounded,
     Icons.person_outline_rounded,
   ];
 
+  static const _selectedIcons = <IconData>[
+    Icons.home_rounded,
+    Icons.payments_rounded,
+    Icons.chat_bubble_rounded,
+    Icons.info_rounded,
+    Icons.person_rounded,
+  ];
+
+  void _maybeHaptic() {
+    if (kIsWeb) return;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        HapticFeedback.selectionClick();
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F1F3),
-        border: Border.all(color: const Color(0xFFE2E4E8)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 66,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(navigationItems.length, (index) {
-              final isSelected = index == currentIndex;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
-              return Expanded(
-                child: InkWell(
-                  onTap: () => changeActivePageIndex(index),
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: isSelected ? Colors.black : Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        navigationItems[index],
-                        size: 22,
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: keyboardVisible
+          ? const SizedBox.shrink()
+          : Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F1F3),
+                border: Border.all(color: const Color(0xFFE2E4E8)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: NavigationBarTheme(
+                  data: NavigationBarThemeData(
+                    height: 70,
+                    backgroundColor: const Color(0xFFF0F1F3),
+                    indicatorColor: Colors.black,
+                    labelTextStyle: MaterialStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(MaterialState.selected);
+                      return TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? Colors.black : Colors.black54,
+                      );
+                    }),
+                    iconTheme: MaterialStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(MaterialState.selected);
+                      return IconThemeData(
                         color: isSelected ? Colors.white : Colors.black54,
-                      ),
-                    ),
+                        size: 22,
+                      );
+                    }),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: currentIndex,
+                    onDestinationSelected: (index) {
+                      _maybeHaptic();
+                      changeActivePageIndex(index);
+                    },
+                    destinations: List.generate(_labels.length, (index) {
+                      final label = _labels[index];
+                      return NavigationDestination(
+                        label: label,
+                        icon: Tooltip(
+                          message: label,
+                          child: Icon(_icons[index]),
+                        ),
+                        selectedIcon: Tooltip(
+                          message: label,
+                          child: Icon(_selectedIcons[index]),
+                        ),
+                      );
+                    }),
                   ),
                 ),
-              );
-            }),
-          ),
-        ),
-      ),
+              ),
+            ),
     );
   }
 }
