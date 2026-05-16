@@ -446,7 +446,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
       final conversationId =
           await _service.getOrCreateResidentConversation(residentId);
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -458,7 +458,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.of(context, rootNavigator: true).pop();
       context.showAppSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
