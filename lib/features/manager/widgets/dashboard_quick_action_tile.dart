@@ -39,7 +39,6 @@ class DashboardQuickActionTile extends StatelessWidget {
             children: [
               _QuickActionIcon(
                 icon: icon,
-                badgeColor: Colors.black,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -84,42 +83,22 @@ class DashboardQuickActionTile extends StatelessWidget {
 class _QuickActionIcon extends StatelessWidget {
   const _QuickActionIcon({
     required this.icon,
-    this.badgeColor,
   });
 
   final IconData icon;
-  final Color? badgeColor;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 38,
       height: 38,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              size: 34,
-              color: Colors.black,
-            ),
-          ),
-          if (badgeColor != null)
-            Positioned(
-              right: -1,
-              bottom: -1,
-              child: Container(
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
+      child: Align(
+        alignment: Alignment.center,
+        child: Icon(
+          icon,
+          size: 34,
+          color: Colors.black,
+        ),
       ),
     );
   }
