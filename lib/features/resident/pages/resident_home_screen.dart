@@ -7,6 +7,7 @@ import 'package:mycondo/features/shared/pages/condo_about_page.dart';
 import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_tab_scaffold.dart';
+import 'package:mycondo/services/shared/chat_services.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -17,6 +18,7 @@ class ResidentHomeScreen extends StatefulWidget {
 
 class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   int _activePageIndex = 0;
+  final _messagingService = MessagingService();
 
   void changeActivePageIndex(int index) {
     setState(() => _activePageIndex = index);
@@ -48,9 +50,15 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         ),
       ],
       bottomNavigationBar: (currentIndex, onIndexChanged) {
-        return DashboardNavigationBar(
-          currentIndex: currentIndex,
-          changeActivePageIndex: onIndexChanged,
+        return StreamBuilder<bool>(
+          stream: _messagingService.hasUnreadMessagesStream(),
+          builder: (context, snapshot) {
+            return DashboardNavigationBar(
+              currentIndex: currentIndex,
+              changeActivePageIndex: onIndexChanged,
+              hasUnreadMessages: snapshot.data ?? false,
+            );
+          },
         );
       },
     );

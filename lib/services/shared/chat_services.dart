@@ -160,4 +160,135 @@ class MessagingService {
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', conversationId);
   }
+
+  String _conversationOwnerColumn(String? role) {
+    if (role == 'manager') return 'manager_id';
+    if (role == 'resident') return 'resident_id';
+    throw StateError('Unsupported profile role.');
+  }
+
+  String _lastReadColumn(String? role) {
+    if (role == 'manager') return 'manager_last_read_at';
+    if (role == 'resident') return 'resident_last_read_at';
+    throw StateError('Unsupported profile role.');
+  }
+
+  Future<bool> _hasUnreadMessagesForCurrentProfile() async {
+    final profile = await _identity.requireCurrentProfile();
+    final ownerColumn = _conversationOwnerColumn(profile.role);
+    final readColumn = _lastReadColumn(profile.role);
+
+    final conversations = await _supabase
+        .from('conversations')
+        .select('id, $readColumn')
+        .eq(ownerColumn, profile.id);
+
+    for (final row in conversations as List<dynamic>) {
+      final conversation = row as Map<String, dynamic>;
+      final lastReadAt = conversation[readColumn]?.toString();
+
+      final unreadMessages = lastReadAt == null
+          ? await _supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversation['id'])
+          .neq('sender_id', profile.id)
+          .limit(1)
+          : await _supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversation['id'])
+          .neq('sender_id', profile.id)
+          .gt('created_at', lastReadAt)
+          .limit(1);
+
+      if ((unreadMessages as List<dynamic>).isNotEmpty) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Stream<bool> hasUnreadMessagesStream() async* {
+    final profile = await _identity.requireCurrentProfile();
+    final ownerColumn = _conversationOwnerColumn(profile.role);
+
+    yield await _hasUnreadMessagesForCurrentProfile();
+
+    yield* _supabase
+        .from('conversations')
+        .stream(primaryKey: ['id'])
+        .eq(ownerColumn, profile.id)
+        .asyncMap((_) => _hasUnreadMessagesForCurrentProfile())
+        .distinct();
+  }
+
+  Future<void> markConversationRead(int conversationId) async {
+    final profile = await _identity.requireCurrentProfile();
+    final readColumn = _lastReadColumn(profile.role);
+
+    await _supabase.from('conversations').update({
+      readColumn: DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', conversationId);
+  }
+
+  Future<DateTime?> currentUserLastReadAt(int conversationId) async {
+    final profile = await _identity.requireCurrentProfile();
+    final readColumn = _lastReadColumn(profile.role);
+
+    final row = await _supabase
+        .from('conversations')
+        .select(readColumn)
+        .eq('id', conversationId)
+        .maybeSingle();
+
+    final value = row?[readColumn];
+    return value == null ? null : DateTime.tryParse(value.toString());
+  }
+
+  Future<Set<String>> fetchManagerUnreadResidentIds(String managerId) async {
+    final conversations = await _supabase
+        .from('conversations')
+        .select('id, resident_id, manager_last_read_at')
+        .eq('manager_id', managerId);
+
+    final unreadResidentIds = <String>{};
+
+    for (final raw in conversations as List<dynamic>) {
+      final conversation = raw as Map<String, dynamic>;
+      final lastReadAt = conversation['manager_last_read_at']?.toString();
+
+      final unreadMessages = lastReadAt == null
+          ? await _supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversation['id'])
+          .neq('sender_id', managerId)
+          .limit(1)
+          : await _supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversation['id'])
+          .neq('sender_id', managerId)
+          .gt('created_at', lastReadAt)
+          .limit(1);
+
+      if ((unreadMessages as List<dynamic>).isNotEmpty) {
+        unreadResidentIds.add(conversation['resident_id'].toString());
+      }
+    }
+
+    return unreadResidentIds;
+  }
+
+  Stream<Set<String>> managerUnreadResidentIdsStream(String managerId) async* {
+    yield await fetchManagerUnreadResidentIds(managerId);
+
+    yield* _supabase
+        .from('conversations')
+        .stream(primaryKey: ['id'])
+        .eq('manager_id', managerId)
+        .asyncMap((_) => fetchManagerUnreadResidentIds(managerId));
+  }
 }
