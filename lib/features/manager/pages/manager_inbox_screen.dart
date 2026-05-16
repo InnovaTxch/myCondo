@@ -132,15 +132,27 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(top: 4, bottom: 24),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final resident = filtered[index];
-                    final residentId = resident['id'].toString();
-                    final name = _displayName(resident);
-                    return _buildResidentTile(residentId: residentId, name: name);
+                return StreamBuilder<Set<String>>(
+                  stream: _service.managerUnreadResidentIdsStream(managerId),
+                  builder: (context, unreadSnapshot) {
+                    final unreadResidentIds = unreadSnapshot.data ?? <String>{};
+
+                    return ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 4, bottom: 24),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final resident = filtered[index];
+                        final residentId = resident['id'].toString();
+                        final name = _displayName(resident);
+
+                        return _buildResidentTile(
+                          residentId: residentId,
+                          name: name,
+                          hasUnread: unreadResidentIds.contains(residentId),
+                        );
+                      },
+                    );
                   },
                 );
               },
@@ -281,6 +293,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   Widget _buildResidentTile({
     required String residentId,
     required String name,
+    bool hasUnread = false,
   }) {
     final initials = _initials(name);
     final avatarColors = [
@@ -306,10 +319,12 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
             padding: const EdgeInsets.symmetric(
                 horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: hasUnread ? softBlue : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: const Color(0xFFE2EAFF), width: 1),
+                color: hasUnread ? primaryBlue : const Color(0xFFE2EAFF),
+                width: hasUnread ? 1.4 : 1,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF2563EB).withOpacity(0.05),
@@ -359,11 +374,11 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: Color(0xFF0F172A),
+                          fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w700,
+                          fontSize: hasUnread ? 16 : 15,
+                          color: hasUnread ? Colors.black : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -393,19 +408,20 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                   ),
                 ),
                 // Chat button
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: softBlue,
-                    borderRadius: BorderRadius.circular(11),
+                if (hasUnread)
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: softBlue,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble_rounded,
+                      color: primaryBlue,
+                      size: 18,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.chat_bubble_rounded,
-                    color: primaryBlue,
-                    size: 18,
-                  ),
-                ),
               ],
             ),
           ),
