@@ -5,7 +5,9 @@ import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentFormPage extends StatefulWidget {
-  const ResidentFormPage({super.key});
+  const ResidentFormPage({super.key, this.initialUnitId});
+
+  final int? initialUnitId;
 
   @override
   State<ResidentFormPage> createState() => _ResidentFormPageState();
@@ -22,6 +24,8 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
   int? _selectedUnitId;
   bool _isLoadingUnits = true;
   bool _isSaving = false;
+  bool get _hasAnyUnits => _units.isNotEmpty;
+  bool get _hasAvailableUnits => _units.any((unit) => !unit.isFull);
 
   @override
   void initState() {
@@ -43,8 +47,12 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
       final availableUnits = units.where((unit) => !unit.isFull).toList();
       setState(() {
         _units = units;
-        _selectedUnitId =
-            availableUnits.isNotEmpty ? availableUnits.first.id : null;
+        final requestedUnitId = widget.initialUnitId;
+        final hasRequestedUnit = requestedUnitId != null &&
+            availableUnits.any((unit) => unit.id == requestedUnitId);
+        _selectedUnitId = hasRequestedUnit
+            ? requestedUnitId
+            : (availableUnits.isNotEmpty ? availableUnits.first.id : null);
         _isLoadingUnits = false;
       });
     } catch (e) {
@@ -86,6 +94,12 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
 
     if (!mounted) return;
     Navigator.pop(context);
+  }
+
+  Future<void> _goToManageCondo() async {
+    await Navigator.pushNamed(context, '/manage-condo');
+    if (!mounted) return;
+    await _loadUnits();
   }
 
   Future<void> _showProfileDialog(ResidentProfile resident) async {
@@ -186,6 +200,24 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                     return null;
                   },
                 ),
+                if (!_isLoadingUnits && !_hasAnyUnits)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'No units found yet. Add a unit in Manage Condo before creating a resident profile.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _goToManageCondo,
+                          child: const Text('Go to Manage Condo'),
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -199,15 +231,22 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                         : const Text('Create Resident Profile'),
                   ),
                 ),
-                if (!_isLoadingUnits &&
-                    _units.isNotEmpty &&
-                    _selectedUnitId == null)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12),
-                    child: Text(
-                      'All units are at maximum capacity. Add a unit or increase capacity in Manage Condo.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.redAccent),
+                if (!_isLoadingUnits && _hasAnyUnits && !_hasAvailableUnits)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'All units are at maximum capacity. Add a unit or increase capacity in Manage Condo.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _goToManageCondo,
+                          child: const Text('Go to Manage Condo'),
+                        ),
+                      ],
                     ),
                   ),
               ],

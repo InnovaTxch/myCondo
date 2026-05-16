@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
+import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/manager/pages/resident_form_page.dart';
 import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -16,9 +18,15 @@ class ManageResidentsPage extends StatefulWidget {
 
 class _ManageResidentsPageState extends State<ManageResidentsPage> {
   final ResidentRepository _repository = ResidentRepository.instance;
+  final CondoUnitRepository _unitRepository = CondoUnitRepository.instance;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _newUnitNameController = TextEditingController();
+  final TextEditingController _newUnitCapacityController =
+      TextEditingController();
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isAddingUnitInline = false;
+  bool _isSavingUnitInline = false;
 
   @override
   void initState() {
@@ -30,6 +38,8 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _newUnitNameController.dispose();
+    _newUnitCapacityController.dispose();
     super.dispose();
   }
 
@@ -56,10 +66,37 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     }
   }
 
-  Future<void> _openAddResident() async {
+  Future<void> _openAddResident([int? initialUnitId]) async {
+    try {
+      final units = await _repository.getUnitOptions();
+      if (!mounted) return;
+      if (units.isEmpty) {
+        context.showAppSnackBar(
+          SnackBar(
+            content: const Text(
+              'Add at least one unit first before adding residents.',
+            ),
+            action: SnackBarAction(
+              label: 'Add Unit',
+              onPressed: () => setState(() => _isAddingUnitInline = true),
+            ),
+          ),
+        );
+        return;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      context.showAppSnackBar(
+        SnackBar(content: Text('Unable to load units: $e')),
+      );
+      return;
+    }
+
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const ResidentFormPage()),
+      MaterialPageRoute(
+        builder: (_) => ResidentFormPage(initialUnitId: initialUnitId),
+      ),
     );
     await _loadResidents();
   }
@@ -72,6 +109,47 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
       ),
     );
     await _loadResidents();
+  }
+
+  Future<void> _saveInlineUnit() async {
+    final name = _newUnitNameController.text.trim();
+    final capacity = int.tryParse(_newUnitCapacityController.text.trim());
+    if (name.isEmpty) {
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Unit name is required.')),
+      );
+      return;
+    }
+    if (capacity == null || capacity <= 0) {
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Enter a valid capacity greater than 0.')),
+      );
+      return;
+    }
+
+    setState(() => _isSavingUnitInline = true);
+    try {
+      await _unitRepository.addUnit(name: name, capacity: capacity);
+      if (!mounted) return;
+      setState(() {
+        _newUnitNameController.clear();
+        _newUnitCapacityController.clear();
+        _isAddingUnitInline = false;
+      });
+      await _loadResidents(showLoading: false);
+      if (!mounted) return;
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Unit added. You can now add residents.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      context.showAppSnackBar(
+        SnackBar(content: Text('Failed to save unit: $e')),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isSavingUnitInline = false);
+    }
   }
 
   @override
@@ -104,15 +182,22 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: _openAddResident,
-                  icon: const Icon(Icons.person_add_alt_1),
-                  label: const Text('Add'),
-                ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSavingUnitInline
+                    ? null
+                    : () => setState(
+                          () => _isAddingUnitInline = !_isAddingUnitInline,
+                        ),
+                icon: const Icon(Icons.add_home_work_outlined),
+                label: Text(_isAddingUnitInline ? 'Cancel' : 'Add Unit'),
+              ),
+            ),
+            const SizedBox(height: 6),
             Expanded(
               child: _isLoading
                   ? const AppScrollableCentered(child: AppLoadingState())
@@ -128,26 +213,36 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                           valueListenable: _repository.unitGroupsNotifier,
                           builder: (context, groups, _) {
                             final filtered = _filterGroups(groups);
-
-                            if (filtered.isEmpty) {
-                              return const AppScrollableCentered(
-                                child: AppEmptyState(
-                                  icon: Icons.search_rounded,
-                                  title: 'No results',
-                                  message:
-                                      'No units or residents match your search.',
-                                  card: false,
-                                ),
-                              );
-                            }
-
-                            return ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: filtered.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) =>
-                                  _buildUnitGroup(filtered[index]),
+                            return Column(
+                              children: [
+                                _buildInlineUnitComposer(),
+                                if (_isAddingUnitInline)
+                                  const SizedBox(height: 6),
+                                if (filtered.isEmpty)
+                                  const Expanded(
+                                    child: AppScrollableCentered(
+                                      child: AppEmptyState(
+                                        icon: Icons.search_rounded,
+                                        title: 'No results',
+                                        message:
+                                            'No units or residents match your search.',
+                                        card: false,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Expanded(
+                                    child: ListView.separated(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      itemCount: filtered.length,
+                                      separatorBuilder: (context, index) =>
+                                          const SizedBox(height: 8),
+                                      itemBuilder: (context, index) =>
+                                          _buildUnitGroup(filtered[index]),
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         ),
@@ -177,14 +272,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             fontSize: 16,
           ),
         ),
-        subtitle: Text(
-          unit.capacity == null
-              ? '${unit.occupied} residents'
-              : '${unit.occupied} of ${unit.capacity} capacity',
-          style: TextStyle(
-            color: isFull ? Colors.redAccent : Colors.black54,
-          ),
-        ),
+        subtitle: _buildCapacityIcons(unit),
         children: [
           if (group.residents.isEmpty)
             const Padding(
@@ -199,6 +287,18 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             )
           else
             ...group.residents.map(_buildResidentTile),
+          if (!isFull)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _openAddResident(unit.id),
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Add Resident'),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -225,6 +325,88 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
             child: const Text('View Info'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInlineUnitComposer() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      child: !_isAddingUnitInline
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(2, 2, 2, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _newUnitNameController,
+                    enabled: !_isSavingUnitInline,
+                    decoration: const InputDecoration(
+                      labelText: 'Unit Name',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _newUnitCapacityController,
+                    enabled: !_isSavingUnitInline,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Maximum Capacity',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _isSavingUnitInline ? null : _saveInlineUnit,
+                      child: _isSavingUnitInline
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Save Unit'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildCapacityIcons(UnitOption unit) {
+    final capacity = unit.capacity;
+    if (capacity == null || capacity <= 0) {
+      return Text(
+        '${unit.occupied} residents',
+        style: const TextStyle(color: Colors.black54),
+      );
+    }
+
+    final occupied = unit.occupied.clamp(0, capacity);
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Wrap(
+        spacing: 2,
+        runSpacing: 2,
+        children: List<Widget>.generate(capacity, (index) {
+          final filled = index < occupied;
+          return Icon(
+            Icons.person,
+            size: 16,
+            color: filled ? Colors.blue : Colors.grey,
+          );
+        }),
       ),
     );
   }
