@@ -8,6 +8,7 @@ import 'resident_dashboard.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_tab_scaffold.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -19,6 +20,12 @@ class ResidentHomeScreen extends StatefulWidget {
 class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   int _activePageIndex = 0;
   final _messagingService = MessagingService();
+
+  @override
+  void initState() {
+    super.initState();
+    presenceService.start();
+  }
 
   void changeActivePageIndex(int index) {
     setState(() => _activePageIndex = index);

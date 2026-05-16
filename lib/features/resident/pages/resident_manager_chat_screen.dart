@@ -17,7 +17,7 @@ class _ResidentManagerChatScreenState
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<({int conversationId, String managerName})>(
+    return FutureBuilder<({int conversationId,  String managerId, String managerName})>(
       future: _loadConversation(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -38,13 +38,14 @@ class _ResidentManagerChatScreenState
         return ChatScreen(
           name: conversation.managerName,
           conversationId: conversation.conversationId,
+          otherProfileId: conversation.managerId,
           showBackButton: false,
         );
       },
     );
   }
 
-  Future<({int conversationId, String managerName})> _loadConversation() async {
+  Future<({int conversationId, String managerId, String managerName})> _loadConversation() async {
     final residentId = await _service.currentProfileId;
     if (residentId == null) {
       throw StateError('Please log in.');
@@ -60,6 +61,7 @@ class _ResidentManagerChatScreenState
 
     return (
       conversationId: conversationId,
+      managerId: manager['id'].toString(),
       managerName: _displayName(manager),
     );
   }

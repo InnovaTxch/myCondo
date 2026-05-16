@@ -3,6 +3,7 @@ import 'package:mycondo/features/shared/pages/chat_screen.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerInboxScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class ManagerInboxScreen extends StatefulWidget {
 
 class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   final _service = MessagingService();
+  late final void Function(Set<String>) _presenceListener;
+  Set<String> _onlineResidentIds = const <String>{};
   Future<List<Map<String, dynamic>>>? _residentsFuture;
   String? _managerId;
   bool _isLoadingProfile = true;
@@ -30,7 +33,19 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   @override
   void initState() {
     super.initState();
+    _presenceListener = (onlineProfileIds) {
+      if (!mounted) return;
+      setState(() => _onlineResidentIds = onlineProfileIds);
+    };
+    presenceService.addListener(_presenceListener);
+    presenceService.start();
     _loadManagerProfile();
+  }
+
+  @override
+  void dispose() {
+    presenceService.removeListener(_presenceListener);
+    super.dispose();
   }
 
   Future<void> _loadManagerProfile() async {
@@ -150,6 +165,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                           residentId: residentId,
                           name: name,
                           hasUnread: unreadResidentIds.contains(residentId),
+                          isOnline: _onlineResidentIds.contains(residentId),
                         );
                       },
                     );
@@ -294,6 +310,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     required String residentId,
     required String name,
     bool hasUnread = false,
+    bool isOnline = false,
   }) {
     final initials = _initials(name);
     final avatarColors = [
@@ -335,36 +352,54 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
             ),
             child: Row(
               children: [
-                // Avatar
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: colorPair,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorPair[0].withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: colorPair,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorPair[0].withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (isOnline)
+                      Positioned(
+                        right: -1,
+                        bottom: -1,
+                        child: Container(
+                          width: 13,
+                          height: 13,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF22C55E),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(width: 14),
                 // Name + role
@@ -384,18 +419,9 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF22C55E),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'Resident',
-                            style: TextStyle(
+                          Text(
+                            isOnline ? 'Active now' : 'Resident',
+                            style: const TextStyle(
                               fontFamily: 'Urbanist',
                               fontSize: 12,
                               color: Color(0xFF64748B),
@@ -453,6 +479,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
           builder: (_) => ChatScreen(
             name: residentName,
             conversationId: conversationId,
+            otherProfileId: residentId,
           ),
         ),
       );

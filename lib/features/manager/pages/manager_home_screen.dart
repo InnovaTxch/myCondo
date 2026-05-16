@@ -10,6 +10,7 @@ import 'package:mycondo/features/shared/pages/condo_about_page.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_navigation_bar.dart';
 import 'package:mycondo/features/shared/widgets/dashboard_tab_scaffold.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 
 class ManagerHomeScreen extends StatefulWidget {
   const ManagerHomeScreen({
@@ -31,6 +32,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   void initState() {
     super.initState();
     _activePageIndex = widget.initialPageIndex;
+    presenceService.start();
   }
 
   void changeActivePageIndex(int index) {

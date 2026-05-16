@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -44,7 +45,22 @@ class AuthService {
 
   //sign out
   Future<void> signOut() async {
-    await _supabase.auth.signOut();
+    try {
+      await presenceService.stop();
+    } catch (_) {
+      // Presence cleanup should not block the user from signing out.
+    }
+
+    try {
+      await _supabase.auth.signOut();
+    } catch (error, stackTrace) {
+      try {
+        await presenceService.start();
+      } catch (_) {
+        // Keep the original auth error visible to the caller.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 
   Future<void> updatePassword(String password) async {

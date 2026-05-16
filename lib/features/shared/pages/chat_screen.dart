@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String name;
   final int conversationId;
   final bool showBackButton;
+  final String otherProfileId;
 
   const ChatScreen({
     super.key,
     required this.name,
     required this.conversationId,
+    required this.otherProfileId,
     this.showBackButton = true,
   });
 
@@ -24,10 +27,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final _service = MessagingService();
   final Set<String> _visibleTimeMessageIds = {};
+  late final void Function(Set<String>) _presenceListener;
   String? _myProfileId;
   DateTime? _lastReadAtWhenOpened;
   bool _didCaptureReadMarker = false;
   bool _isTyping = false;
+  bool _isOtherUserActive = false;
 
   // Blue color palette
   static const Color primaryBlue = Color(0xFF2563EB);
@@ -39,6 +44,13 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _presenceListener = (onlineProfileIds) {
+      if (!mounted) return;
+      setState(() {
+        _isOtherUserActive = onlineProfileIds.contains(widget.otherProfileId);
+      });
+    };
+    presenceService.addListener(_presenceListener);
     _loadProfileId();
     _loadReadMarkerThenMarkRead();
     _controller.addListener(() {
@@ -177,6 +189,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    presenceService.removeListener(_presenceListener);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -305,72 +318,82 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: Color(0xFF1E293B), size: 18),
                 onPressed: () => Navigator.pop(context),
               ),
-            // Avatar
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [primaryBlue, deepBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryBlue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  _getInitials(widget.name),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.name,
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [primaryBlue, deepBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF22C55E),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Online',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryBlue.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                ],
+                  child: Center(
+                    child: Text(
+                      _getInitials(widget.name),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isOtherUserActive)
+                  Positioned(
+                    right: -1,
+                    bottom: -1,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Transform.translate(
+                offset: const Offset(0, 3),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name,
+                      style: const TextStyle(
+                        color: Color(0xFF1E293B),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _isOtherUserActive ? 'Active now' : '',
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             // Action buttons
