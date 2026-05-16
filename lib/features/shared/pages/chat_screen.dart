@@ -23,6 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final _service = MessagingService();
+  final Set<String> _visibleTimeMessageIds = {};
   String? _myProfileId;
   DateTime? _lastReadAtWhenOpened;
   bool _didCaptureReadMarker = false;
@@ -107,6 +108,56 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  DateTime? _parseMessageDate(dynamic createdAt) {
+    if (createdAt == null) return null;
+    return DateTime.tryParse(createdAt.toString())?.toLocal();
+  }
+
+  String _formatDateDivider(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDay = DateTime(date.year, date.month, date.day);
+
+    final difference = today.difference(messageDay).inDays;
+
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Widget _buildDateDivider(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2563EB),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   DateTime? _messageCreatedAt(Map<String, dynamic> message) {
     final value = message['created_at'];
     if (value == null) return null;
@@ -181,25 +232,40 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
+                    final messageId = msg['id'].toString();
                     final bool isMe = msg['sender_id'] == myId;
                     final timeStr = _formatTime(msg['created_at']);
-
-                    final isUnreadIncoming = _isUnreadIncomingMessage(msg, myId);
+                    final createdAt = _parseMessageDate(msg['created_at']);
                     final olderMessage = index + 1 < messages.length ? messages[index + 1] : null;
                     final olderMessageIsUnread = olderMessage != null &&
                         _isUnreadIncomingMessage(olderMessage, myId);
 
-                    final showUnreadDivider = isUnreadIncoming && !olderMessageIsUnread;
+                    final olderCreatedAt = olderMessage == null
+                        ? null
+                        : _parseMessageDate(olderMessage['created_at']);
 
-                    // Check if we should show date separator
-                    final bool showTime = index == messages.length - 1 ||
-                        (index + 1 < messages.length &&
-                            msg['sender_id'] != messages[index + 1]['sender_id']);
+                    final isUnreadIncoming = _isUnreadIncomingMessage(msg, myId);
+                    final showUnreadDivider = isUnreadIncoming && !olderMessageIsUnread;
+                    final showDateDivider = createdAt != null &&
+                        (olderCreatedAt == null || !_isSameDay(createdAt, olderCreatedAt));
+                    final showTime = _visibleTimeMessageIds.contains(messageId);
 
                     return Column(
                       children: [
+                        if (showDateDivider) _buildDateDivider(_formatDateDivider(createdAt)),
                         if (showUnreadDivider) _buildUnreadDivider(),
-                        _buildMessageBubble(msg, isMe, timeStr, showTime),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (showTime) {
+                                _visibleTimeMessageIds.remove(messageId);
+                              } else {
+                                _visibleTimeMessageIds.add(messageId);
+                              }
+                            });
+                          },
+                          child: _buildMessageBubble(msg, isMe, timeStr, showTime),
+                        ),
                       ],
                     );
                   },
