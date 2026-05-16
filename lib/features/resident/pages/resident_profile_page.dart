@@ -55,7 +55,11 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       setState(() {
         _firstName = profile['first_name']?.toString();
         _lastName = profile['last_name']?.toString();
-        _email = email;
+        final profileEmail = profile['email']?.toString().trim();
+        final authEmail = email?.trim();
+        _email = (profileEmail != null && profileEmail.isNotEmpty)
+            ? profileEmail
+            : authEmail;
         _unitName = profile['unit_name']?.toString();
         _residentCode = profile['resident_code']?.toString();
         _status = profile['resident_status']?.toString();

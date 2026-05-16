@@ -23,9 +23,16 @@ class ResidentProfileService {
         .maybeSingle();
 
     final unit = resident?['units'] as Map<String, dynamic>?;
+    final authEmail = supabase.auth.currentUser?.email?.trim();
+    final profileEmail = (data['email'] as String?)?.trim();
+    final resolvedEmail =
+        (profileEmail != null && profileEmail.isNotEmpty)
+            ? profileEmail
+            : authEmail;
 
     return {
       ...data,
+      'email': resolvedEmail,
       'resident_code': resident?['code'],
       'resident_status': resident?['status'],
       'unit_name': unit?['name'],

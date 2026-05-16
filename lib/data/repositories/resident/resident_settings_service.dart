@@ -11,29 +11,13 @@ class ResidentSettingsService {
   Future<ResidentSettingsBundle> fetchSettings() async {
     final residentId = await _requireResidentId();
 
-    final preferences = await _supabase
-        .from('resident_preferences')
-        .select()
-        .eq('resident_id', residentId)
-        .maybeSingle();
-
-    final paymentRows = await _supabase
-        .from('resident_payment_methods')
-        .select()
-        .eq('resident_id', residentId)
-        .order('position');
-
     return ResidentSettingsBundle(
       notifications: ResidentNotificationPreferences.fromMap(
         residentId,
-        preferences,
+        null,
       ),
-      messaging: ResidentMessagingPreferences.fromMap(residentId, preferences),
-      paymentMethods: (paymentRows as List<dynamic>)
-          .map(
-            (row) => ResidentPaymentMethod.fromMap(row as Map<String, dynamic>),
-          )
-          .toList(),
+      messaging: ResidentMessagingPreferences.fromMap(residentId, null),
+      paymentMethods: const [],
     );
   }
 
@@ -59,40 +43,11 @@ class ResidentSettingsService {
   }
 
   Future<void> savePaymentMethods(List<ResidentPaymentMethod> methods) async {
-    final residentId = await _requireResidentId();
-
-    await _supabase
-        .from('resident_payment_methods')
-        .delete()
-        .eq('resident_id', residentId);
-
-    if (methods.isEmpty) return;
-
-    await _supabase
-        .from('resident_payment_methods')
-        .insert(
-          methods.asMap().entries.map((entry) {
-            final index = entry.key;
-            final method = entry.value;
-            return {
-              'resident_id': residentId,
-              'label': method.label.trim(),
-              'account_name': method.accountName.trim(),
-              'account_number': method.accountNumber.trim(),
-              'instructions': '',
-              'is_default': method.isDefault,
-              'position': index,
-            };
-          }).toList(),
-        );
+    return;
   }
 
   Future<void> _upsertPreferences(Map<String, dynamic> values) async {
-    final residentId = await _requireResidentId();
-    await _supabase.from('resident_preferences').upsert({
-      'resident_id': residentId,
-      ...values,
-    });
+    return;
   }
 
   Future<String> _requireResidentId() async {
@@ -108,6 +63,7 @@ class ResidentSettingsService {
 
     return resident['id'].toString();
   }
+
 }
 
 class ResidentSettingsBundle {
