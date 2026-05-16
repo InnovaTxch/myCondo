@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SessionTimerService {
@@ -48,6 +49,12 @@ class SessionTimerService {
     stopTimer();
 
     try {
+      try {
+        await presenceService.stop();
+      } catch (e) {
+        debugPrint("Presence error during timeout logout: $e");
+      }
+
       await Supabase.instance.client.auth.signOut();
     } catch (e) {
       debugPrint("Auth error during timeout: $e");

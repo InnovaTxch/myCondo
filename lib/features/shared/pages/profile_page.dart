@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -10,6 +11,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
+  final _authService = AuthService();
 
   String name = "";
   String email = "";
@@ -50,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> logout() async {
-    await supabase.auth.signOut();
+    await _authService.signOut();
 
     if (!mounted) return;
 

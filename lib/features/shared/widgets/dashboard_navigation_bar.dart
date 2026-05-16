@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:mycondo/features/shared/widgets/badged_navigation_icon.dart';
 
 class DashboardNavigationBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> changeActivePageIndex;
+  final bool hasUnreadMessages;
 
   const DashboardNavigationBar({
     super.key,
     required this.currentIndex,
     required this.changeActivePageIndex,
+    this.hasUnreadMessages = false,
   });
 
   static const _labels = <String>[
@@ -96,15 +99,22 @@ class DashboardNavigationBar extends StatelessWidget {
                     },
                     destinations: List.generate(_labels.length, (index) {
                       final label = _labels[index];
+                      final showBadge = index == 2 && hasUnreadMessages;
                       return NavigationDestination(
                         label: label,
                         icon: Tooltip(
                           message: label,
-                          child: Icon(_icons[index]),
+                          child: BadgedNavigationIcon(
+                            icon: _icons[index],
+                            showBadge: showBadge,
+                          ),
                         ),
                         selectedIcon: Tooltip(
                           message: label,
-                          child: Icon(_selectedIcons[index]),
+                          child: BadgedNavigationIcon(
+                            icon: _selectedIcons[index],
+                            showBadge: showBadge,
+                          ),
                         ),
                       );
                     }),

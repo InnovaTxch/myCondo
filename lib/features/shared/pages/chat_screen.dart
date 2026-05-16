@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/services/shared/presence_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String name;
   final int conversationId;
   final bool showBackButton;
+  final String otherProfileId;
 
   const ChatScreen({
     super.key,
     required this.name,
     required this.conversationId,
+    required this.otherProfileId,
     this.showBackButton = true,
   });
 
@@ -23,8 +26,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final _service = MessagingService();
+  final Set<String> _visibleTimeMessageIds = {};
+  late final void Function(Set<String>) _presenceListener;
   String? _myProfileId;
+  DateTime? _lastReadAtWhenOpened;
+  bool _didCaptureReadMarker = false;
   bool _isTyping = false;
+  bool _isOtherUserActive = false;
 
   // Blue color palette
   static const Color primaryBlue = Color(0xFF2563EB);
@@ -36,10 +44,36 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _presenceListener = (onlineProfileIds) {
+      if (!mounted) return;
+      setState(() {
+        _isOtherUserActive = onlineProfileIds.contains(widget.otherProfileId);
+      });
+    };
+    presenceService.addListener(_presenceListener);
     _loadProfileId();
+    _loadReadMarkerThenMarkRead();
     _controller.addListener(() {
       setState(() => _isTyping = _controller.text.trim().isNotEmpty);
     });
+  }
+
+  Future<void> _loadReadMarkerThenMarkRead() async {
+    if (_didCaptureReadMarker) return;
+    _didCaptureReadMarker = true;
+
+    try {
+      final lastReadAt =
+      await _service.currentUserLastReadAt(widget.conversationId);
+
+      if (mounted) {
+        setState(() => _lastReadAtWhenOpened = lastReadAt);
+      }
+
+      await _service.markConversationRead(widget.conversationId);
+    } catch (e) {
+      debugPrint('Failed to mark conversation read: $e');
+    }
   }
 
   Future<void> _loadProfileId() async {
@@ -86,8 +120,76 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  DateTime? _parseMessageDate(dynamic createdAt) {
+    if (createdAt == null) return null;
+    return DateTime.tryParse(createdAt.toString())?.toLocal();
+  }
+
+  String _formatDateDivider(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDay = DateTime(date.year, date.month, date.day);
+
+    final difference = today.difference(messageDay).inDays;
+
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Widget _buildDateDivider(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2563EB),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  DateTime? _messageCreatedAt(Map<String, dynamic> message) {
+    final value = message['created_at'];
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  bool _isUnreadIncomingMessage(Map<String, dynamic> message, String? myId) {
+    final lastReadAt = _lastReadAtWhenOpened;
+    final createdAt = _messageCreatedAt(message);
+
+    if (lastReadAt == null || createdAt == null || myId == null) {
+      return false;
+    }
+
+    return message['sender_id'] != myId && createdAt.isAfter(lastReadAt);
+  }
+
   @override
   void dispose() {
+    presenceService.removeListener(_presenceListener);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -120,6 +222,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final messages = snapshot.data!;
 
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _loadReadMarkerThenMarkRead();
+                  }
+                });
+
                 if (messages.isEmpty) {
                   return const AppEmptyState(
                     icon: Icons.chat_bubble_outline_rounded,
@@ -137,16 +245,42 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
+                    final messageId = msg['id'].toString();
                     final bool isMe = msg['sender_id'] == myId;
                     final timeStr = _formatTime(msg['created_at']);
+                    final createdAt = _parseMessageDate(msg['created_at']);
+                    final olderMessage = index + 1 < messages.length ? messages[index + 1] : null;
+                    final olderMessageIsUnread = olderMessage != null &&
+                        _isUnreadIncomingMessage(olderMessage, myId);
 
-                    // Check if we should show date separator
-                    final bool showTime = index == messages.length - 1 ||
-                        (index + 1 < messages.length &&
-                            msg['sender_id'] != messages[index + 1]['sender_id']);
+                    final olderCreatedAt = olderMessage == null
+                        ? null
+                        : _parseMessageDate(olderMessage['created_at']);
 
-                    return _buildMessageBubble(
-                        msg, isMe, timeStr, showTime);
+                    final isUnreadIncoming = _isUnreadIncomingMessage(msg, myId);
+                    final showUnreadDivider = isUnreadIncoming && !olderMessageIsUnread;
+                    final showDateDivider = createdAt != null &&
+                        (olderCreatedAt == null || !_isSameDay(createdAt, olderCreatedAt));
+                    final showTime = _visibleTimeMessageIds.contains(messageId);
+
+                    return Column(
+                      children: [
+                        if (showDateDivider) _buildDateDivider(_formatDateDivider(createdAt)),
+                        if (showUnreadDivider) _buildUnreadDivider(),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (showTime) {
+                                _visibleTimeMessageIds.remove(messageId);
+                              } else {
+                                _visibleTimeMessageIds.add(messageId);
+                              }
+                            });
+                          },
+                          child: _buildMessageBubble(msg, isMe, timeStr, showTime),
+                        ),
+                      ],
+                    );
                   },
                 );
               },
@@ -184,72 +318,82 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: Color(0xFF1E293B), size: 18),
                 onPressed: () => Navigator.pop(context),
               ),
-            // Avatar
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [primaryBlue, deepBlue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryBlue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  _getInitials(widget.name),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.name,
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [primaryBlue, deepBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF22C55E),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Online',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryBlue.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                ],
+                  child: Center(
+                    child: Text(
+                      _getInitials(widget.name),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isOtherUserActive)
+                  Positioned(
+                    right: -1,
+                    bottom: -1,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Transform.translate(
+                offset: const Offset(0, 3),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.name,
+                      style: const TextStyle(
+                        color: Color(0xFF1E293B),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _isOtherUserActive ? 'Active now' : '',
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             // Action buttons
@@ -485,6 +629,29 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnreadDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: const [
+          Expanded(child: Divider(color: Color(0xFFBFDBFE))),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'Unread messages',
+              style: TextStyle(
+                color: primaryBlue,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: Color(0xFFBFDBFE))),
         ],
       ),
     );
