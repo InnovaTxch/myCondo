@@ -19,13 +19,6 @@ class DashboardQuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         DashboardQuickActionTile(
-          title: 'Manage Condo',
-          subtitle: 'Add, edit, and delete condo units here.',
-          icon: Icons.apartment_outlined,
-          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
-        ),
-        const SizedBox(height: 10),
-        DashboardQuickActionTile(
           title: 'Approve Payments',
           subtitle: 'Approve cash and e-wallet payments here.',
           icon: Icons.fact_check_outlined,
