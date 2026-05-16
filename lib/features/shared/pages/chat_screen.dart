@@ -24,6 +24,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final _service = MessagingService();
   String? _myProfileId;
+  DateTime? _lastReadAtWhenOpened;
+  bool _didCaptureReadMarker = false;
   bool _isTyping = false;
 
   // Blue color palette
@@ -37,9 +39,28 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadProfileId();
+    _loadReadMarkerThenMarkRead();
     _controller.addListener(() {
       setState(() => _isTyping = _controller.text.trim().isNotEmpty);
     });
+  }
+
+  Future<void> _loadReadMarkerThenMarkRead() async {
+    if (_didCaptureReadMarker) return;
+    _didCaptureReadMarker = true;
+
+    try {
+      final lastReadAt =
+      await _service.currentUserLastReadAt(widget.conversationId);
+
+      if (mounted) {
+        setState(() => _lastReadAtWhenOpened = lastReadAt);
+      }
+
+      await _service.markConversationRead(widget.conversationId);
+    } catch (e) {
+      debugPrint('Failed to mark conversation read: $e');
+    }
   }
 
   Future<void> _loadProfileId() async {
@@ -86,6 +107,23 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  DateTime? _messageCreatedAt(Map<String, dynamic> message) {
+    final value = message['created_at'];
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
+  }
+
+  bool _isUnreadIncomingMessage(Map<String, dynamic> message, String? myId) {
+    final lastReadAt = _lastReadAtWhenOpened;
+    final createdAt = _messageCreatedAt(message);
+
+    if (lastReadAt == null || createdAt == null || myId == null) {
+      return false;
+    }
+
+    return message['sender_id'] != myId && createdAt.isAfter(lastReadAt);
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -120,6 +158,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final messages = snapshot.data!;
 
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _loadReadMarkerThenMarkRead();
+                  }
+                });
+
                 if (messages.isEmpty) {
                   return const AppEmptyState(
                     icon: Icons.chat_bubble_outline_rounded,
@@ -140,13 +184,24 @@ class _ChatScreenState extends State<ChatScreen> {
                     final bool isMe = msg['sender_id'] == myId;
                     final timeStr = _formatTime(msg['created_at']);
 
+                    final isUnreadIncoming = _isUnreadIncomingMessage(msg, myId);
+                    final olderMessage = index + 1 < messages.length ? messages[index + 1] : null;
+                    final olderMessageIsUnread = olderMessage != null &&
+                        _isUnreadIncomingMessage(olderMessage, myId);
+
+                    final showUnreadDivider = isUnreadIncoming && !olderMessageIsUnread;
+
                     // Check if we should show date separator
                     final bool showTime = index == messages.length - 1 ||
                         (index + 1 < messages.length &&
                             msg['sender_id'] != messages[index + 1]['sender_id']);
 
-                    return _buildMessageBubble(
-                        msg, isMe, timeStr, showTime);
+                    return Column(
+                      children: [
+                        if (showUnreadDivider) _buildUnreadDivider(),
+                        _buildMessageBubble(msg, isMe, timeStr, showTime),
+                      ],
+                    );
                   },
                 );
               },
@@ -485,6 +540,29 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnreadDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: const [
+          Expanded(child: Divider(color: Color(0xFFBFDBFE))),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              'Unread messages',
+              style: TextStyle(
+                color: primaryBlue,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: Color(0xFFBFDBFE))),
         ],
       ),
     );
