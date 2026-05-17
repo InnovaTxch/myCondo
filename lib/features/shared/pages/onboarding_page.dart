@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/auth/pending_signup_credentials.dart';
@@ -67,7 +68,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
     } catch (e) {
       if (mounted) {
         context.showAppSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: AppColors.errorRed,
+          ),
         );
       }
     } finally {
@@ -108,7 +112,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         context.showAppSnackBar(
           SnackBar(
             content: Text("Error signing out: $e"),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -132,6 +136,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -149,7 +154,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               const SizedBox(height: 12),
               Text(
                 _isManager ? "Set up your condo" : "Join your condo",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -157,7 +162,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ? "Create your condo workspace and add resident profiles after setup."
                     : "Use the BH code and resident code from your manager.",
                 style: TextStyle(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: AppColors.secondaryText,
                   height: 1.35,
                 ),
               ),
@@ -199,7 +204,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               SubmitButton(
                 text: _isManager ? "Start Managing" : "Join Condo",
                 onPressed: _canSubmit ? _handleFinalSubmit : null,
-                color: Color(0xFF5DA9E9),
+                color: AppColors.primaryBlue,
                 isLoading: _isLoading,
               ),
             ],

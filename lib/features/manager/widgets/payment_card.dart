@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 
@@ -18,12 +19,13 @@ class PaymentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final date = _formatDate(payment.date);
+    final statusColors = context.appStatusColors;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: AppColors.creamWhite,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -50,7 +52,7 @@ class PaymentCard extends StatelessWidget {
                         fontFamily: "Urbanist",
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF8A8A8A),
+                        color: AppColors.secondaryText,
                         height: 1.0,
                       ),
                     ),
@@ -66,7 +68,7 @@ class PaymentCard extends StatelessWidget {
                       fontFamily: "Urbanist",
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: _statusColor(payment.status),
+                      color: _statusColor(payment.status, statusColors),
                       height: 1.0,
                     ),
                   ),
@@ -77,7 +79,7 @@ class PaymentCard extends StatelessWidget {
                       fontFamily: "Urbanist",
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF8A8A8A),
+                      color: AppColors.secondaryText,
                       height: 1.0,
                     ),
                   ),
@@ -94,7 +96,7 @@ class PaymentCard extends StatelessWidget {
                 fontFamily: "Urbanist",
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
-                color: Colors.black,
+                color: AppColors.darkText,
                 height: 1.0,
               ),
             ),
@@ -161,8 +163,8 @@ class PaymentCard extends StatelessWidget {
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: const Color(0xFF53B1FD),
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: AppColors.pureWhite,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
@@ -177,7 +179,7 @@ class PaymentCard extends StatelessWidget {
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: AppColors.pureWhite,
             height: 1.0,
           ),
         ),
@@ -195,8 +197,8 @@ class PaymentCard extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF53B1FD),
-          side: const BorderSide(color: Color(0xFF53B1FD)),
+          foregroundColor: AppColors.primaryBlue,
+          side: const BorderSide(color: AppColors.primaryBlue),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
@@ -211,7 +213,7 @@ class PaymentCard extends StatelessWidget {
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF53B1FD),
+            color: AppColors.primaryBlue,
             height: 1.0,
           ),
         ),
@@ -236,14 +238,14 @@ class PaymentCard extends StatelessWidget {
     }
   }
 
-  Color _statusColor(PaymentStatus status) {
+  Color _statusColor(PaymentStatus status, AppStatusColors statusColors) {
     switch (status) {
       case PaymentStatus.pending:
-        return const Color(0xFF8A6200);
+        return statusColors.warningStrong;
       case PaymentStatus.approved:
-        return const Color(0xFF227A45);
+        return statusColors.success;
       case PaymentStatus.rejected:
-        return const Color(0xFFB3261E);
+        return statusColors.destructive;
     }
   }
 }
@@ -267,7 +269,7 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF777777),
+              color: AppColors.secondaryText,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -283,3 +285,4 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+

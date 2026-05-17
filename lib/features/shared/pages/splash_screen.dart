@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -6,7 +7,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF4F4F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30),
         child: Column(
@@ -53,7 +54,8 @@ class SplashScreen extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: AppColors.black,
+                  foregroundColor: AppColors.pureWhite,
                   minimumSize: Size(300, 55),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -66,7 +68,7 @@ class SplashScreen extends StatelessWidget {
                   "Let's Get Started",
                   style: TextStyle(
                     fontFamily: "Urbanist",
-                    color: Colors.white,
+                    color: AppColors.pureWhite,
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
                   ),

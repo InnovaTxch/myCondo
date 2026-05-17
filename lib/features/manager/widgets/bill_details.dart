@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class BillDetails extends StatelessWidget {
@@ -36,7 +37,7 @@ class BillDetails extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               side: const BorderSide(color: Color(0xFFE6E2DD)),
-              foregroundColor: const Color(0xFF1A1A1A),
+              foregroundColor: AppColors.darkText,
             ),
             icon: const Icon(Icons.calendar_month_outlined),
             label: Text("Due ${DateFormat('MMM d, yyyy').format(dueDate)}"),
@@ -59,7 +60,7 @@ class BillDetails extends StatelessWidget {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: const Color(0xFFF7F5F2),
+      fillColor: AppColors.creamWhite,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -67,3 +68,4 @@ class BillDetails extends StatelessWidget {
     );
   }
 }
+

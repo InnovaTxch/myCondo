@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class SubmitButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
-  final Color color;
+  final Color? color;
 
   const SubmitButton({
     super.key,
     required this.text,
     required this.onPressed,
-    required this.color,
+    this.color,
     this.isLoading = false,
   });
 
@@ -19,7 +20,8 @@ class SubmitButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
+        backgroundColor: color ?? AppColors.primaryBlue,
+        foregroundColor: AppColors.pureWhite,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
@@ -31,7 +33,7 @@ class SubmitButton extends StatelessWidget {
               height: 22,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppColors.pureWhite,
               ),
             )
           : Text(
@@ -40,7 +42,7 @@ class SubmitButton extends StatelessWidget {
                 fontFamily: "Urbanist",
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.pureWhite,
               ),
             ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'gateway_text.dart';
 
 class LoginGateway extends StatelessWidget {
@@ -11,13 +12,13 @@ class LoginGateway extends StatelessWidget {
       children: [
         GatewayText(
           text: "Already have an account? ", 
-          textColor: Colors.black.withValues(alpha: 0.6)
+          textColor: AppColors.secondaryText
         ),
         GestureDetector(
           onTap: () => Navigator.pushReplacementNamed(context, '/login'),
           child: GatewayText(
             text: "Log in",
-            textColor: Color(0xFF53B1FD)
+            textColor: AppColors.primaryBlue,
           ),
         )
       ],

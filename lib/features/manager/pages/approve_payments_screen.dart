@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
@@ -175,7 +176,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
               fontFamily: "Urbanist",
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF53B1FD),
+              color: AppColors.primaryBlue,
               height: 1.0,
             ),
           ),
@@ -185,7 +186,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
             height: 2,
             width: isSelected ? 40 : 0,
             decoration: BoxDecoration(
-              color: const Color(0xFF53B1FD),
+              color: AppColors.primaryBlue,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -324,3 +325,4 @@ class _RejectPaymentDialogState extends State<_RejectPaymentDialog> {
     );
   }
 }
+

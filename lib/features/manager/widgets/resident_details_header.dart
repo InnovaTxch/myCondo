@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class ResidentDetailsHeader extends StatelessWidget {
   const ResidentDetailsHeader({
@@ -17,7 +18,7 @@ class ResidentDetailsHeader extends StatelessWidget {
           IconButton(
             onPressed: onBack,
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: const Color(0xFF1A1A1A),
+            color: AppColors.darkText,
           ),
           const Expanded(
             child: Center(
@@ -27,7 +28,7 @@ class ResidentDetailsHeader extends StatelessWidget {
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Urbanist',
-                  color: Color(0xFF1A1A1A),
+                  color: AppColors.darkText,
                 ),
               ),
             ),
@@ -38,3 +39,4 @@ class ResidentDetailsHeader extends StatelessWidget {
     );
   }
 }
+

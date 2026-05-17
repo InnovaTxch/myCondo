@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 
@@ -22,9 +23,9 @@ class ResidentBillCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: AppColors.softGray),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +55,7 @@ class ResidentBillCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Due $dueDate',
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
           ),
           const SizedBox(height: 12),
           ...bill.bills.map(
@@ -90,12 +91,12 @@ class ResidentBillCard extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Paid',
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(color: AppColors.secondaryText),
                   ),
                 ),
                 Text(
                   currency.format(_centavosToPesos(bill.paidAmount)),
-                  style: const TextStyle(color: Colors.black54),
+                  style: const TextStyle(color: AppColors.secondaryText),
                 ),
               ],
             ),
@@ -157,13 +158,13 @@ class ResidentBillCard extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'paid':
-        return const Color(0xFF227A45);
+        return AppColors.successGreen;
       case 'partial':
-        return const Color(0xFF1A73C8);
+        return AppColors.primaryBlue;
       case 'overdue':
-        return const Color(0xFFB3261E);
+        return AppColors.errorRed;
       default:
-        return const Color(0xFF8A6200);
+        return AppColors.warningOrange;
     }
   }
 

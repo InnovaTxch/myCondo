@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class PaymentHistoryCard extends StatelessWidget {
   final String time;
@@ -44,7 +45,7 @@ class PaymentHistoryCard extends StatelessWidget {
                     fontFamily: "Urbanist",
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF53B1FD),
+                    color: AppColors.primaryBlue,
                     height: 1.0,
                   ),
                 ),
@@ -67,3 +68,4 @@ class PaymentHistoryCard extends StatelessWidget {
     );
   }
 }
+

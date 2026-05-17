@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:mycondo/data/models/unit.dart';
 
@@ -60,7 +61,7 @@ class _BillRecipientContainerState extends State<BillRecipientContainer> {
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFFE6E2DD)),
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFF7F5F2),
+        color: AppColors.creamWhite,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +109,7 @@ class _BillRecipientContainerState extends State<BillRecipientContainer> {
               child: FilledButton(
                 onPressed: () => _showSearchModal(context),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A1A),
+                  backgroundColor: AppColors.darkText,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
@@ -155,7 +156,7 @@ class _BillRecipientContainerState extends State<BillRecipientContainer> {
                       prefixIcon: const Icon(Icons.search),
                       hintText: "Search unit or resident",
                       filled: true,
-                      fillColor: const Color(0xFFF7F5F2),
+                      fillColor: AppColors.creamWhite,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -186,3 +187,4 @@ class _BillRecipientContainerState extends State<BillRecipientContainer> {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class PlaceholderPage extends StatelessWidget {
   const PlaceholderPage({
@@ -15,15 +16,15 @@ class PlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F4F4),
+      backgroundColor: AppColors.lightBlueBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF4F4F4),
+        backgroundColor: AppColors.lightBlueBackground,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: AppColors.darkText),
         title: Text(
           title,
           style: const TextStyle(
-            color: Colors.black,
+            color: AppColors.darkText,
             fontFamily: 'Urbanist',
             fontWeight: FontWeight.w700,
           ),
@@ -38,7 +39,7 @@ class PlaceholderPage extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: const Color(0xFF4A90D9),
+                  color: AppColors.primaryBlue,
                   size: 64,
                 ),
                 const SizedBox(height: 20),
@@ -46,7 +47,7 @@ class PlaceholderPage extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.black,
+                    color: AppColors.darkText,
                     fontFamily: 'Urbanist',
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -57,7 +58,7 @@ class PlaceholderPage extends StatelessWidget {
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFF555555),
+                    color: AppColors.secondaryText,
                     fontFamily: 'Urbanist',
                     fontSize: 16,
                     height: 1.4,

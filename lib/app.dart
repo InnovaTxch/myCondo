@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:mycondo/app_routes.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 import 'package:mycondo/services/shared/session_timer_service.dart';
 
@@ -18,6 +19,7 @@ class MyCondoApp extends StatelessWidget {
         navigatorKey: SessionTimerService().navigatorKey,
         title: 'myCondo',
         debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
         initialRoute: '/',
         routes: AppRoutes.routes,
       ),

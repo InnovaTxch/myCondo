@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
@@ -155,9 +156,9 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
   @override
   Widget build(BuildContext context) {
     return AppPageScaffold(
-      backgroundColor: const Color(0xFFDDF1FF),
+      backgroundColor: AppColors.lightBlueBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFDDF1FF),
+        backgroundColor: AppColors.lightBlueBackground,
         elevation: 0,
         title: const Text('Manage Residents'),
       ),
@@ -411,3 +412,4 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     );
   }
 }
+

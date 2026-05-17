@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
@@ -37,7 +38,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
@@ -690,3 +691,4 @@ class _DashboardLoading extends StatelessWidget {
     );
   }
 }
+

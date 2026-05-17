@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/shared/condo_about.dart';
 import 'package:mycondo/data/repositories/shared/condo_about_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -56,7 +57,7 @@ class _CondoAboutPageState extends State<CondoAboutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: FutureBuilder<CondoAbout>(
           future: _aboutFuture,
@@ -142,7 +143,7 @@ class _AboutHeader extends StatelessWidget {
               TextSpan(
                 text: 'myCondo',
                 style: TextStyle(
-                  color: Color(0xFF55AEF5),
+                  color: AppColors.primaryBlue,
                   fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.w600,
                 ),
@@ -653,4 +654,6 @@ class _EditCondoAboutSheetState extends State<_EditCondoAboutSheet> {
     );
   }
 }
+
+
 

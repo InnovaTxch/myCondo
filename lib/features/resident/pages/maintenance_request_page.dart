@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
@@ -100,7 +101,7 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFDCECF5),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: _isLoading
             ? const AppLoadingState()
@@ -400,3 +401,4 @@ InputDecoration _fieldDecoration(String? hintText) {
     ),
   );
 }
+

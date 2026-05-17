@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class ResidentInfoField extends StatelessWidget {
   const ResidentInfoField({
@@ -20,7 +21,7 @@ class ResidentInfoField extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF1A1A1A), size: 20),
+          Icon(icon, color: AppColors.darkText, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -37,3 +38,4 @@ class ResidentInfoField extends StatelessWidget {
     );
   }
 }
+

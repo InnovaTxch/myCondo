@@ -1,6 +1,7 @@
 import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -147,7 +148,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F1EC),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -168,7 +169,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
+                        color: AppColors.darkText,
                       ),
                     ),
                   ],
@@ -216,7 +217,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1A),
+                    color: AppColors.darkText,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Column(
@@ -262,7 +263,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
                 SubmitButton(
                   text: "Generate & Send Bills",
                   onPressed: _isSubmissionValid() ? _generateBill : null,
-                  color: const Color(0xFF1A1A1A),
+                  color: AppColors.darkText,
                   isLoading: _isLoading,
                 ),
               ],
@@ -299,7 +300,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1A1A1A),
+              color: AppColors.darkText,
             ),
           ),
           const SizedBox(height: 12),
@@ -351,7 +352,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: const Color(0xFFF7F5F2),
+      fillColor: AppColors.creamWhite,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -377,3 +378,5 @@ class _CreateBillPageState extends State<CreateBillPage> {
     (item['amount'] as TextEditingController).dispose();
   }
 }
+
+

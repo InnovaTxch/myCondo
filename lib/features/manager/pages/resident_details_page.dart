@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
@@ -199,7 +200,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     final status = resident?.status ?? 'active';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F1EC),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -280,7 +281,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
               fontSize: 22,
               fontWeight: FontWeight.w700,
               fontFamily: 'Urbanist',
-              color: Color(0xFF1A1A1A),
+              color: AppColors.darkText,
             ),
           ),
           const SizedBox(height: 4),
@@ -444,7 +445,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                   onPressed: () => setState(() => _isEditing = true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEFEBE8),
-                    foregroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: AppColors.darkText,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -462,7 +463,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                   onPressed: () => Navigator.pushNamed(context, '/add-bills'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFEFEBE8),
-                    foregroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: AppColors.darkText,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -537,3 +538,5 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     return (parts.first, parts.sublist(1).join(' '));
   }
 }
+
+

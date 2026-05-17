@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_profile_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_settings_service.dart';
@@ -222,7 +223,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         : _email!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => _loadProfile(showLoading: false),
@@ -245,7 +246,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
+                        color: AppColors.darkText,
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -429,7 +430,7 @@ class _ProfileHeader extends StatelessWidget {
             backgroundColor: Color(0xFFEAF4FB),
             child: Icon(
               Icons.person_outline_rounded,
-              color: Color(0xFF55AEF5),
+              color: AppColors.primaryBlue,
               size: 34,
             ),
           ),
@@ -542,7 +543,7 @@ class _InfoTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF55AEF5), size: 20),
+          Icon(icon, color: AppColors.primaryBlue, size: 20),
           const Spacer(),
           Text(
             value,
@@ -867,7 +868,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     icon: const Icon(Icons.check_rounded, size: 20),
                     label: const Text('Save Profile'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF55AEF5),
+                      backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
@@ -1094,7 +1095,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                         : const Icon(Icons.check_rounded, size: 20),
                     label: Text(_isSaving ? 'Updating...' : 'Update Password'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF55AEF5),
+                      backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
@@ -1583,7 +1584,7 @@ class _SettingsSheetFrame extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onSave,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF55AEF5),
+                    backgroundColor: AppColors.primaryBlue,
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(
@@ -1653,7 +1654,7 @@ class _SettingsSwitchTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: const Color(0xFF55AEF5),
+            activeThumbColor: AppColors.primaryBlue,
           ),
         ],
       ),
@@ -1700,10 +1701,10 @@ class _SegmentButton extends StatelessWidget {
         height: 44,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF55AEF5) : Colors.white,
+          color: selected ? AppColors.primaryBlue : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? const Color(0xFF55AEF5) : const Color(0xFFE1EAF2),
+            color: selected ? AppColors.primaryBlue : const Color(0xFFE1EAF2),
           ),
         ),
         child: Text(
@@ -1765,7 +1766,7 @@ class _EmptySettingsState extends StatelessWidget {
         children: [
           const Icon(
             Icons.account_balance_wallet_outlined,
-            color: Color(0xFF55AEF5),
+            color: AppColors.primaryBlue,
             size: 28,
           ),
           const SizedBox(height: 10),
@@ -1926,7 +1927,7 @@ InputDecoration _profileInputDecoration({
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFF55AEF5), width: 1.5),
+      borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
@@ -2010,3 +2011,5 @@ class _HelpItem extends StatelessWidget {
     );
   }
 }
+
+

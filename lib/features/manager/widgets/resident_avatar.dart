@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 
 class ResidentAvatar extends StatelessWidget {
@@ -41,7 +42,7 @@ class ResidentAvatar extends StatelessWidget {
           style: const TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1A1A1A),
+            color: AppColors.darkText,
           ),
         ),
       ),
@@ -60,3 +61,4 @@ class ResidentAvatar extends StatelessWidget {
     return parts.map((part) => part[0].toUpperCase()).join();
   }
 }
+

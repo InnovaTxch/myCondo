@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
+import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/theme/app_theme.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -29,7 +32,13 @@ class _ProfilePageState extends State<ProfilePage> {
       final user = supabase.auth.currentUser;
 
       if (user == null) {
-        print("No user logged in");
+        if (mounted) {
+          context.showAppMessage(
+            'No active session found.',
+            tone: AppSnackTone.warning,
+          );
+        }
+        setState(() => isLoading = false);
         return;
       }
 
@@ -47,7 +56,12 @@ class _ProfilePageState extends State<ProfilePage> {
         isLoading = false;
       });
     } catch (e) {
-      print("PROFILE ERROR: $e");
+      if (!mounted) return;
+      context.showAppMessage(
+        'Could not load profile.',
+        tone: AppSnackTone.error,
+      );
+      setState(() => isLoading = false);
     }
   }
 
@@ -67,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
       ),
       body: isLoading
-          ? const Center(child: Text("Loading..."))
+          ? const Center(child: AppLoadingState())
           : Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -94,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
             Text(
               email,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.secondaryText),
             ),
 
             const SizedBox(height: 10),
@@ -105,13 +119,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: AppColors.softLavender,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 role,
                 style: const TextStyle(
-                  color: Colors.blue,
+                  color: AppColors.primaryBlue,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -128,7 +142,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: ElevatedButton(
                 onPressed: logout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.errorRed,
+                  foregroundColor: AppColors.pureWhite,
                 ),
                 child: const Text("Log out"),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class InputField extends TextFormField {
   InputField({
@@ -11,7 +12,7 @@ class InputField extends TextFormField {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.pureWhite,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             
             // Standardizing the borders
@@ -21,15 +22,15 @@ class InputField extends TextFormField {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Color(0xFF5DA9E9)),
+              borderSide: const BorderSide(color: AppColors.primaryBlue),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Colors.red),
+              borderSide: const BorderSide(color: AppColors.errorRed),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: Colors.red),
+              borderSide: const BorderSide(color: AppColors.errorRed),
             ),
           ),
         );

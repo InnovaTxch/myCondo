@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
@@ -41,7 +42,7 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
   @override
   Widget build(BuildContext context) {
     return AppPageScaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -61,7 +62,7 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.darkText,
                     ),
                   ),
                 ],
@@ -196,9 +197,9 @@ class _ResidentBillCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: AppColors.softGray),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +221,7 @@ class _ResidentBillCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Due $dueDate',
-            style: const TextStyle(color: Colors.black54, fontSize: 12),
+            style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
           ),
           const SizedBox(height: 12),
           ...bill.bills.map(
@@ -251,7 +252,7 @@ class _ResidentBillCard extends StatelessWidget {
             const SizedBox(height: 10),
             _NoticeBox(
               icon: Icons.hourglass_top_rounded,
-              color: Color(0xFF8A6200),
+              color: AppColors.warningOrange,
               message: 'Payment submitted. Waiting for manager approval.',
             ),
           ],
@@ -259,7 +260,7 @@ class _ResidentBillCard extends StatelessWidget {
             const SizedBox(height: 10),
             _NoticeBox(
               icon: Icons.cancel_outlined,
-              color: Color(0xFFB3261E),
+              color: AppColors.errorRed,
               message:
                   'Payment denied: ${bill.latestRejectedPayment!.rejectionReason ?? 'No reason provided.'}',
             ),
@@ -279,8 +280,8 @@ class _ResidentBillCard extends StatelessWidget {
                 icon: const Icon(Icons.payments_outlined, size: 18),
                 label: const Text('Pay Bill'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.darkText,
+                  foregroundColor: AppColors.pureWhite,
                   minimumSize: const Size.fromHeight(46),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -395,7 +396,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD4DCE4),
+                      color: AppColors.softGray,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -409,7 +410,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF111111),
+                          color: AppColors.darkText,
                         ),
                       ),
                     ),
@@ -426,9 +427,9 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.pureWhite,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE3EEF7)),
+                    border: Border.all(color: AppColors.softGray),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +448,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                           Text(
                             'Due $dueDate',
                             style: const TextStyle(
-                              color: Color(0xFF66737C),
+                              color: AppColors.secondaryText,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -461,7 +462,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                           const Expanded(
                             child: Text(
                               'Outstanding Balance',
-                              style: TextStyle(color: Color(0xFF66737C)),
+                              style: TextStyle(color: AppColors.secondaryText),
                             ),
                           ),
                           Text(
@@ -471,7 +472,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF55AEF5),
+                              color: AppColors.primaryBlue,
                             ),
                           ),
                         ],
@@ -561,7 +562,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEAF4FB),
+                    color: AppColors.skyBlue,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Row(
@@ -569,7 +570,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
-                        color: Color(0xFF1A73C8),
+                        color: AppColors.primaryBlue,
                         size: 18,
                       ),
                       SizedBox(width: 8),
@@ -577,7 +578,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                         child: Text(
                           'Your payment will be marked pending until management approves it.',
                           style: TextStyle(
-                            color: Color(0xFF35566E),
+                            color: AppColors.secondaryText,
                             fontSize: 12,
                             height: 1.3,
                             fontWeight: FontWeight.w600,
@@ -598,7 +599,7 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: AppColors.pureWhite,
                             ),
                           )
                         : const Icon(Icons.send_rounded, size: 18),
@@ -606,8 +607,8 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                       _isSaving ? 'Submitting...' : 'Submit for Approval',
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF55AEF5),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: AppColors.pureWhite,
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
@@ -683,7 +684,7 @@ class _PaymentFormLabel extends StatelessWidget {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w800,
-        color: Color(0xFF3D4650),
+        color: AppColors.darkText,
       ),
     );
   }
@@ -711,12 +712,12 @@ class _PaymentMethodChip extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF55AEF5) : Colors.white,
+          color: isSelected ? AppColors.primaryBlue : AppColors.pureWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF55AEF5)
-                : const Color(0xFFE1EAF2),
+                ? AppColors.primaryBlue
+                : AppColors.softGray,
           ),
         ),
         child: Row(
@@ -725,7 +726,7 @@ class _PaymentMethodChip extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? Colors.white : const Color(0xFF3D4650),
+              color: isSelected ? AppColors.pureWhite : AppColors.darkText,
             ),
             const SizedBox(width: 6),
             Text(
@@ -733,7 +734,7 @@ class _PaymentMethodChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: isSelected ? Colors.white : const Color(0xFF3D4650),
+                color: isSelected ? AppColors.pureWhite : AppColors.darkText,
               ),
             ),
           ],
@@ -752,26 +753,26 @@ InputDecoration _paymentInputDecoration({
     hintText: hint,
     prefixText: prefixText,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: AppColors.pureWhite,
     suffixIcon: suffixIcon == null
         ? null
-        : Icon(suffixIcon, color: const Color(0xFF7A8994), size: 20),
+        : Icon(suffixIcon, color: AppColors.secondaryText, size: 20),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFE1EAF2)),
+      borderSide: const BorderSide(color: AppColors.softGray),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFF55AEF5), width: 1.5),
+      borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFB3261E)),
+      borderSide: const BorderSide(color: AppColors.errorRed),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.5),
+      borderSide: const BorderSide(color: AppColors.errorRed, width: 1.5),
     ),
   );
 }
@@ -792,7 +793,7 @@ class _NoticeBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -831,7 +832,7 @@ class _AmountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = TextStyle(
       fontWeight: isStrong ? FontWeight.w800 : FontWeight.w500,
-      color: isStrong ? Colors.black : Colors.black54,
+      color: isStrong ? AppColors.darkText : AppColors.secondaryText,
     );
 
     return Row(
@@ -850,16 +851,18 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColors = context.appStatusColors;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: _statusColor(status).withOpacity(0.12),
+        color: _statusColor(status, statusColors).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         _formatStatus(status),
         style: TextStyle(
-          color: _statusColor(status),
+          color: _statusColor(status, statusColors),
           fontSize: 12,
           fontWeight: FontWeight.w800,
         ),
@@ -875,16 +878,16 @@ class _StatusPill extends StatelessWidget {
     return words.join(' ');
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(String status, AppStatusColors statusColors) {
     switch (status) {
       case 'paid':
-        return const Color(0xFF227A45);
+        return statusColors.success;
       case 'partial':
-        return const Color(0xFF1A73C8);
+        return AppColors.primaryBlue;
       case 'overdue':
-        return const Color(0xFFB3261E);
+        return statusColors.destructive;
       default:
-        return const Color(0xFF8A6200);
+        return statusColors.warningStrong;
     }
   }
 }
@@ -905,4 +908,7 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
+
+
+
 

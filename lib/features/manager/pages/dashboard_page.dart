@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
@@ -140,7 +141,7 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _initializePage,
@@ -170,3 +171,4 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
     );
   }
 }
+

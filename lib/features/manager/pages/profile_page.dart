@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
@@ -82,7 +83,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     (_email ?? '').isNotEmpty ? _email! : 'No email available';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => _loadProfile(showLoading: false),
@@ -118,21 +119,21 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                     children: [
                       const CircleAvatar(
                         radius: 40,
-                        backgroundColor: Color(0xFFEAEAEA),
+                        backgroundColor: AppColors.softGray,
                         child: Icon(Icons.person,
-                            size: 40, color: Colors.grey),
+                            size: 40, color: AppColors.secondaryText),
                       ),
                       Positioned(
                         top: -4,
                         right: 0,
                         child: Container(
                           decoration: const BoxDecoration(
-                            color: Colors.blue,
+                            color: AppColors.primaryBlue,
                             shape: BoxShape.circle,
                           ),
                           padding: const EdgeInsets.all(6),
                           child: const Icon(Icons.edit,
-                              size: 14, color: Colors.white),
+                              size: 14, color: AppColors.pureWhite),
                         ),
                       ),
                     ],
@@ -154,7 +155,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: AppColors.softLavender,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -162,7 +163,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Colors.blue,
+                        color: AppColors.primaryBlue,
                       ),
                     ),
                   ),
@@ -173,7 +174,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                     email,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF6A6A6A),
+                      color: AppColors.secondaryText,
                     ),
                   ),
                 ],
@@ -195,7 +196,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Material(
-                    color: Colors.white,
+                    color: AppColors.pureWhite,
                     borderRadius: BorderRadius.circular(20),
                     child: ListTile(
                       dense: true,
@@ -224,8 +225,8 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
               ElevatedButton(
                 onPressed: _isSigningOut ? null : _logout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFBF2F2F),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.errorRed,
+                  foregroundColor: AppColors.pureWhite,
                   minimumSize: const Size.fromHeight(52),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -233,7 +234,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                 ),
                 child: _isSigningOut
                     ? const CircularProgressIndicator(
-                    color: Colors.white)
+                    color: AppColors.pureWhite)
                     : const Text('LOGOUT'),
               ),
 
@@ -245,3 +246,4 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     );
   }
 }
+

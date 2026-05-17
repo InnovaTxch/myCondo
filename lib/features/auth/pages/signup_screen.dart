@@ -4,6 +4,7 @@ import 'package:mycondo/data/repositories/auth/pending_signup_credentials.dart';
 import 'package:mycondo/features/auth/widgets/signup_form.dart';
 import 'package:mycondo/features/auth/widgets/login_gateway.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -47,7 +48,7 @@ class _SignupScreenState extends State<SignupScreen>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF4F4F4),
+      backgroundColor: AppColors.lightBlueBackground,
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30),
         child: ListView(
@@ -70,7 +71,7 @@ class _SignupScreenState extends State<SignupScreen>{
             Text(
               "Managers can set up a condo. Residents can join with condo and resident codes.",
               style: TextStyle(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: AppColors.secondaryText,
                 fontSize: 15,
                 height: 1.35,
               ),
@@ -91,7 +92,7 @@ class _SignupScreenState extends State<SignupScreen>{
               text: "Sign up", 
               onPressed: _isLoading ? null : signUp, 
               isLoading: _isLoading, 
-              color: Color(0xFF5DA9E9)
+              color: AppColors.primaryBlue
             ),
 
             const SizedBox(height: 20),

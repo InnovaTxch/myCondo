@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/features/manager/widgets/payment_history_card.dart';
 
 class PaymentHistoryScreen extends StatelessWidget {
@@ -50,7 +51,7 @@ class PaymentHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFDDF0FC),
+      backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
@@ -171,3 +172,4 @@ class PaymentHistoryScreen extends StatelessWidget {
     );
   }
 }
+

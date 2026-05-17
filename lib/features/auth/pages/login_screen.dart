@@ -8,6 +8,7 @@ import 'package:mycondo/features/auth/widgets/login_form.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
 import 'package:mycondo/features/auth/widgets/signup_gateway.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -66,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen>{
     context.showAppSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AppColors.errorRed,
       ),
     );
   }
@@ -81,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF4F4F4),
+      backgroundColor: AppColors.lightBlueBackground,
 
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30),
@@ -110,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen>{
               text: "Log in", 
               onPressed: _isLoading ? null : signIn,
               isLoading: _isLoading,
-              color: Color(0xFF5DA9E9),
+              color: AppColors.primaryBlue,
             ),
 
             const SizedBox(height: 20),

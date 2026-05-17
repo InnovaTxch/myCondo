@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class AppLoadingState extends StatelessWidget {
   const AppLoadingState({
@@ -32,7 +33,7 @@ class AppLoadingState extends StatelessWidget {
           Text(
             message!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF666666)),
+            style: const TextStyle(color: AppColors.secondaryText),
           ),
         ],
       ),
@@ -64,7 +65,7 @@ class AppEmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 40, color: const Color(0xFF999999)),
+          Icon(icon, size: 40, color: AppColors.secondaryText),
           const SizedBox(height: 12),
         ],
         Text(
@@ -76,7 +77,7 @@ class AppEmptyState extends StatelessWidget {
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF777777)),
+          style: const TextStyle(color: AppColors.secondaryText),
         ),
         if (actionLabel != null && onAction != null) ...[
           const SizedBox(height: 18),
@@ -93,7 +94,7 @@ class AppEmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(18),
       ),
       child: content,
@@ -120,7 +121,7 @@ class AppErrorState extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFFB3261E)),
+          style: const TextStyle(color: AppColors.errorRed),
         ),
       );
     }
@@ -139,7 +140,7 @@ class AppErrorState extends StatelessWidget {
               details!,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.black54,
+                color: AppColors.secondaryText,
                 fontSize: 12,
               ),
             ),

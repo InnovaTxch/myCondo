@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
@@ -58,7 +59,7 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
   @override
   Widget build(BuildContext context) {
     return AppPageScaffold(
-      backgroundColor: const Color(0xFFDCECF5),
+      backgroundColor: AppColors.lightBlueBackground,
       body: Column(
         children: [
           Padding(
@@ -77,7 +78,7 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1A1A1A),
+                      color: AppColors.darkText,
                     ),
                   ),
                 ],
@@ -270,3 +271,5 @@ class _GroupLabel extends StatelessWidget {
     );
   }
 }
+
+

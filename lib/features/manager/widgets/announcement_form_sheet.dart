@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -106,7 +107,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A1A),
+                color: AppColors.darkText,
               ),
             ),
             const SizedBox(height: 18),
@@ -186,7 +187,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
                 child: ElevatedButton(
                   onPressed: _saving || _titleCtrl.text.trim().isEmpty ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A1A1A),
+                    backgroundColor: AppColors.darkText,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -235,7 +236,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF1A1A1A), width: 1.5),
+        borderSide: const BorderSide(color: AppColors.darkText, width: 1.5),
       ),
     );
   }
@@ -257,3 +258,4 @@ class _InputLabel extends StatelessWidget {
     );
   }
 }
+

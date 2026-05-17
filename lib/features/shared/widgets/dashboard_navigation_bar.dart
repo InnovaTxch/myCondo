@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mycondo/features/shared/widgets/badged_navigation_icon.dart';
+import 'package:mycondo/theme/app_theme.dart';
 
 class DashboardNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -56,6 +57,7 @@ class DashboardNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 160),
@@ -65,28 +67,28 @@ class DashboardNavigationBar extends StatelessWidget {
           ? const SizedBox.shrink()
           : Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F1F3),
-                border: Border.all(color: const Color(0xFFE2E4E8)),
+                color: AppColors.creamWhite,
+                border: Border.all(color: AppColors.softGray),
               ),
               child: SafeArea(
                 top: false,
                 child: NavigationBarTheme(
                   data: NavigationBarThemeData(
                     height: 70,
-                    backgroundColor: const Color(0xFFF0F1F3),
-                    indicatorColor: Colors.black,
-                    labelTextStyle: MaterialStateProperty.resolveWith((states) {
-                      final isSelected = states.contains(MaterialState.selected);
+                    backgroundColor: AppColors.creamWhite,
+                    indicatorColor: AppColors.black,
+                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(WidgetState.selected);
                       return TextStyle(
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? Colors.black : Colors.black54,
+                        color: isSelected ? AppColors.darkText : AppColors.secondaryText,
                       );
                     }),
-                    iconTheme: MaterialStateProperty.resolveWith((states) {
-                      final isSelected = states.contains(MaterialState.selected);
+                    iconTheme: WidgetStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(WidgetState.selected);
                       return IconThemeData(
-                        color: isSelected ? Colors.white : Colors.black54,
+                        color: isSelected ? colorScheme.onPrimary : AppColors.secondaryText,
                         size: 22,
                       );
                     }),
