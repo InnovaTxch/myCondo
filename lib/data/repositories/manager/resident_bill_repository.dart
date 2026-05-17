@@ -15,7 +15,7 @@ class ResidentBillRepository {
     final monthlyRows = await _supabase
         .from('monthly_bills')
         .select(
-          'id, due_date, status, '
+          'id, created_at, due_date, status, '
           'bills!bills_monthly_bill_id_fkey(name, amount), '
           'payments!payments_monthly_bill_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
         )
@@ -24,7 +24,7 @@ class ResidentBillRepository {
     final oneTimeRows = await _supabase
         .from('one_time_fees')
         .select(
-          'id, due_date, status, '
+          'id, created_at, due_date, status, '
           'bills!bills_one_time_fee_id_fkey(name, amount), '
           'payments!payments_one_time_fee_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
         )
@@ -90,7 +90,8 @@ class ResidentBillRepository {
       await _supabase.from('payments').insert(payment);
       await _supabase
           .from('monthly_bills')
-          .update({'status': nextStatus}).eq('id', bill.id);
+          .update({'status': nextStatus})
+          .eq('id', bill.id);
       return;
     }
 
@@ -99,7 +100,8 @@ class ResidentBillRepository {
     await _supabase.from('payments').insert(payment);
     await _supabase
         .from('one_time_fees')
-        .update({'status': nextStatus}).eq('id', bill.id);
+        .update({'status': nextStatus})
+        .eq('id', bill.id);
   }
 
   Future<void> addBill({
@@ -112,20 +114,28 @@ class ResidentBillRepository {
       missingMessage: 'No manager profile is linked to this signed-in user.',
     );
 
-    final parentTable =
-        billType == 'Monthly Bill' ? 'monthly_bills' : 'one_time_fees';
-    final foreignKey =
-        billType == 'Monthly Bill' ? 'monthly_bill_id' : 'one_time_fee_id';
+    final parentTable = billType == 'Monthly Bill'
+        ? 'monthly_bills'
+        : 'one_time_fees';
+    final foreignKey = billType == 'Monthly Bill'
+        ? 'monthly_bill_id'
+        : 'one_time_fee_id';
 
-    final parent = await _supabase.from(parentTable).insert({
-      'received_by': residentId,
-      'posted_by': manager.id,
-      'due_date': dueDate.toIso8601String(),
-      'status': 'unpaid',
-    }).select('id').single();
+    final parent = await _supabase
+        .from(parentTable)
+        .insert({
+          'received_by': residentId,
+          'posted_by': manager.id,
+          'due_date': dueDate.toIso8601String(),
+          'status': 'unpaid',
+        })
+        .select('id')
+        .single();
 
     final parentId = parent['id'] as int;
-    await _supabase.from('bills').insert(
+    await _supabase
+        .from('bills')
+        .insert(
           bills
               .map(
                 (bill) => {

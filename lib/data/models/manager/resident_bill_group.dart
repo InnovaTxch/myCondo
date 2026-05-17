@@ -4,6 +4,7 @@ class ResidentBillGroup {
   const ResidentBillGroup({
     required this.id,
     required this.billType,
+    required this.issuedAt,
     required this.dueDate,
     required this.status,
     required this.bills,
@@ -13,6 +14,7 @@ class ResidentBillGroup {
 
   final int id;
   final String billType;
+  final DateTime issuedAt;
   final DateTime dueDate;
   final String status;
   final List<Bill> bills;
@@ -67,6 +69,9 @@ class ResidentBillGroup {
     return ResidentBillGroup(
       id: map['id'] as int,
       billType: billType,
+      issuedAt: map['created_at'] == null
+          ? DateTime.parse(map['due_date'].toString())
+          : DateTime.parse(map['created_at'].toString()),
       dueDate: DateTime.parse(map['due_date'].toString()),
       status: (map['status'] ?? '').toString(),
       paidAmount: payments.fold<int>(0, (total, payment) {

@@ -44,112 +44,117 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
     return AppPageScaffold(
       backgroundColor: AppColors.lightBlueBackground,
       body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 20, 8),
-              child: Row(
-                children: [
-                  if (widget.showBackButton)
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.chevron_left_rounded),
-                    )
-                  else
-                    const SizedBox(width: 12),
-                  Text(
-                    widget.paidOnly ? 'Payment History' : 'Pay Bill',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                    ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 20, 8),
+            child: Row(
+              children: [
+                if (widget.showBackButton)
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  )
+                else
+                  const SizedBox(width: 12),
+                Text(
+                  widget.paidOnly ? 'Payment History' : 'Pay Bill',
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkText,
                   ),
-                ],
-              ),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Monthly bill breakdown',
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/resident-bill-breakdown'),
+                  icon: const Icon(Icons.calendar_month_rounded),
+                ),
+              ],
             ),
-            Expanded(
-              child: FutureBuilder<List<ResidentBillGroup>>(
-                future: _billsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const AppLoadingState();
-                  }
+          ),
+          Expanded(
+            child: FutureBuilder<List<ResidentBillGroup>>(
+              future: _billsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const AppLoadingState();
+                }
 
-                  if (snapshot.hasError) {
-                    return AppErrorState(
-                      message: 'Unable to load bills. Try again.',
-                      onRetry: _refresh,
-                    );
-                  }
+                if (snapshot.hasError) {
+                  return AppErrorState(
+                    message: 'Unable to load bills. Try again.',
+                    onRetry: _refresh,
+                  );
+                }
 
-                  final bills = snapshot.data ?? const <ResidentBillGroup>[];
-                  final openBills = bills
-                      .where((bill) => !bill.isPaid)
-                      .toList();
-                  final paidBills = bills.where((bill) => bill.isPaid).toList();
-                  final visibleBills = widget.paidOnly ? paidBills : bills;
+                final bills = snapshot.data ?? const <ResidentBillGroup>[];
+                final openBills = bills.where((bill) => !bill.isPaid).toList();
+                final paidBills = bills.where((bill) => bill.isPaid).toList();
+                final visibleBills = widget.paidOnly ? paidBills : bills;
 
-                  if (visibleBills.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
-                        children: [
-                          AppEmptyState(
-                            icon: Icons.receipt_long_outlined,
-                            title: 'No bills yet',
-                            message: widget.paidOnly
-                                ? 'Paid bills will appear here after approval.'
-                                : 'Bills from management will appear here.',
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
+                if (visibleBills.isEmpty) {
                   return RefreshIndicator(
                     onRefresh: _refresh,
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
                       children: [
-                        if (!widget.paidOnly && openBills.isNotEmpty) ...[
-                          const _SectionTitle('Open Bills'),
-                          ...openBills.map(
-                            (bill) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _ResidentBillCard(
-                                bill: bill,
-                                canPay: !widget.paidOnly,
-                                onPay: () => _openPaymentSheet(bill),
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (paidBills.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          const _SectionTitle('Paid Bills'),
-                          ...paidBills.map(
-                            (bill) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _ResidentBillCard(
-                                bill: bill,
-                                canPay: false,
-                                onPay: () => _openPaymentSheet(bill),
-                              ),
-                            ),
-                          ),
-                        ],
+                        AppEmptyState(
+                          icon: Icons.receipt_long_outlined,
+                          title: 'No bills yet',
+                          message: widget.paidOnly
+                              ? 'Paid bills will appear here after approval.'
+                              : 'Bills from management will appear here.',
+                        ),
                       ],
                     ),
                   );
-                },
-              ),
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                    children: [
+                      if (!widget.paidOnly && openBills.isNotEmpty) ...[
+                        const _SectionTitle('Open Bills'),
+                        ...openBills.map(
+                          (bill) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _ResidentBillCard(
+                              bill: bill,
+                              canPay: !widget.paidOnly,
+                              onPay: () => _openPaymentSheet(bill),
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (paidBills.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        const _SectionTitle('Paid Bills'),
+                        ...paidBills.map(
+                          (bill) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _ResidentBillCard(
+                              bill: bill,
+                              canPay: false,
+                              onPay: () => _openPaymentSheet(bill),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -221,7 +226,10 @@ class _ResidentBillCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Due $dueDate',
-            style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 12),
           ...bill.bills.map(
@@ -715,9 +723,7 @@ class _PaymentMethodChip extends StatelessWidget {
           color: isSelected ? AppColors.primaryBlue : AppColors.pureWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primaryBlue
-                : AppColors.softGray,
+            color: isSelected ? AppColors.primaryBlue : AppColors.softGray,
           ),
         ),
         child: Row(
@@ -908,7 +914,3 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
-
-
-

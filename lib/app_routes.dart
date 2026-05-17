@@ -11,6 +11,7 @@ import 'package:mycondo/features/manager/pages/manage_residents_page.dart';
 import 'package:mycondo/features/manager/pages/manager_home_screen.dart';
 import 'package:mycondo/features/resident/pages/maintenance_request_page.dart';
 import 'package:mycondo/features/resident/pages/resident_announcements_page.dart';
+import 'package:mycondo/features/resident/pages/resident_bill_breakdown_page.dart';
 import 'package:mycondo/features/resident/pages/resident_bills_page.dart';
 import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
@@ -27,7 +28,9 @@ class AppRoutes {
     '/resident-dashboard': (context) => const ResidentHomeScreen(),
     '/resident-announcements': (context) => const ResidentAnnouncementsPage(),
     '/resident-bills': (context) => const ResidentBillsPage(),
-    '/resident-maintenance-request': (context) => const MaintenanceRequestPage(),
+    '/resident-bill-breakdown': (context) => const ResidentBillBreakdownPage(),
+    '/resident-maintenance-request': (context) =>
+        const MaintenanceRequestPage(),
     '/manager-announcements': (context) => const ManagerAnnouncementsPage(),
     '/approve-payments': (context) => const ApprovePaymentsScreen(),
     '/manage-condo': (context) => const ManageCondoPage(),
@@ -35,4 +38,3 @@ class AppRoutes {
     '/add-bills': (context) => const CreateBillPage(),
   };
 }
-

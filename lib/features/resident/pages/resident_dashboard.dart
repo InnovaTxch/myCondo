@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
-import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
@@ -94,7 +93,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                   const SizedBox(height: 22),
                   _ResidentMatrix(data: data),
                   const SizedBox(height: 18),
-                  _PaymentBreakdownButton(bills: data.openBills),
+                  const _BillBreakdownButton(),
                   const SizedBox(height: 18),
                   _AnnouncementPreview(announcement: data.latestAnnouncement),
                   const SizedBox(height: 18),
@@ -264,7 +263,7 @@ class _MetricItem extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.16),
+            color: Colors.white.withValues(alpha: 0.16),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: Colors.white, size: 22),
@@ -294,10 +293,8 @@ class _MetricItem extends StatelessWidget {
   }
 }
 
-class _PaymentBreakdownButton extends StatelessWidget {
-  const _PaymentBreakdownButton({required this.bills});
-
-  final List<ResidentBillGroup> bills;
+class _BillBreakdownButton extends StatelessWidget {
+  const _BillBreakdownButton();
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +316,7 @@ class _PaymentBreakdownButton extends StatelessWidget {
               SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  'View Payment Breakdown',
+                  'View Bill Breakdown',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -332,146 +329,7 @@ class _PaymentBreakdownButton extends StatelessWidget {
   }
 
   void _openBreakdown(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _PaymentBreakdownSheet(bills: bills),
-    );
-  }
-}
-
-class _PaymentBreakdownSheet extends StatelessWidget {
-  const _PaymentBreakdownSheet({required this.bills});
-
-  final List<ResidentBillGroup> bills;
-
-  @override
-  Widget build(BuildContext context) {
-    final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
-    final total = bills.fold<int>(
-      0,
-      (sum, bill) => sum + bill.outstandingAmount,
-    );
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Payment Breakdown',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 14),
-            if (bills.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Text(
-                  'No open bills right now.',
-                  style: TextStyle(color: Color(0xFF777777)),
-                ),
-              )
-            else
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    ...bills.map(
-                      (bill) => _BreakdownBill(bill: bill, currency: currency),
-                    ),
-                  ],
-                ),
-              ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Total Amount Due',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-                Text(
-                  currency.format(total / 100),
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: bills.isEmpty
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        Navigator.pushNamed(context, '/resident-bills');
-                      },
-                icon: const Icon(Icons.payments_outlined, size: 18),
-                label: const Text('Pay Bill'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BreakdownBill extends StatelessWidget {
-  const _BreakdownBill({required this.bill, required this.currency});
-
-  final ResidentBillGroup bill;
-  final NumberFormat currency;
-
-  @override
-  Widget build(BuildContext context) {
-    final dueDate = DateFormat('MMM d, yyyy').format(bill.dueDate);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  bill.billType,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-              Text(
-                'Due $dueDate',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF777777)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...bill.bills.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 5),
-              child: Row(
-                children: [
-                  Expanded(child: Text(item.name)),
-                  Text(currency.format(item.amount / 100)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    Navigator.pushNamed(context, '/resident-bill-breakdown');
   }
 }
 
@@ -682,13 +540,7 @@ class _DashboardLoading extends StatelessWidget {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      children: const [
-        SizedBox(
-          height: 260,
-          child: AppLoadingState(),
-        ),
-      ],
+      children: const [SizedBox(height: 260, child: AppLoadingState())],
     );
   }
 }
-
