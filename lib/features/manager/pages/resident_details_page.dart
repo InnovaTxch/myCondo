@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
 import 'package:mycondo/features/manager/widgets/resident_avatar.dart';
+import 'package:mycondo/features/manager/pages/manager_bill_breakdown_page.dart';
 import 'package:mycondo/features/manager/widgets/resident_bills_section.dart';
 import 'package:mycondo/features/manager/widgets/resident_details_header.dart';
 import 'package:mycondo/features/manager/widgets/resident_info_field.dart';
@@ -234,6 +235,21 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                           ),
                           child: ResidentBillsSection(
                             residentId: widget.residentId,
+                            onViewBreakdown: () async {
+                              final residentName =
+                                  _resident?.name.trim().isNotEmpty == true
+                                  ? _resident!.name
+                                  : 'Resident';
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ManagerBillBreakdownPage(
+                                    residentId: widget.residentId,
+                                    residentName: residentName,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],
