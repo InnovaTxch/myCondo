@@ -270,6 +270,16 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (!_isEditing)
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                onPressed: () => setState(() => _isEditing = true),
+                icon: const Icon(Icons.edit_outlined),
+                color: AppColors.darkText,
+                tooltip: 'Edit Info',
+              ),
+            ),
           ResidentAvatar(resident: resident),
           const SizedBox(height: 16),
           Text(
@@ -434,48 +444,9 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
   }
 
   Widget _buildViewActions() {
+    final destructiveColor = context.appStatusColors.destructive;
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => setState(() => _isEditing = true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEFEBE8),
-                    foregroundColor: AppColors.darkText,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Edit Info'),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/add-bills'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEFEBE8),
-                    foregroundColor: AppColors.darkText,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Add Bills'),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -489,8 +460,15 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _delete,
-            icon: const Icon(Icons.person_remove_outlined),
-            label: const Text('Remove Resident'),
+            icon: Icon(Icons.person_remove_outlined, color: destructiveColor),
+            label: Text(
+              'Remove Resident',
+              style: TextStyle(color: destructiveColor),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: destructiveColor,
+              side: BorderSide(color: destructiveColor),
+            ),
           ),
         ),
       ],
@@ -538,5 +516,3 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
     return (parts.first, parts.sublist(1).join(' '));
   }
 }
-
-

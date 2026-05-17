@@ -55,7 +55,10 @@ class ResidentBillCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Due $dueDate',
-            style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 12),
           ...bill.bills.map(
@@ -134,9 +137,7 @@ class ResidentBillCard extends StatelessWidget {
                 height: 48,
                 child: OutlinedButton(
                   onPressed: onDelete,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                  ),
+                  style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
                   child: const Icon(Icons.delete_outline),
                 ),
               ),
