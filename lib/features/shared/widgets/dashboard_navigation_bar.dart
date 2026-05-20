@@ -8,12 +8,14 @@ class DashboardNavigationBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> changeActivePageIndex;
   final bool hasUnreadMessages;
+  final bool hasPaymentNotification; // NEW: badge on the Payments tab
 
   const DashboardNavigationBar({
     super.key,
     required this.currentIndex,
     required this.changeActivePageIndex,
     this.hasUnreadMessages = false,
+    this.hasPaymentNotification = false, // NEW
   });
 
   static const _labels = <String>[
@@ -120,7 +122,10 @@ class DashboardNavigationBar extends StatelessWidget {
                     },
                     destinations: List.generate(_labels.length, (index) {
                       final label = _labels[index];
-                      final showBadge = index == 2 && hasUnreadMessages;
+                      // index 1 = Payments, index 2 = Messages
+                      final showBadge =
+                          (index == 1 && hasPaymentNotification) || // NEW
+                          (index == 2 && hasUnreadMessages);
                       return NavigationDestination(
                         label: label,
                         icon: BadgedNavigationIcon(

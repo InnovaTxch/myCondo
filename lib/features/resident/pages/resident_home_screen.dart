@@ -29,6 +29,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   void changeActivePageIndex(int index) {
     setState(() => _activePageIndex = index);
+    // When resident taps Payments tab (index 1), clear the badge (NEW)
+    if (index == 1) {
+      _messagingService.clearPaymentStatusNotification();
+    }
   }
 
   @override
@@ -57,13 +61,21 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         ),
       ],
       bottomNavigationBar: (currentIndex, onIndexChanged) {
+        // Stream 1: unread chat messages
         return StreamBuilder<bool>(
           stream: _messagingService.hasUnreadMessagesStream(),
-          builder: (context, snapshot) {
-            return DashboardNavigationBar(
-              currentIndex: currentIndex,
-              changeActivePageIndex: onIndexChanged,
-              hasUnreadMessages: snapshot.data ?? false,
+          builder: (context, msgSnapshot) {
+            // Stream 2: payment approved / rejected by manager (NEW)
+            return StreamBuilder<bool>(
+              stream: _messagingService.hasPaymentStatusUpdateStream(),
+              builder: (context, paySnapshot) {
+                return DashboardNavigationBar(
+                  currentIndex: currentIndex,
+                  changeActivePageIndex: onIndexChanged,
+                  hasUnreadMessages: msgSnapshot.data ?? false,
+                  hasPaymentNotification: paySnapshot.data ?? false, // NEW
+                );
+              },
             );
           },
         );
