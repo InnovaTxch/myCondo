@@ -21,7 +21,6 @@ class ManagerDashboardPage extends StatefulWidget {
 }
 
 class _ManagerDashboardPage extends State<ManagerDashboardPage> {
-
   ManagerDashboardService dashboardService = ManagerDashboardService();
   ManagerAnnouncementService announcementService = ManagerAnnouncementService();
 
@@ -29,31 +28,24 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
   DashboardSummary summary = DashboardSummary();
   DashboardAnnouncement? highlightedAnnouncement;
   bool isAnnouncementLoading = true;
-  int selectedNavigationIndex = 0;
 
   Future<void> _openAnnouncements() async {
-    final changed =
-        await Navigator.pushNamed(context, '/manager-announcements');
+    final changed = await Navigator.pushNamed(context, '/manager-announcements');
     if (!mounted) return;
-    if (changed == true) {
-      await _initializePage();
-    }
+    if (changed == true) await _initializePage();
   }
 
   Future<void> _initializePage() async {
     setState(() => isAnnouncementLoading = true);
-
     try {
       final results = await Future.wait([
         dashboardService.getFirstName(),
         dashboardService.getDashboardSummary(),
         announcementService.getAnnouncements(),
       ]);
-
       final name = results[0] as String?;
       final dashboardSummary = results[1] as DashboardSummary;
       final announcements = results[2] as List<Announcement>;
-
       if (!mounted) return;
       setState(() {
         managerName = name;
@@ -79,18 +71,11 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
 
   DashboardAnnouncement? _toHighlightedAnnouncement(List<Announcement> announcements) {
     if (announcements.isEmpty) return null;
-
     Announcement selected = announcements.first;
     for (final ann in announcements) {
-      if (ann.category == 'urgent') {
-        selected = ann;
-        break;
-      }
-      if (ann.category == 'reminder' && selected.category != 'urgent') {
-        selected = ann;
-      }
+      if (ann.category == 'urgent') { selected = ann; break; }
+      if (ann.category == 'reminder' && selected.category != 'urgent') selected = ann;
     }
-
     final colorScheme = _categoryStyle(selected.category);
     return DashboardAnnouncement(
       title: selected.title,
@@ -110,24 +95,9 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
 
   ({IconData icon, Color tint, Color background}) _categoryStyle(String category) {
     switch (category) {
-      case 'urgent':
-        return (
-          icon: Icons.warning_rounded,
-          tint: const Color(0xFFCC3333),
-          background: const Color(0xFFFDEDED),
-        );
-      case 'reminder':
-        return (
-          icon: Icons.access_time_rounded,
-          tint: const Color(0xFFB07D10),
-          background: const Color(0xFFFFF8E6),
-        );
-      default:
-        return (
-          icon: Icons.info_outline_rounded,
-          tint: const Color(0xFF1A73C8),
-          background: const Color(0xFFEBF3FD),
-        );
+      case 'urgent': return (icon: Icons.warning_rounded, tint: const Color(0xFFCC3333), background: const Color(0xFFFDEDED));
+      case 'reminder': return (icon: Icons.access_time_rounded, tint: const Color(0xFFB07D10), background: const Color(0xFFFFF8E6));
+      default: return (icon: Icons.info_outline_rounded, tint: const Color(0xFF1A73C8), background: const Color(0xFFEBF3FD));
     }
   }
 
@@ -144,15 +114,16 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
       backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: RefreshIndicator(
+          color: AppColors.primaryBlue,
           onRefresh: _initializePage,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 DashboardGreeting(managerName: managerName ?? ""),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 DashboardSummaryCard(summary: summary),
                 const SizedBox(height: 16),
                 DashboardAnnouncementSection(
@@ -160,9 +131,22 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
                   isLoading: isAnnouncementLoading,
                   onOpenAnnouncements: _openAnnouncements,
                 ),
-                const SizedBox(height: 18),
-
-                DashboardQuickActions(),
+                const SizedBox(height: 16),
+                // Section label
+                const Padding(
+                  padding: EdgeInsets.only(left: 4, bottom: 12),
+                  child: Text(
+                    "Quick Actions",
+                    style: TextStyle(
+                      fontFamily: "Urbanist",
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondaryText,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                const DashboardQuickActions(),
               ],
             ),
           ),
@@ -171,4 +155,3 @@ class _ManagerDashboardPage extends State<ManagerDashboardPage> {
     );
   }
 }
-
