@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
-import 'package:mycondo/data/repositories/manager/manager_dashboard_service.dart';
+import 'package:mycondo/data/repositories/manager/manager_profile_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
@@ -15,9 +15,10 @@ class ManagerProfilePage extends StatefulWidget {
 
 class _ManagerProfilePageState extends State<ManagerProfilePage> {
   final AuthService _authService = AuthService();
-  final ManagerDashboardService _dashboardService = ManagerDashboardService();
+  final ManagerProfileService _profileService = ManagerProfileService();
 
   String? _firstName;
+  String? _lastName;
   String? _email;
 
   bool _isLoading = true;
@@ -33,19 +34,26 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     setState(() => _isLoading = showLoading);
 
     try {
-      final firstName = await _dashboardService.getFirstName();
-      final email = _authService.getCurrentUserEmail();
+      final profile = await _profileService.getProfile();
 
       if (!mounted) return;
 
       setState(() {
-        _firstName = firstName;
-        _email = email;
+        _firstName = profile['first_name']?.toString();
+        _lastName = profile['last_name']?.toString();
+        final profileEmail = profile['email']?.toString().trim();
+        final authEmail = _authService.getCurrentUserEmail()?.trim();
+        _email = (profileEmail != null && profileEmail.isNotEmpty)
+            ? profileEmail
+            : authEmail;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      context.showAppSnackBar(
+        SnackBar(content: Text('Could not load profile: $e')),
+      );
     }
   }
 
@@ -74,13 +82,21 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     }
   }
 
+  Future<void> _openEditProfile() async {
+    final updated = await Navigator.pushNamed(context, '/manager-edit-profile');
+    if (!mounted || updated != true) return;
+    await _loadProfile(showLoading: false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final name =
-    (_firstName ?? '').isNotEmpty ? _firstName! : 'Manager';
+    final fullName = [
+      (_firstName ?? '').trim(),
+      (_lastName ?? '').trim(),
+    ].where((part) => part.isNotEmpty).join(' ');
+    final name = fullName.isNotEmpty ? fullName : 'Manager';
 
-    final email =
-    (_email ?? '').isNotEmpty ? _email! : 'No email available';
+    final email = (_email ?? '').isNotEmpty ? _email! : 'No email available';
 
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
@@ -126,14 +142,21 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                       Positioned(
                         top: -4,
                         right: 0,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryBlue,
-                            shape: BoxShape.circle,
+                        child: Material(
+                          color: AppColors.primaryBlue,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: _openEditProfile,
+                            customBorder: const CircleBorder(),
+                            child: const Padding(
+                              padding: EdgeInsets.all(6),
+                              child: Icon(
+                                Icons.edit,
+                                size: 14,
+                                color: AppColors.pureWhite,
+                              ),
+                            ),
                           ),
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(Icons.edit,
-                              size: 14, color: AppColors.pureWhite),
                         ),
                       ),
                     ],
@@ -208,12 +231,11 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                       leading: Icon(item.$2, size: 20),
                       title: Text(
                         item.$1,
-                        style:
-                        const TextStyle(fontSize: 14),
+                        style: const TextStyle(fontSize: 14),
                       ),
                       trailing: const Icon(Icons.chevron_right,
                           size: 18),
-                      onTap: () {},
+                      onTap: item.$1 == 'Edit Profile' ? _openEditProfile : null,
                     ),
                   ),
                 );
@@ -246,4 +268,3 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     );
   }
 }
-

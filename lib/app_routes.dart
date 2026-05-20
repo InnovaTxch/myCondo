@@ -6,6 +6,7 @@ import 'package:mycondo/features/auth/pages/signup_screen.dart';
 import 'package:mycondo/features/manager/pages/announcements_page.dart';
 import 'package:mycondo/features/manager/pages/approve_payments_screen.dart';
 import 'package:mycondo/features/manager/pages/create_bill_page.dart';
+import 'package:mycondo/features/manager/pages/edit_profile_page.dart';
 import 'package:mycondo/features/manager/pages/manage_condo_page.dart';
 import 'package:mycondo/features/manager/pages/manage_residents_page.dart';
 import 'package:mycondo/features/manager/pages/manager_home_screen.dart';
@@ -16,6 +17,7 @@ import 'package:mycondo/features/resident/pages/resident_bills_page.dart';
 import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
 import 'package:mycondo/features/shared/pages/splash_screen.dart';
+import 'package:mycondo/features/manager/pages/manager_transaction_history_page.dart';
 
 class AppRoutes {
   static final Map<String, WidgetBuilder> routes = {
@@ -33,8 +35,12 @@ class AppRoutes {
         const MaintenanceRequestPage(),
     '/manager-announcements': (context) => const ManagerAnnouncementsPage(),
     '/approve-payments': (context) => const ApprovePaymentsScreen(),
+    '/manager-edit-profile': (context) => const ManagerEditProfilePage(),
     '/manage-condo': (context) => const ManageCondoPage(),
     '/manage-residents': (context) => const ManageResidentsPage(),
     '/add-bills': (context) => const CreateBillPage(),
+    '/transaction-history': (context) => const ManagerTransactionHistoryPage(),
+    '/manager-transactions': (context) =>
+        const ManagerTransactionHistoryPage(),
   };
 }
