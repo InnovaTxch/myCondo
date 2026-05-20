@@ -34,8 +34,8 @@ class PaymentApprovalRepository {
           monthly_bill_id,
           one_time_fee_id,
           paid_by,
-          monthly_bills!payments_monthly_bill_id_fkey(id, due_date),
-          one_time_fees!payments_one_time_fee_id_fkey(id, due_date)
+          monthly_bills!payments_monthly_bill_id_fkey(id, due_date, target_unit_id, units(name)),
+          one_time_fees!payments_one_time_fee_id_fkey(id, due_date, target_unit_id, units(name))
         ''')
         .inFilter('paid_by', residentIds)
         .inFilter('status', statuses)
@@ -43,21 +43,21 @@ class PaymentApprovalRepository {
 
     final profiles = await _getProfilesForPayments(data as List);
     return (data as List)
-        .map((row) => _paymentFromMap(
-              row as Map<String, dynamic>,
-              profiles,
-            ))
+        .map((row) => _paymentFromMap(row as Map<String, dynamic>, profiles))
         .toList();
   }
 
   Future<void> approvePayment(PaymentItem payment) async {
     final manager = await _requireManagerContext();
 
-    await _supabase.from('payments').update({
-      'status': 'completed',
-      'validated_by': manager.managerId,
-      'rejection_reason': null,
-    }).eq('id', payment.id);
+    await _supabase
+        .from('payments')
+        .update({
+          'status': 'completed',
+          'validated_by': manager.managerId,
+          'rejection_reason': null,
+        })
+        .eq('id', payment.id);
 
     final bill = await _getBillForPayment(payment);
     final paidAmount = await _getCompletedPaidAmount(payment);
@@ -66,10 +66,10 @@ class PaymentApprovalRepository {
         ? 'monthly_bills'
         : 'one_time_fees';
 
-    await _supabase.from(table).update({'status': nextStatus}).eq(
-      'id',
-      payment.billId,
-    );
+    await _supabase
+        .from(table)
+        .update({'status': nextStatus})
+        .eq('id', payment.billId);
   }
 
   Future<void> rejectPayment({
@@ -82,11 +82,14 @@ class PaymentApprovalRepository {
       throw Exception('A rejection reason is required.');
     }
 
-    await _supabase.from('payments').update({
-      'status': 'rejected',
-      'validated_by': manager.managerId,
-      'rejection_reason': trimmed,
-    }).eq('id', payment.id);
+    await _supabase
+        .from('payments')
+        .update({
+          'status': 'rejected',
+          'validated_by': manager.managerId,
+          'rejection_reason': trimmed,
+        })
+        .eq('id', payment.id);
   }
 
   String _toDatabaseStatus(PaymentStatus status) {
@@ -108,13 +111,14 @@ class PaymentApprovalRepository {
     final oneTimeFee = map['one_time_fees'] as Map<String, dynamic>?;
     final billType = monthlyBill != null ? 'Monthly Bill' : 'One-Time Fee';
     final bill = monthlyBill ?? oneTimeFee ?? const <String, dynamic>{};
+    final unitName = (bill['units']?['name'] ?? '').toString().trim();
     final paidBy = (map['paid_by'] ?? '').toString();
     final name = profiles[paidBy] ?? '';
 
     return PaymentItem(
       id: (map['id'] as num).toInt(),
       residentName: name.isEmpty ? 'Resident' : name,
-      room: billType,
+      room: unitName.isEmpty ? 'Resident Bill' : 'Unit $unitName',
       amount: (map['amount'] as num).toInt(),
       date: (map['created_at'] ?? '').toString(),
       billType: billType,
@@ -158,7 +162,9 @@ class PaymentApprovalRepository {
         .toList();
   }
 
-  Future<Map<String, String>> _getProfilesForPayments(List<dynamic> rows) async {
+  Future<Map<String, String>> _getProfilesForPayments(
+    List<dynamic> rows,
+  ) async {
     final ids = rows
         .map((row) => (row as Map<String, dynamic>)['paid_by']?.toString())
         .whereType<String>()
@@ -183,8 +189,9 @@ class PaymentApprovalRepository {
   }
 
   Future<_BillTotals> _getBillForPayment(PaymentItem payment) async {
-    final foreignKey =
-        payment.billType == 'Monthly Bill' ? 'monthly_bill_id' : 'one_time_fee_id';
+    final foreignKey = payment.billType == 'Monthly Bill'
+        ? 'monthly_bill_id'
+        : 'one_time_fee_id';
 
     final rows = await _supabase
         .from('bills')
@@ -199,8 +206,9 @@ class PaymentApprovalRepository {
   }
 
   Future<int> _getCompletedPaidAmount(PaymentItem payment) async {
-    final foreignKey =
-        payment.billType == 'Monthly Bill' ? 'monthly_bill_id' : 'one_time_fee_id';
+    final foreignKey = payment.billType == 'Monthly Bill'
+        ? 'monthly_bill_id'
+        : 'one_time_fee_id';
 
     final rows = await _supabase
         .from('payments')
@@ -235,10 +243,7 @@ class PaymentApprovalRepository {
 }
 
 class _ManagerContext {
-  const _ManagerContext({
-    required this.managerId,
-    required this.condoId,
-  });
+  const _ManagerContext({required this.managerId, required this.condoId});
 
   final String managerId;
   final int condoId;
