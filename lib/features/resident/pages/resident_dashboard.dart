@@ -444,6 +444,13 @@ class _QuickActions extends StatelessWidget {
     return Column(
       children: [
         _ActionTile(
+          title: 'Unit Bill',
+          subtitle: 'View shared unit dues, payments, and remaining balance.',
+          icon: Icons.apartment_outlined,
+          onTap: () => Navigator.pushNamed(context, '/resident-unit-bill'),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
           title: 'Pay Bill',
           subtitle: 'Review bills and submit payment for approval.',
           icon: Icons.payments_outlined,
