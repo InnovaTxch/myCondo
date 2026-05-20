@@ -136,14 +136,30 @@ class UnitOption {
     required this.name,
     this.capacity,
     this.occupied = 0,
+    this.issuedBills = 0,
+    this.paidBills = 0,
+    this.overdueBills = 0,
+    this.openBills = 0,
   });
 
   final int id;
   final String name;
   final int? capacity;
   final int occupied;
+  final int issuedBills;
+  final int paidBills;
+  final int overdueBills;
+  final int openBills;
 
   bool get isFull => capacity != null && occupied >= capacity!;
+  bool get isFullyPaid =>
+      issuedBills > 0 && overdueBills == 0 && openBills == 0;
+  bool get hasOverdueBills => overdueBills > 0;
+
+  double get paymentProgress {
+    if (issuedBills <= 0) return 1;
+    return (paidBills / issuedBills).clamp(0, 1).toDouble();
+  }
 
   String get capacityLabel {
     if (capacity == null) return '$occupied residents';
@@ -152,10 +168,7 @@ class UnitOption {
 }
 
 class UnitResidentGroup {
-  const UnitResidentGroup({
-    required this.unit,
-    required this.residents,
-  });
+  const UnitResidentGroup({required this.unit, required this.residents});
 
   final UnitOption unit;
   final List<ResidentProfile> residents;

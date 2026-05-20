@@ -18,9 +18,7 @@ class ResidentRepository {
 
   Future<List<ResidentProfile>> getResidents({String query = ''}) async {
     final residents = List<ResidentProfile>.from(residentsNotifier.value)
-      ..sort(
-        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-      );
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     final trimmed = query.trim().toLowerCase();
     if (trimmed.isEmpty) return residents;
@@ -66,53 +64,56 @@ class ResidentRepository {
         .map((row) => row as Map<String, dynamic>)
         .toList();
 
-    if (residentRows.isEmpty) {
-      residentsNotifier.value = <ResidentProfile>[];
-      unitGroupsNotifier.value = units
-          .map((unit) => UnitResidentGroup(unit: unit, residents: const []))
-          .toList();
-      return;
-    }
-
-    final residentIds = residentRows
-        .map((row) => row['id'].toString())
-        .toList();
-
-    final profilesData = await _supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .inFilter('id', residentIds);
-
     final profileById = <String, Map<String, dynamic>>{};
-    for (final row in (profilesData as List)) {
-      final profile = row as Map<String, dynamic>;
-      profileById[profile['id'].toString()] = profile;
+    if (residentRows.isNotEmpty) {
+      final residentIds = residentRows
+          .map((row) => row['id'].toString())
+          .toList();
+      final profilesData = await _supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .inFilter('id', residentIds);
+
+      for (final row in (profilesData as List)) {
+        final profile = row as Map<String, dynamic>;
+        profileById[profile['id'].toString()] = profile;
+      }
     }
 
-    final residents = residentRows.map((row) {
-      final residentId = row['id'].toString();
-      final profile = profileById[residentId] ?? const <String, dynamic>{};
-      final unitId = row['unit_id'] as int?;
-      final unit = unitId == null ? null : unitById[unitId];
+    final residents =
+        residentRows.map((row) {
+          final residentId = row['id'].toString();
+          final profile = profileById[residentId] ?? const <String, dynamic>{};
+          final unitId = row['unit_id'] as int?;
+          final unit = unitId == null ? null : unitById[unitId];
 
-      final firstName = (profile['first_name'] ?? '').toString().trim();
-      final lastName = (profile['last_name'] ?? '').toString().trim();
-      final name = '$firstName $lastName'.trim();
+          final firstName = (profile['first_name'] ?? '').toString().trim();
+          final lastName = (profile['last_name'] ?? '').toString().trim();
+          final name = '$firstName $lastName'.trim();
 
-      return ResidentProfile(
-        id: residentId,
-        name: name.isEmpty ? 'Unnamed Resident' : name,
-        unit: unit?.name ?? 'Unknown Unit',
-        unitId: unitId,
-        status: row['status']?.toString(),
-        condoCode: context.condoCode,
-        residentCode: row['code']?.toString(),
-      );
-    }).toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+          return ResidentProfile(
+            id: residentId,
+            name: name.isEmpty ? 'Unnamed Resident' : name,
+            unit: unit?.name ?? 'Unknown Unit',
+            unitId: unitId,
+            status: row['status']?.toString(),
+            condoCode: context.condoCode,
+            residentCode: row['code']?.toString(),
+          );
+        }).toList()..sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+
+    final billingSummaryByUnit = await _fetchUnitBillingSummary(
+      unitIds: unitIds,
+    );
 
     residentsNotifier.value = residents;
-    unitGroupsNotifier.value = _buildUnitGroups(units, residents);
+    unitGroupsNotifier.value = _buildUnitGroups(
+      units,
+      residents,
+      billingSummaryByUnit,
+    );
   }
 
   Future<ResidentProfile?> getResidentById(String residentId) async {
@@ -181,12 +182,15 @@ class ResidentRepository {
       },
     );
 
-    final createdRow = (created as List).isNotEmpty ? created.first as Map : null;
+    final createdRow = (created as List).isNotEmpty
+        ? created.first as Map
+        : null;
     final profileId = (createdRow?['resident_id'] ?? '').toString();
     final code = (createdRow?['resident_code'] ?? '').toString();
 
     await refreshResidents();
-    final resident = (await getResidentById(profileId)) ??
+    final resident =
+        (await getResidentById(profileId)) ??
         ResidentProfile(
           id: profileId,
           name: input.name.trim(),
@@ -195,10 +199,7 @@ class ResidentRepository {
           status: 'active',
         );
 
-    return resident.copyWith(
-      condoCode: context.condoCode,
-      residentCode: code,
-    );
+    return resident.copyWith(condoCode: context.condoCode, residentCode: code);
   }
 
   Future<void> updateResident(
@@ -228,12 +229,16 @@ class ResidentRepository {
   List<UnitResidentGroup> _buildUnitGroups(
     List<UnitOption> units,
     List<ResidentProfile> residents,
+    Map<int, _UnitBillingSummary> billingSummaryByUnit,
   ) {
     return units.map((unit) {
-      final unitResidents = residents
-          .where((resident) => resident.unitId == unit.id)
-          .toList()
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      final summary =
+          billingSummaryByUnit[unit.id] ?? const _UnitBillingSummary();
+      final unitResidents =
+          residents.where((resident) => resident.unitId == unit.id).toList()
+            ..sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
 
       return UnitResidentGroup(
         unit: UnitOption(
@@ -241,13 +246,68 @@ class ResidentRepository {
           name: unit.name,
           capacity: unit.capacity,
           occupied: unitResidents.length,
+          issuedBills: summary.issuedBills,
+          paidBills: summary.paidBills,
+          overdueBills: summary.overdueBills,
+          openBills: summary.openBills,
         ),
         residents: unitResidents,
       );
-    }).toList()
-      ..sort(
-        (a, b) => a.unit.name.toLowerCase().compareTo(b.unit.name.toLowerCase()),
-      );
+    }).toList()..sort(
+      (a, b) => a.unit.name.toLowerCase().compareTo(b.unit.name.toLowerCase()),
+    );
+  }
+
+  Future<Map<int, _UnitBillingSummary>> _fetchUnitBillingSummary({
+    required List<int> unitIds,
+  }) async {
+    if (unitIds.isEmpty) return const <int, _UnitBillingSummary>{};
+
+    final summaries = {
+      for (final unitId in unitIds) unitId: _UnitBillingSummaryBuilder(),
+    };
+
+    final monthlyRows = await _supabase
+        .from('monthly_bills')
+        .select('status, received_by, target_unit_id')
+        .inFilter('target_unit_id', unitIds);
+
+    final oneTimeRows = await _supabase
+        .from('one_time_fees')
+        .select('status, received_by, target_unit_id')
+        .inFilter('target_unit_id', unitIds);
+
+    _accumulateBillingRows(
+      rows: monthlyRows as List,
+      summaries: summaries,
+      residentToUnitId: const <String, int>{},
+    );
+    _accumulateBillingRows(
+      rows: oneTimeRows as List,
+      summaries: summaries,
+      residentToUnitId: const <String, int>{},
+    );
+
+    return {
+      for (final entry in summaries.entries) entry.key: entry.value.build(),
+    };
+  }
+
+  void _accumulateBillingRows({
+    required List rows,
+    required Map<int, _UnitBillingSummaryBuilder> summaries,
+    required Map<String, int> residentToUnitId,
+  }) {
+    for (final row in rows) {
+      final map = row as Map<String, dynamic>;
+      final targetUnitId = map['target_unit_id'] as int?;
+      final receivedBy = map['received_by']?.toString();
+      final unitId =
+          targetUnitId ??
+          (receivedBy == null ? null : residentToUnitId[receivedBy]);
+      if (unitId == null || !summaries.containsKey(unitId)) continue;
+      summaries[unitId]!.addStatus((map['status'] ?? '').toString());
+    }
   }
 
   Future<_ManagerContext> _requireManagerContext() async {
@@ -271,16 +331,53 @@ class ResidentRepository {
       condoCode: (manager['condos']?['code'] ?? '').toString(),
     );
   }
-
-
 }
 
 class _ManagerContext {
-  const _ManagerContext({
-    required this.condoId,
-    required this.condoCode,
-  });
+  const _ManagerContext({required this.condoId, required this.condoCode});
 
   final int condoId;
   final String condoCode;
+}
+
+class _UnitBillingSummary {
+  const _UnitBillingSummary({
+    this.issuedBills = 0,
+    this.paidBills = 0,
+    this.overdueBills = 0,
+    this.openBills = 0,
+  });
+
+  final int issuedBills;
+  final int paidBills;
+  final int overdueBills;
+  final int openBills;
+}
+
+class _UnitBillingSummaryBuilder {
+  int issuedBills = 0;
+  int paidBills = 0;
+  int overdueBills = 0;
+  int openBills = 0;
+
+  void addStatus(String status) {
+    issuedBills += 1;
+    if (status == 'paid') {
+      paidBills += 1;
+      return;
+    }
+    if (status == 'overdue') {
+      overdueBills += 1;
+    }
+    openBills += 1;
+  }
+
+  _UnitBillingSummary build() {
+    return _UnitBillingSummary(
+      issuedBills: issuedBills,
+      paidBills: paidBills,
+      overdueBills: overdueBills,
+      openBills: openBills,
+    );
+  }
 }

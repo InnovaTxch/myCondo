@@ -10,6 +10,8 @@ class ResidentBillGroup {
     required this.bills,
     required this.paidAmount,
     required this.payments,
+    this.targetUnitId,
+    this.targetUnitName,
   });
 
   final int id;
@@ -20,6 +22,8 @@ class ResidentBillGroup {
   final List<Bill> bills;
   final int paidAmount;
   final List<BillPaymentAttempt> payments;
+  final int? targetUnitId;
+  final String? targetUnitName;
 
   int get totalAmount {
     return bills.fold<int>(0, (total, bill) => total + bill.amount);
@@ -52,6 +56,8 @@ class ResidentBillGroup {
     return amount < 0 ? 0 : amount;
   }
 
+  bool get isUnitTargeted => targetUnitId != null;
+
   factory ResidentBillGroup.fromMap({
     required Map<String, dynamic> map,
     required String billType,
@@ -79,6 +85,10 @@ class ResidentBillGroup {
         return total + payment.amount;
       }),
       payments: payments,
+      targetUnitId: (map['target_unit_id'] as num?)?.toInt(),
+      targetUnitName: (map['units']?['name'] ?? '').toString().trim().isEmpty
+          ? null
+          : (map['units']?['name']).toString().trim(),
       bills: rows
           .map(
             (row) => Bill(

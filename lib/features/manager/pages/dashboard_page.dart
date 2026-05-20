@@ -502,8 +502,16 @@ class _ManagerQuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ActionTile(
+          title: 'Manage Units',
+          subtitle:
+              'Edit unit profile, monthly charges, and unit payment status.',
+          icon: Icons.apartment_outlined,
+          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
           title: 'Create Bills',
-          subtitle: 'Send dues and charges to selected residents or units.',
+          subtitle: 'Send dues and charges to selected residents.',
           icon: Icons.receipt_long_outlined,
           onTap: () => Navigator.pushNamed(context, '/add-bills'),
         ),

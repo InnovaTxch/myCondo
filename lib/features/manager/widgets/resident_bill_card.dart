@@ -33,13 +33,28 @@ class ResidentBillCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  bill.billType,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Urbanist',
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bill.billType,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Urbanist',
+                      ),
+                    ),
+                    if (bill.isUnitTargeted &&
+                        (bill.targetUnitName ?? '').isNotEmpty)
+                      Text(
+                        'Unit ${bill.targetUnitName}',
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Text(

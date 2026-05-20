@@ -56,6 +56,17 @@ class PaymentCard extends StatelessWidget {
                         height: 1.0,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      payment.room,
+                      style: const TextStyle(
+                        fontFamily: "Urbanist",
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryText,
+                        height: 1.0,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -126,29 +137,15 @@ class PaymentCard extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            _outlineButton(
-              label: 'Deny',
-              onTap: onReject,
-            ),
+            _outlineButton(label: 'Deny', onTap: onReject),
             const SizedBox(width: 8),
-            _filledButton(
-              label: 'Approve',
-              onTap: onApprove,
-            ),
+            _filledButton(label: 'Approve', onTap: onApprove),
           ],
         );
       case PaymentStatus.approved:
-        return _filledButton(
-          label: 'Approved',
-          onTap: null,
-          minWidth: 110,
-        );
+        return _filledButton(label: 'Approved', onTap: null, minWidth: 110);
       case PaymentStatus.rejected:
-        return _outlineButton(
-          label: 'Denied',
-          onTap: null,
-          minWidth: 100,
-        );
+        return _outlineButton(label: 'Denied', onTap: null, minWidth: 100);
     }
   }
 
@@ -251,10 +248,7 @@ class PaymentCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -285,4 +279,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-

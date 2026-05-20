@@ -15,18 +15,18 @@ class ResidentBillRepository {
     final monthlyRows = await _supabase
         .from('monthly_bills')
         .select(
-          'id, created_at, due_date, status, '
+          'id, created_at, due_date, status, target_unit_id, units(name), '
           'bills!bills_monthly_bill_id_fkey(name, amount), '
-          'payments!payments_monthly_bill_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
+          'payments!payments_monthly_bill_id_fkey(id, amount, status, paid_by, proof_url, remark, rejection_reason, created_at)',
         )
         .eq('received_by', residentId);
 
     final oneTimeRows = await _supabase
         .from('one_time_fees')
         .select(
-          'id, created_at, due_date, status, '
+          'id, created_at, due_date, status, target_unit_id, units(name), '
           'bills!bills_one_time_fee_id_fkey(name, amount), '
-          'payments!payments_one_time_fee_id_fkey(id, amount, status, proof_url, remark, rejection_reason, created_at)',
+          'payments!payments_one_time_fee_id_fkey(id, amount, status, paid_by, proof_url, remark, rejection_reason, created_at)',
         )
         .eq('received_by', residentId);
 

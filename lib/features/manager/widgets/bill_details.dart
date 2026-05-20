@@ -3,16 +3,18 @@ import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 
 class BillDetails extends StatelessWidget {
-  BillDetails({
+  const BillDetails({
     super.key,
     required this.dueDate,
+    required this.selectedBillType,
+    required this.billTypes,
     required this.setSelectedBillType,
     required this.setDueDate,
   });
 
-  final List<String> _billTypes = ["Monthly Bill", "One-Time Fee"];
-
   final DateTime dueDate;
+  final String? selectedBillType;
+  final List<String> billTypes;
   final ValueChanged<String?> setSelectedBillType;
   final ValueChanged<DateTime> setDueDate;
 
@@ -22,10 +24,11 @@ class BillDetails extends StatelessWidget {
       children: [
         DropdownButtonFormField<String>(
           decoration: _inputDecoration("Bill Type"),
-          items: _billTypes
+          initialValue: selectedBillType,
+          items: billTypes
               .map((type) => DropdownMenuItem(value: type, child: Text(type)))
               .toList(),
-          onChanged: setSelectedBillType,
+          onChanged: billTypes.length == 1 ? null : setSelectedBillType,
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -68,4 +71,3 @@ class BillDetails extends StatelessWidget {
     );
   }
 }
-

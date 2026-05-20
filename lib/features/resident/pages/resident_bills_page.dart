@@ -212,12 +212,27 @@ class _ResidentBillCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  bill.billType,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bill.billType,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (bill.isUnitTargeted &&
+                        (bill.targetUnitName ?? '').isNotEmpty)
+                      Text(
+                        'Unit ${bill.targetUnitName}',
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               _StatusPill(status: bill.status),
@@ -445,12 +460,28 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              widget.bill.billType,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.bill.billType,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                if (widget.bill.isUnitTargeted &&
+                                    (widget.bill.targetUnitName ?? '')
+                                        .isNotEmpty)
+                                  Text(
+                                    'Unit ${widget.bill.targetUnitName}',
+                                    style: const TextStyle(
+                                      color: AppColors.secondaryText,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           Text(
