@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
+import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
+import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/manager/pages/resident_form_page.dart';
 import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
+import 'package:mycondo/features/manager/widgets/unit_bill_progress_badge.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -20,12 +23,15 @@ class ManageResidentsPage extends StatefulWidget {
 class _ManageResidentsPageState extends State<ManageResidentsPage> {
   final ResidentRepository _repository = ResidentRepository.instance;
   final CondoUnitRepository _unitRepository = CondoUnitRepository.instance;
+  final UnitBillingRepository _unitBillingRepository =
+      UnitBillingRepository.instance;
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _newUnitNameController = TextEditingController();
   final TextEditingController _newUnitCapacityController =
       TextEditingController();
   bool _isLoading = true;
   String? _errorMessage;
+  Map<int, UnitBillPaymentSummary> _unitBillSummaries = const {};
   bool _isAddingUnitInline = false;
   bool _isSavingUnitInline = false;
 
@@ -58,12 +64,20 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
 
     try {
       await _repository.refreshResidents();
+      final unitIds = _repository.unitGroupsNotifier.value
+          .map((group) => group.unit.id)
+          .toList();
+      final unitBillSummaries = await _unitBillingRepository
+          .getCurrentMonthPaymentSummaries(unitIds: unitIds);
+      if (!mounted) return;
+      setState(() => _unitBillSummaries = unitBillSummaries);
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -148,8 +162,9 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
         SnackBar(content: Text('Failed to save unit: $e')),
       );
     } finally {
-      if (!mounted) return;
-      setState(() => _isSavingUnitInline = false);
+      if (mounted) {
+        setState(() => _isSavingUnitInline = false);
+      }
     }
   }
 
@@ -192,8 +207,8 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                 onPressed: _isSavingUnitInline
                     ? null
                     : () => setState(
-                          () => _isAddingUnitInline = !_isAddingUnitInline,
-                        ),
+                        () => _isAddingUnitInline = !_isAddingUnitInline,
+                      ),
                 icon: const Icon(Icons.add_home_work_outlined),
                 label: Text(_isAddingUnitInline ? 'Cancel' : 'Add Unit'),
               ),
@@ -203,50 +218,49 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
               child: _isLoading
                   ? const AppScrollableCentered(child: AppLoadingState())
                   : _errorMessage != null
-                      ? AppScrollableCentered(
-                          child: AppErrorState(
-                            message: 'Unable to load residents. Try again.',
-                            details: _errorMessage,
-                            onRetry: () => _loadResidents(),
-                          ),
-                        )
-                      : ValueListenableBuilder<List<UnitResidentGroup>>(
-                          valueListenable: _repository.unitGroupsNotifier,
-                          builder: (context, groups, _) {
-                            final filtered = _filterGroups(groups);
-                            return Column(
-                              children: [
-                                _buildInlineUnitComposer(),
-                                if (_isAddingUnitInline)
-                                  const SizedBox(height: 6),
-                                if (filtered.isEmpty)
-                                  const Expanded(
-                                    child: AppScrollableCentered(
-                                      child: AppEmptyState(
-                                        icon: Icons.search_rounded,
-                                        title: 'No results',
-                                        message:
-                                            'No units or residents match your search.',
-                                        card: false,
-                                      ),
-                                    ),
-                                  )
-                                else
-                                  Expanded(
-                                    child: ListView.separated(
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(),
-                                      itemCount: filtered.length,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(height: 8),
-                                      itemBuilder: (context, index) =>
-                                          _buildUnitGroup(filtered[index]),
-                                    ),
+                  ? AppScrollableCentered(
+                      child: AppErrorState(
+                        message: 'Unable to load residents. Try again.',
+                        details: _errorMessage,
+                        onRetry: () => _loadResidents(),
+                      ),
+                    )
+                  : ValueListenableBuilder<List<UnitResidentGroup>>(
+                      valueListenable: _repository.unitGroupsNotifier,
+                      builder: (context, groups, _) {
+                        final filtered = _filterGroups(groups);
+                        return Column(
+                          children: [
+                            _buildInlineUnitComposer(),
+                            if (_isAddingUnitInline) const SizedBox(height: 6),
+                            if (filtered.isEmpty)
+                              const Expanded(
+                                child: AppScrollableCentered(
+                                  child: AppEmptyState(
+                                    icon: Icons.search_rounded,
+                                    title: 'No results',
+                                    message:
+                                        'No units or residents match your search.',
+                                    card: false,
                                   ),
-                              ],
-                            );
-                          },
-                        ),
+                                ),
+                              )
+                            else
+                              Expanded(
+                                child: ListView.separated(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) =>
+                                      _buildUnitGroup(filtered[index]),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -257,6 +271,9 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
   Widget _buildUnitGroup(UnitResidentGroup group) {
     final unit = group.unit;
     final isFull = unit.isFull;
+    final billSummary =
+        _unitBillSummaries[unit.id] ??
+        UnitBillPaymentSummary.empty(unitId: unit.id, month: DateTime.now());
 
     return Card(
       color: Colors.white,
@@ -266,14 +283,27 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
           Icons.apartment_outlined,
           color: isFull ? Colors.redAccent : Colors.black87,
         ),
-        title: Text(
-          'Unit ${unit.name}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Unit ${unit.name}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  _buildCapacityStatus(unit),
+                ],
+              ),
+            ),
+            UnitBillProgressBadge(summary: billSummary, showAmounts: false),
+          ],
         ),
-        subtitle: _buildCapacityIcons(unit),
         children: [
           if (group.residents.isEmpty)
             const Padding(
@@ -315,10 +345,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
           Expanded(
             child: Text(
               resident.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
           ),
           OutlinedButton(
@@ -385,31 +412,50 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     );
   }
 
-  Widget _buildCapacityIcons(UnitOption unit) {
+  Widget _buildCapacityStatus(UnitOption unit) {
     final capacity = unit.capacity;
     if (capacity == null || capacity <= 0) {
-      return Text(
-        '${unit.occupied} residents',
-        style: const TextStyle(color: Colors.black54),
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.groups_2_outlined,
+            size: 16,
+            color: AppColors.secondaryText,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            '${unit.occupied} residents assigned',
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       );
     }
 
     final occupied = unit.occupied.clamp(0, capacity);
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Wrap(
-        spacing: 2,
-        runSpacing: 2,
-        children: List<Widget>.generate(capacity, (index) {
-          final filled = index < occupied;
-          return Icon(
-            Icons.person,
-            size: 16,
-            color: filled ? Colors.blue : Colors.grey,
-          );
-        }),
-      ),
+    final isFull = occupied >= capacity;
+    final color = isFull ? AppColors.errorRed : AppColors.primaryBlue;
+
+    return Row(
+      children: [
+        Icon(Icons.groups_2_outlined, size: 16, color: color),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            '$occupied of $capacity residents',
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
-
