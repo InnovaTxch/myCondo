@@ -7,22 +7,21 @@ class InputField extends TextFormField {
     required String hint,
     required TextEditingController super.controller,
     super.obscureText,
-    super.validator
+    super.validator,
   }) : super(
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: AppColors.pureWhite,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            
-            // Standardizing the borders
+            fillColor: const Color(0xFFDEEAF5), // soft blue-grey, darker than lightBlueBackground
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: const BorderSide(color: AppColors.primaryBlue),
+              borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
