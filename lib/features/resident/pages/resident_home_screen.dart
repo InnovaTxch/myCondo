@@ -61,6 +61,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   void changeActivePageIndex(int index) {
+    if (index == 1) {
+      _clearPaymentBadge();
+    }
     setState(() => _activePageIndex = index);
   }
 
@@ -166,6 +169,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         DashboardTabItem(
           root: ResidentProfilePage(
             onContactAdministration: () => changeActivePageIndex(2),
+            onOpenMaintenanceRequests: () {
+              _clearMaintenanceBadge();
+              Navigator.pushNamed(context, '/resident-maintenance-request');
+            },
           ),
         ),
       ],

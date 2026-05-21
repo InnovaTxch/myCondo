@@ -8,9 +8,14 @@ import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentProfilePage extends StatefulWidget {
-  const ResidentProfilePage({super.key, this.onContactAdministration});
+  const ResidentProfilePage({
+    super.key,
+    this.onContactAdministration,
+    this.onOpenMaintenanceRequests,
+  });
 
   final VoidCallback? onContactAdministration;
+  final VoidCallback? onOpenMaintenanceRequests;
 
   @override
   State<ResidentProfilePage> createState() => _ResidentProfilePageState();
@@ -313,10 +318,12 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                       subtitle:
                           'Open maintenance requests and submit a new one.',
                       icon: Icons.warning_amber_outlined,
-                      onTap: () => Navigator.pushNamed(
-                        context,
-                        '/resident-maintenance-request',
-                      ),
+                      onTap:
+                          widget.onOpenMaintenanceRequests ??
+                          () => Navigator.pushNamed(
+                            context,
+                            '/resident-maintenance-request',
+                          ),
                     ),
                     const SizedBox(height: 10),
                     _ProfileActionTile(

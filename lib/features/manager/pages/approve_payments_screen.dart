@@ -89,36 +89,60 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                       _buildTabs(),
                       const SizedBox(height: 14),
                       Expanded(
-                        child: FutureBuilder<List<PaymentItem>>(
-                          future: _paymentsFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const AppLoadingState();
-                            }
+                        child: RefreshIndicator(
+                          onRefresh: _loadPayments,
+                          child: FutureBuilder<List<PaymentItem>>(
+                            future: _paymentsFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: const [
+                                    SizedBox(height: 120),
+                                    AppLoadingState(),
+                                  ],
+                                );
+                              }
 
-                            if (snapshot.hasError) {
-                              return AppErrorState(
-                                message: 'Unable to load payments. Try again.',
-                                details: '${snapshot.error}',
-                                onRetry: _loadPayments,
-                              );
-                            }
+                              if (snapshot.hasError) {
+                                return ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: [
+                                    const SizedBox(height: 120),
+                                    AppErrorState(
+                                      message:
+                                          'Unable to load payments. Try again.',
+                                      details: '${snapshot.error}',
+                                      onRetry: _loadPayments,
+                                    ),
+                                  ],
+                                );
+                              }
 
-                            final payments =
-                                snapshot.data ?? const <PaymentItem>[];
-                            if (payments.isEmpty) {
-                              return const AppEmptyState(
-                                icon: Icons.payments_outlined,
-                                title: 'No payments found',
-                                message: 'Payments will appear here when residents submit them.',
-                                card: false,
-                              );
-                            }
+                              final payments =
+                                  snapshot.data ?? const <PaymentItem>[];
+                              if (payments.isEmpty) {
+                                return ListView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  children: const [
+                                    SizedBox(height: 120),
+                                    AppEmptyState(
+                                      icon: Icons.payments_outlined,
+                                      title: 'No payments found',
+                                      message:
+                                          'Payments will appear here when residents submit them.',
+                                      card: false,
+                                    ),
+                                  ],
+                                );
+                              }
 
-                            return RefreshIndicator(
-                              onRefresh: _loadPayments,
-                              child: ListView.builder(
+                              return ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 itemCount: payments.length,
                                 itemBuilder: (context, index) {
                                   final payment = payments[index];
@@ -128,9 +152,9 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                                     onReject: () => _reject(payment),
                                   );
                                 },
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -230,10 +254,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
     if (!confirmed) return;
 
     try {
-      await _repository.rejectPayment(
-        payment: payment,
-        reason: reason,
-      );
+      await _repository.rejectPayment(payment: payment, reason: reason);
       await _loadPayments();
     } catch (e) {
       if (!mounted) return;
@@ -260,8 +281,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isDestructive ? const Color(0xFFB3261E) : null,
+              backgroundColor: isDestructive ? const Color(0xFFB3261E) : null,
               foregroundColor: isDestructive ? Colors.white : null,
             ),
             child: Text(actionLabel),
@@ -325,4 +345,3 @@ class _RejectPaymentDialogState extends State<_RejectPaymentDialog> {
     );
   }
 }
-
