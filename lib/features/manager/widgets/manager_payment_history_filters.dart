@@ -114,119 +114,153 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
 
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return SafeArea(
-              child: Container(
-                margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                decoration: const BoxDecoration(
-                  color: AppColors.pureWhite,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(28),
-                    bottom: Radius.circular(20),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Filter payments',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
+            return DraggableScrollableSheet(
+              initialChildSize: 0.38,
+              minChildSize: 0.37,
+              maxChildSize: 0.40,
+              expand: false,
+              builder: (context, scrollController) {
+                return SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(
+                      20,
+                      12,
+                      20,
+                      12 + MediaQuery.viewInsetsOf(context).bottom,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: AppColors.pureWhite,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(28),
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    const _FilterLabel('Status'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _choiceChip(
-                          label: 'All',
-                          selected: tempStatus == null,
-                          onSelected: () => setSheetState(() => tempStatus = null),
-                        ),
-                        _choiceChip(
-                          label: 'Approved',
-                          selected: tempStatus == PaymentStatus.approved,
-                          onSelected: () => setSheetState(
-                                () => tempStatus = PaymentStatus.approved,
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: AppColors.softGray,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
                           ),
-                        ),
-                        _choiceChip(
-                          label: 'Denied',
-                          selected: tempStatus == PaymentStatus.rejected,
-                          onSelected: () => setSheetState(
-                                () => tempStatus = PaymentStatus.rejected,
+                          const SizedBox(height: 18),
+                          const Text(
+                            'Filter payments',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 18),
+                          const _FilterLabel('Status'),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _choiceChip(
+                                label: 'All',
+                                selected: tempStatus == null,
+                                onSelected: () =>
+                                    setSheetState(() => tempStatus = null),
+                              ),
+                              _choiceChip(
+                                label: 'Approved',
+                                selected: tempStatus == PaymentStatus.approved,
+                                onSelected: () => setSheetState(
+                                  () => tempStatus = PaymentStatus.approved,
+                                ),
+                              ),
+                              _choiceChip(
+                                label: 'Denied',
+                                selected: tempStatus == PaymentStatus.rejected,
+                                onSelected: () => setSheetState(
+                                  () => tempStatus = PaymentStatus.rejected,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          const _FilterLabel('Month'),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _choiceChip(
+                                label: 'All months',
+                                selected:
+                                    tempMonth == PaymentHistoryMonthFilter.all,
+                                onSelected: () => setSheetState(
+                                  () => tempMonth =
+                                      PaymentHistoryMonthFilter.all,
+                                ),
+                              ),
+                              _choiceChip(
+                                label: 'This month',
+                                selected: tempMonth ==
+                                    PaymentHistoryMonthFilter.thisMonth,
+                                onSelected: () => setSheetState(
+                                  () => tempMonth =
+                                      PaymentHistoryMonthFilter.thisMonth,
+                                ),
+                              ),
+                              _choiceChip(
+                                label: 'Last month',
+                                selected: tempMonth ==
+                                    PaymentHistoryMonthFilter.lastMonth,
+                                onSelected: () => setSheetState(
+                                  () => tempMonth =
+                                      PaymentHistoryMonthFilter.lastMonth,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    onStatusChanged(null);
+                                    onMonthChanged(
+                                      PaymentHistoryMonthFilter.all,
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Clear filters'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    onStatusChanged(tempStatus);
+                                    onMonthChanged(tempMonth);
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Apply'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 18),
-                    const _FilterLabel('Month'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        _choiceChip(
-                          label: 'All months',
-                          selected: tempMonth == PaymentHistoryMonthFilter.all,
-                          onSelected: () => setSheetState(
-                                () => tempMonth = PaymentHistoryMonthFilter.all,
-                          ),
-                        ),
-                        _choiceChip(
-                          label: 'This month',
-                          selected:
-                          tempMonth == PaymentHistoryMonthFilter.thisMonth,
-                          onSelected: () => setSheetState(
-                                () => tempMonth = PaymentHistoryMonthFilter.thisMonth,
-                          ),
-                        ),
-                        _choiceChip(
-                          label: 'Last month',
-                          selected:
-                          tempMonth == PaymentHistoryMonthFilter.lastMonth,
-                          onSelected: () => setSheetState(
-                                () => tempMonth = PaymentHistoryMonthFilter.lastMonth,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              onStatusChanged(null);
-                              onMonthChanged(PaymentHistoryMonthFilter.all);
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Clear filters'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              onStatusChanged(tempStatus);
-                              onMonthChanged(tempMonth);
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Apply'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
