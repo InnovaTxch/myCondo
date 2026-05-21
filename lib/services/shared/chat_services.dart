@@ -156,9 +156,10 @@ class MessagingService {
       'content': content,
     });
 
-    await _supabase.from('conversations').update({
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', conversationId);
+    await _supabase
+        .from('conversations')
+        .update({'updated_at': DateTime.now().toIso8601String()})
+        .eq('id', conversationId);
   }
 
   String _conversationOwnerColumn(String? role) {
@@ -189,18 +190,18 @@ class MessagingService {
 
       final unreadMessages = lastReadAt == null
           ? await _supabase
-              .from('messages')
-              .select('id')
-              .eq('conversation_id', conversation['id'])
-              .neq('sender_id', profile.id)
-              .limit(1)
+                .from('messages')
+                .select('id')
+                .eq('conversation_id', conversation['id'])
+                .neq('sender_id', profile.id)
+                .limit(1)
           : await _supabase
-              .from('messages')
-              .select('id')
-              .eq('conversation_id', conversation['id'])
-              .neq('sender_id', profile.id)
-              .gt('created_at', lastReadAt)
-              .limit(1);
+                .from('messages')
+                .select('id')
+                .eq('conversation_id', conversation['id'])
+                .neq('sender_id', profile.id)
+                .gt('created_at', lastReadAt)
+                .limit(1);
 
       if ((unreadMessages as List<dynamic>).isNotEmpty) {
         return true;
@@ -228,9 +229,10 @@ class MessagingService {
     final profile = await _identity.requireCurrentProfile();
     final readColumn = _lastReadColumn(profile.role);
 
-    await _supabase.from('conversations').update({
-      readColumn: DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', conversationId);
+    await _supabase
+        .from('conversations')
+        .update({readColumn: DateTime.now().toUtc().toIso8601String()})
+        .eq('id', conversationId);
   }
 
   Future<DateTime?> currentUserLastReadAt(int conversationId) async {
@@ -261,18 +263,18 @@ class MessagingService {
 
       final unreadMessages = lastReadAt == null
           ? await _supabase
-              .from('messages')
-              .select('id')
-              .eq('conversation_id', conversation['id'])
-              .neq('sender_id', managerId)
-              .limit(1)
+                .from('messages')
+                .select('id')
+                .eq('conversation_id', conversation['id'])
+                .neq('sender_id', managerId)
+                .limit(1)
           : await _supabase
-              .from('messages')
-              .select('id')
-              .eq('conversation_id', conversation['id'])
-              .neq('sender_id', managerId)
-              .gt('created_at', lastReadAt)
-              .limit(1);
+                .from('messages')
+                .select('id')
+                .eq('conversation_id', conversation['id'])
+                .neq('sender_id', managerId)
+                .gt('created_at', lastReadAt)
+                .limit(1);
 
       if ((unreadMessages as List<dynamic>).isNotEmpty) {
         unreadResidentIds.add(conversation['resident_id'].toString());

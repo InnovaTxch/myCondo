@@ -9,9 +9,20 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 
 class ManagerDashboardPage extends StatefulWidget {
-  const ManagerDashboardPage({super.key, required this.onOpenPaymentHistory});
+  const ManagerDashboardPage({
+    super.key,
+    required this.onOpenPaymentHistory,
+    this.showPaymentNotificationBadge = false,
+    this.showMaintenanceNotificationBadge = false,
+    this.onPaymentNotificationsViewed,
+    this.onMaintenanceNotificationsViewed,
+  });
 
   final VoidCallback onOpenPaymentHistory;
+  final bool showPaymentNotificationBadge;
+  final bool showMaintenanceNotificationBadge;
+  final VoidCallback? onPaymentNotificationsViewed;
+  final VoidCallback? onMaintenanceNotificationsViewed;
 
   @override
   State<ManagerDashboardPage> createState() => _ManagerDashboardPageState();
@@ -190,6 +201,14 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                   const SizedBox(height: 18),
                   _ManagerQuickActions(
                     onOpenPaymentHistory: widget.onOpenPaymentHistory,
+                    showPaymentNotificationBadge:
+                        widget.showPaymentNotificationBadge,
+                    showMaintenanceNotificationBadge:
+                        widget.showMaintenanceNotificationBadge,
+                    onPaymentNotificationsViewed:
+                        widget.onPaymentNotificationsViewed,
+                    onMaintenanceNotificationsViewed:
+                        widget.onMaintenanceNotificationsViewed,
                   ),
                 ],
               );
@@ -485,9 +504,19 @@ class _ManagerAnnouncementPreview extends StatelessWidget {
 }
 
 class _ManagerQuickActions extends StatelessWidget {
-  const _ManagerQuickActions({required this.onOpenPaymentHistory});
+  const _ManagerQuickActions({
+    required this.onOpenPaymentHistory,
+    required this.showPaymentNotificationBadge,
+    required this.showMaintenanceNotificationBadge,
+    this.onPaymentNotificationsViewed,
+    this.onMaintenanceNotificationsViewed,
+  });
 
   final VoidCallback onOpenPaymentHistory;
+  final bool showPaymentNotificationBadge;
+  final bool showMaintenanceNotificationBadge;
+  final VoidCallback? onPaymentNotificationsViewed;
+  final VoidCallback? onMaintenanceNotificationsViewed;
 
   @override
   Widget build(BuildContext context) {
@@ -504,7 +533,11 @@ class _ManagerQuickActions extends StatelessWidget {
           title: 'Approve Payments',
           subtitle: 'Review cash and e-wallet submissions from residents.',
           icon: Icons.fact_check_outlined,
-          onTap: () => Navigator.pushNamed(context, '/approve-payments'),
+          showBadge: showPaymentNotificationBadge,
+          onTap: () {
+            onPaymentNotificationsViewed?.call();
+            Navigator.pushNamed(context, '/approve-payments');
+          },
         ),
         const SizedBox(height: 10),
         _ActionTile(
@@ -526,8 +559,11 @@ class _ManagerQuickActions extends StatelessWidget {
           title: 'Maintenance Requests',
           subtitle: 'Review and update resident repair requests.',
           icon: Icons.build_circle_outlined,
-          onTap: () =>
-              Navigator.pushNamed(context, '/manager-maintenance-requests'),
+          showBadge: showMaintenanceNotificationBadge,
+          onTap: () {
+            onMaintenanceNotificationsViewed?.call();
+            Navigator.pushNamed(context, '/manager-maintenance-requests');
+          },
         ),
         const SizedBox(height: 10),
         _ActionTile(
@@ -547,12 +583,14 @@ class _ActionTile extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.onTap,
+    this.showBadge = false,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -570,7 +608,26 @@ class _ActionTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.black, size: 30),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: Colors.black, size: 30),
+                  if (showBadge)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
