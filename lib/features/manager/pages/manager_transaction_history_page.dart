@@ -163,6 +163,20 @@ class _ManagerTransactionHistoryPageState
     }).toList();
   }
 
+  bool _matchesMonthFilter(String value) {
+    if (_monthFilter == PaymentHistoryMonthFilter.all) return true;
+
+    final paymentDate = DateTime.tryParse(value)?.toLocal();
+    if (paymentDate == null) return false;
+
+    final now = DateTime.now();
+
+    final subtractMonths = _monthFilter == PaymentHistoryMonthFilter.thisMonth ? 0 : 1;
+    final targetMonth = DateTime(now.year, now.month - subtractMonths);
+
+    return paymentDate.year == targetMonth.year &&
+        paymentDate.month == targetMonth.month;
+  }
 }
 
 
