@@ -65,11 +65,9 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
       SessionTimerService().stopTimer();
 
       if (!mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
         '/login',
-            (route) => false,
+        (route) => false,
       );
     } catch (_) {
       if (!mounted) return;
