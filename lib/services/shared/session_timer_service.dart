@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mycondo/services/shared/presence_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mycondo/features/shared/widgets/session_timeout_dialog.dart';
 
 class SessionTimerService {
   static final SessionTimerService _instance = SessionTimerService._internal();
@@ -71,17 +72,11 @@ class SessionTimerService {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Session Expired'),
-        content: const Text('You have been logged out due to inactivity.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-            },
-            child: const Text('bye'),
-          ),
-        ],
+      builder: (dialogContext) => SessionExpiredDialog(
+        onConfirm: () {
+          Navigator.of(dialogContext, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
+        },
       ),
     );
   }
