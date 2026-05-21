@@ -7,6 +7,39 @@ class NotificationService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ProfileIdentityService _identity = ProfileIdentityService();
 
+  Future<ManagerNotificationSnapshot> getManagerInitialSnapshot() async {
+    final profile = await _identity.requireCurrentProfile();
+    final residentIds = await _getResidentIdsForManager(profile.id);
+    final condoId = await _getManagerCondoId(profile.id);
+
+    final hasPaymentNotifications =
+        residentIds.isNotEmpty && await _hasPendingPayments(residentIds);
+    final hasMaintenanceNotifications =
+        condoId != null && await _hasOpenMaintenanceRequestsForManager(condoId);
+
+    return ManagerNotificationSnapshot(
+      hasPaymentNotifications: hasPaymentNotifications,
+      hasMaintenanceNotifications: hasMaintenanceNotifications,
+    );
+  }
+
+  Future<ResidentNotificationSnapshot> getResidentInitialSnapshot() async {
+    final profile = await _identity.requireCurrentProfile();
+
+    final hasPaymentNotifications = await _hasUnseenResidentPaymentDecisions(
+      profile.id,
+    );
+    final hasMaintenanceNotifications = await _hasNonPendingResidentMaintenance(
+      profile.id,
+    );
+
+    return ResidentNotificationSnapshot(
+      hasPaymentNotifications: hasPaymentNotifications,
+      hasMaintenanceNotifications: hasMaintenanceNotifications,
+      hasAnnouncementNotifications: false,
+    );
+  }
+
   /// For the MANAGER: emits popup messages for resident-side actions.
   Stream<String> managerActionPopupsStream() async* {
     final profile = await _identity.requireCurrentProfile();
@@ -344,6 +377,51 @@ class NotificationService {
     return _extractIntIdSet(rows);
   }
 
+  Future<bool> _hasPendingPayments(List<String> residentIds) async {
+    final rows = await _supabase
+        .from('payments')
+        .select('id')
+        .inFilter('paid_by', residentIds)
+        .eq('status', 'pending')
+        .limit(1);
+
+    return (rows as List<dynamic>).isNotEmpty;
+  }
+
+  Future<bool> _hasOpenMaintenanceRequestsForManager(int condoId) async {
+    final rows = await _supabase
+        .from('maintenance_requests')
+        .select('id')
+        .eq('condo_id', condoId)
+        .inFilter('status', ['pending', 'in_progress'])
+        .limit(1);
+
+    return (rows as List<dynamic>).isNotEmpty;
+  }
+
+  Future<bool> _hasUnseenResidentPaymentDecisions(String residentId) async {
+    final rows = await _supabase
+        .from('payments')
+        .select('id')
+        .eq('paid_by', residentId)
+        .inFilter('status', ['completed', 'rejected'])
+        .eq('payment_seen_by_resident', false)
+        .limit(1);
+
+    return (rows as List<dynamic>).isNotEmpty;
+  }
+
+  Future<bool> _hasNonPendingResidentMaintenance(String residentId) async {
+    final rows = await _supabase
+        .from('maintenance_requests')
+        .select('id')
+        .eq('resident_id', residentId)
+        .inFilter('status', ['in_progress', 'resolved', 'cancelled'])
+        .limit(1);
+
+    return (rows as List<dynamic>).isNotEmpty;
+  }
+
   Future<Set<int>> _fetchMaintenanceRequestIdsForCondo(int condoId) async {
     final rows = await _supabase
         .from('maintenance_requests')
@@ -411,4 +489,26 @@ class NotificationService {
   String _normalizedStatus(dynamic value) {
     return value == null ? '' : value.toString().trim().toLowerCase();
   }
+}
+
+class ManagerNotificationSnapshot {
+  const ManagerNotificationSnapshot({
+    required this.hasPaymentNotifications,
+    required this.hasMaintenanceNotifications,
+  });
+
+  final bool hasPaymentNotifications;
+  final bool hasMaintenanceNotifications;
+}
+
+class ResidentNotificationSnapshot {
+  const ResidentNotificationSnapshot({
+    required this.hasPaymentNotifications,
+    required this.hasMaintenanceNotifications,
+    required this.hasAnnouncementNotifications,
+  });
+
+  final bool hasPaymentNotifications;
+  final bool hasMaintenanceNotifications;
+  final bool hasAnnouncementNotifications;
 }

@@ -8,12 +8,14 @@ class DashboardNavigationBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> changeActivePageIndex;
   final bool hasUnreadMessages;
+  final bool hasHomeNotifications;
 
   const DashboardNavigationBar({
     super.key,
     required this.currentIndex,
     required this.changeActivePageIndex,
     this.hasUnreadMessages = false,
+    this.hasHomeNotifications = false,
   });
 
   static const _labels = <String>[
@@ -81,14 +83,20 @@ class DashboardNavigationBar extends StatelessWidget {
                       final isSelected = states.contains(WidgetState.selected);
                       return TextStyle(
                         fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? AppColors.darkText : AppColors.secondaryText,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? AppColors.darkText
+                            : AppColors.secondaryText,
                       );
                     }),
                     iconTheme: WidgetStateProperty.resolveWith((states) {
                       final isSelected = states.contains(WidgetState.selected);
                       return IconThemeData(
-                        color: isSelected ? colorScheme.onPrimary : AppColors.secondaryText,
+                        color: isSelected
+                            ? colorScheme.onPrimary
+                            : AppColors.secondaryText,
                         size: 22,
                       );
                     }),
@@ -101,7 +109,9 @@ class DashboardNavigationBar extends StatelessWidget {
                     },
                     destinations: List.generate(_labels.length, (index) {
                       final label = _labels[index];
-                      final showBadge = index == 2 && hasUnreadMessages;
+                      final showBadge =
+                          (index == 0 && hasHomeNotifications) ||
+                          (index == 2 && hasUnreadMessages);
                       return NavigationDestination(
                         label: label,
                         icon: Tooltip(

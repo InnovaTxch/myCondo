@@ -26,14 +26,38 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   final _messagingService = MessagingService();
   final _notificationService = NotificationService();
   StreamSubscription<String>? _actionPopupSubscription;
+  bool _hasHomeNotificationBadge = false;
+  bool _hasPaymentNotificationBadge = false;
+  bool _hasMaintenanceNotificationBadge = false;
+  bool _hasAnnouncementNotificationBadge = false;
 
   @override
   void initState() {
     super.initState();
     presenceService.start();
+    _loadInitialNotificationSnapshot();
     _actionPopupSubscription = _notificationService
         .residentActionPopupsStream()
         .listen(_showActionPopup);
+  }
+
+  Future<void> _loadInitialNotificationSnapshot() async {
+    try {
+      final snapshot = await _notificationService.getResidentInitialSnapshot();
+      if (!mounted) return;
+      setState(() {
+        _hasPaymentNotificationBadge = snapshot.hasPaymentNotifications;
+        _hasMaintenanceNotificationBadge = snapshot.hasMaintenanceNotifications;
+        _hasAnnouncementNotificationBadge =
+            snapshot.hasAnnouncementNotifications;
+        _hasHomeNotificationBadge =
+            _hasPaymentNotificationBadge ||
+            _hasMaintenanceNotificationBadge ||
+            _hasAnnouncementNotificationBadge;
+      });
+    } catch (_) {
+      // Ignore snapshot failures; realtime stream can still populate badges.
+    }
   }
 
   void changeActivePageIndex(int index) {
@@ -44,11 +68,71 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     if (!mounted) return;
     final text = message.trim();
     if (text.isEmpty) return;
+    _markNotificationFlags(text);
     context.showAppMessage(
       text,
       tone: AppSnackTone.info,
       replaceCurrent: false,
     );
+  }
+
+  void _markNotificationFlags(String message) {
+    final lower = message.toLowerCase();
+    var categoryChanged = false;
+
+    if (lower.contains('payment') && !_hasPaymentNotificationBadge) {
+      _hasPaymentNotificationBadge = true;
+      categoryChanged = true;
+    }
+    if (lower.contains('maintenance') && !_hasMaintenanceNotificationBadge) {
+      _hasMaintenanceNotificationBadge = true;
+      categoryChanged = true;
+    }
+    if (lower.contains('announcement') && !_hasAnnouncementNotificationBadge) {
+      _hasAnnouncementNotificationBadge = true;
+      categoryChanged = true;
+    }
+
+    final nextHome =
+        _hasPaymentNotificationBadge ||
+        _hasMaintenanceNotificationBadge ||
+        _hasAnnouncementNotificationBadge;
+    final homeChanged = _hasHomeNotificationBadge != nextHome;
+    if (!categoryChanged && !homeChanged) return;
+
+    setState(() {
+      _hasHomeNotificationBadge = nextHome;
+    });
+  }
+
+  void _syncHomeNotificationBadge() {
+    final next =
+        _hasPaymentNotificationBadge ||
+        _hasMaintenanceNotificationBadge ||
+        _hasAnnouncementNotificationBadge;
+    if (_hasHomeNotificationBadge == next) return;
+    setState(() {
+      _hasHomeNotificationBadge = next;
+    });
+  }
+
+  void _clearPaymentBadge() {
+    if (!_hasPaymentNotificationBadge) return;
+    _messagingService.clearPaymentStatusNotification();
+    _hasPaymentNotificationBadge = false;
+    _syncHomeNotificationBadge();
+  }
+
+  void _clearMaintenanceBadge() {
+    if (!_hasMaintenanceNotificationBadge) return;
+    _hasMaintenanceNotificationBadge = false;
+    _syncHomeNotificationBadge();
+  }
+
+  void _clearAnnouncementBadge() {
+    if (!_hasAnnouncementNotificationBadge) return;
+    _hasAnnouncementNotificationBadge = false;
+    _syncHomeNotificationBadge();
   }
 
   @override
@@ -67,6 +151,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         DashboardTabItem(
           root: ResidentDashboard(
             onOpenMessages: () => changeActivePageIndex(2),
+            showPaymentNotificationBadge: _hasPaymentNotificationBadge,
+            showMaintenanceNotificationBadge: _hasMaintenanceNotificationBadge,
+            onPaymentNotificationsViewed: _clearPaymentBadge,
+            onMaintenanceNotificationsViewed: _clearMaintenanceBadge,
+            onAnnouncementNotificationsViewed: _clearAnnouncementBadge,
           ),
         ),
         const DashboardTabItem(
@@ -88,6 +177,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               currentIndex: currentIndex,
               changeActivePageIndex: onIndexChanged,
               hasUnreadMessages: snapshot.data ?? false,
+              hasHomeNotifications: _hasHomeNotificationBadge,
             );
           },
         );

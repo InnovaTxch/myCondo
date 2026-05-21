@@ -30,15 +30,34 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   final _messagingService = MessagingService();
   final _notificationService = NotificationService();
   StreamSubscription<String>? _actionPopupSubscription;
+  bool _hasHomeNotificationBadge = false;
+  bool _hasPaymentNotificationBadge = false;
+  bool _hasMaintenanceNotificationBadge = false;
 
   @override
   void initState() {
     super.initState();
     _activePageIndex = widget.initialPageIndex;
     presenceService.start();
+    _loadInitialNotificationSnapshot();
     _actionPopupSubscription = _notificationService
         .managerActionPopupsStream()
         .listen(_showActionPopup);
+  }
+
+  Future<void> _loadInitialNotificationSnapshot() async {
+    try {
+      final snapshot = await _notificationService.getManagerInitialSnapshot();
+      if (!mounted) return;
+      setState(() {
+        _hasPaymentNotificationBadge = snapshot.hasPaymentNotifications;
+        _hasMaintenanceNotificationBadge = snapshot.hasMaintenanceNotifications;
+        _hasHomeNotificationBadge =
+            _hasPaymentNotificationBadge || _hasMaintenanceNotificationBadge;
+      });
+    } catch (_) {
+      // Ignore snapshot failures; realtime stream can still populate badges.
+    }
   }
 
   void changeActivePageIndex(int index) {
@@ -49,11 +68,56 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     if (!mounted) return;
     final text = message.trim();
     if (text.isEmpty) return;
+    _markNotificationFlags(text);
     context.showAppMessage(
       text,
       tone: AppSnackTone.info,
       replaceCurrent: false,
     );
+  }
+
+  void _markNotificationFlags(String message) {
+    final lower = message.toLowerCase();
+    var categoryChanged = false;
+
+    if (lower.contains('payment') && !_hasPaymentNotificationBadge) {
+      _hasPaymentNotificationBadge = true;
+      categoryChanged = true;
+    }
+    if (lower.contains('maintenance') && !_hasMaintenanceNotificationBadge) {
+      _hasMaintenanceNotificationBadge = true;
+      categoryChanged = true;
+    }
+
+    final nextHome =
+        _hasPaymentNotificationBadge || _hasMaintenanceNotificationBadge;
+    final homeChanged = _hasHomeNotificationBadge != nextHome;
+    if (!categoryChanged && !homeChanged) return;
+
+    setState(() {
+      _hasHomeNotificationBadge = nextHome;
+    });
+  }
+
+  void _syncHomeNotificationBadge() {
+    final next =
+        _hasPaymentNotificationBadge || _hasMaintenanceNotificationBadge;
+    if (_hasHomeNotificationBadge == next) return;
+    setState(() {
+      _hasHomeNotificationBadge = next;
+    });
+  }
+
+  void _clearPaymentBadge() {
+    if (!_hasPaymentNotificationBadge) return;
+    _hasPaymentNotificationBadge = false;
+    _syncHomeNotificationBadge();
+  }
+
+  void _clearMaintenanceBadge() {
+    if (!_hasMaintenanceNotificationBadge) return;
+    _hasMaintenanceNotificationBadge = false;
+    _syncHomeNotificationBadge();
   }
 
   @override
@@ -72,6 +136,10 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         DashboardTabItem(
           root: ManagerDashboardPage(
             onOpenPaymentHistory: () => changeActivePageIndex(1),
+            showPaymentNotificationBadge: _hasPaymentNotificationBadge,
+            showMaintenanceNotificationBadge: _hasMaintenanceNotificationBadge,
+            onPaymentNotificationsViewed: _clearPaymentBadge,
+            onMaintenanceNotificationsViewed: _clearMaintenanceBadge,
           ),
         ),
         DashboardTabItem(root: ManagerTransactionHistoryPage()),
@@ -87,6 +155,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
               currentIndex: currentIndex,
               changeActivePageIndex: onIndexChanged,
               hasUnreadMessages: snapshot.data ?? false,
+              hasHomeNotifications: _hasHomeNotificationBadge,
             );
           },
         );
