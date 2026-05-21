@@ -138,6 +138,31 @@ class _ManagerTransactionHistoryPageState
       ),
     );
   }
+
+  List<PaymentItem> _applyFilters(List<PaymentItem> payments) {
+    final query = _searchController.text.trim().toLowerCase();
+
+    return payments.where((payment) {
+      if (_statusFilter != null && payment.status != _statusFilter) return false;
+      if (!_matchesMonthFilter(payment.date)) return false;
+
+      if (query.isNotEmpty) {
+        final amount = payment.amount / 100;
+        final amountText = amount.toStringAsFixed(2);
+
+        final matchesSearch = payment.residentName.toLowerCase().contains(query) ||
+            payment.room.toLowerCase().contains(query) ||
+            payment.billType.toLowerCase().contains(query) ||
+            amountText.contains(query) ||
+            'php $amountText'.contains(query);
+
+        if (!matchesSearch) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
 }
 
 
