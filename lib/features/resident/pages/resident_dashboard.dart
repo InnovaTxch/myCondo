@@ -465,8 +465,8 @@ class _QuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ActionTile(
-          title: 'Request Maintenance',
-          subtitle: 'Report repairs or unit issues to management.',
+          title: 'Maintenance',
+          subtitle: 'Track requests and submit unit repair concerns.',
           icon: Icons.build_circle_outlined,
           onTap: () =>
               Navigator.pushNamed(context, '/resident-maintenance-request'),

@@ -27,11 +27,37 @@ class MaintenanceRequestService {
       'reporter_first_name': input.firstName.trim(),
       'reporter_last_name': input.lastName.trim(),
       'room_number': input.roomNumber.trim(),
-      'priority': input.priority,
+      'priority': input.priority.toLowerCase(),
       'problem_type': input.problemType,
       'description': input.description.trim(),
       'status': 'pending',
     });
+  }
+
+  Future<List<MaintenanceRequestRecord>> fetchMyRequests({
+    String? status,
+  }) async {
+    final profileIdentity = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
+
+    var query = _supabase
+        .from('maintenance_requests')
+        .select(
+          'id, created_at, priority, problem_type, description, '
+          'status, manager_notes, resolved_at',
+        )
+        .eq('resident_id', profileIdentity.id);
+
+    if (status != null && status != 'all') {
+      query = query.eq('status', status);
+    }
+
+    final rows = await query.order('created_at', ascending: false);
+
+    return (rows as List<dynamic>)
+        .map((raw) => MaintenanceRequestRecord.fromMap(raw))
+        .toList();
   }
 
   Future<_MaintenanceResidentContext> _requireResidentContext() async {
@@ -65,6 +91,52 @@ class MaintenanceRequestService {
       lastName: (profile['last_name'] as String? ?? '').trim(),
       unitName: (unit['name'] as String? ?? '').trim(),
     );
+  }
+}
+
+class MaintenanceRequestRecord {
+  const MaintenanceRequestRecord({
+    required this.id,
+    required this.createdAt,
+    required this.priority,
+    required this.problemType,
+    required this.description,
+    required this.status,
+    required this.managerNotes,
+    required this.resolvedAt,
+  });
+
+  final int id;
+  final DateTime? createdAt;
+  final String priority;
+  final String problemType;
+  final String description;
+  final String status;
+  final String managerNotes;
+  final DateTime? resolvedAt;
+
+  factory MaintenanceRequestRecord.fromMap(dynamic mapLike) {
+    final map = mapLike as Map<String, dynamic>;
+    return MaintenanceRequestRecord(
+      id: _parseInt(map['id']),
+      createdAt: _parseDateTime(map['created_at']),
+      priority: (map['priority'] ?? '').toString(),
+      problemType: (map['problem_type'] ?? '').toString(),
+      description: (map['description'] ?? '').toString(),
+      status: (map['status'] ?? '').toString(),
+      managerNotes: (map['manager_notes'] ?? '').toString(),
+      resolvedAt: _parseDateTime(map['resolved_at']),
+    );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    return DateTime.tryParse(value.toString());
   }
 }
 
