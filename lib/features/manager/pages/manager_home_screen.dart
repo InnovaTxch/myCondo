@@ -53,21 +53,13 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         DashboardTabItem(root: ManagerProfilePage()),
       ],
       bottomNavigationBar: (currentIndex, onIndexChanged) {
-        // Stream 1: unread chat messages
         return StreamBuilder<bool>(
           stream: _messagingService.hasUnreadMessagesStream(),
-          builder: (context, msgSnapshot) {
-            // Stream 2: pending payments awaiting manager approval (NEW)
-            return StreamBuilder<bool>(
-              stream: _messagingService.hasPendingPaymentsStream(),
-              builder: (context, paySnapshot) {
-                return DashboardNavigationBar(
-                  currentIndex: currentIndex,
-                  changeActivePageIndex: onIndexChanged,
-                  hasUnreadMessages: msgSnapshot.data ?? false,
-                  hasPaymentNotification: paySnapshot.data ?? false, // NEW
-                );
-              },
+          builder: (context, snapshot) {
+            return DashboardNavigationBar(
+              currentIndex: currentIndex,
+              changeActivePageIndex: onIndexChanged,
+              hasUnreadMessages: snapshot.data ?? false,
             );
           },
         );
