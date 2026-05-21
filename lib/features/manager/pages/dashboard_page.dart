@@ -9,7 +9,12 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 
 class ManagerDashboardPage extends StatefulWidget {
-  const ManagerDashboardPage({super.key});
+  const ManagerDashboardPage({
+    super.key,
+    required this.onOpenPaymentHistory,
+  });
+
+  final VoidCallback onOpenPaymentHistory;
 
   @override
   State<ManagerDashboardPage> createState() => _ManagerDashboardPageState();
@@ -186,7 +191,9 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                     onTap: _openAnnouncements,
                   ),
                   const SizedBox(height: 18),
-                  const _ManagerQuickActions(),
+                  _ManagerQuickActions(
+                    onOpenPaymentHistory: widget.onOpenPaymentHistory,
+                  ),
                 ],
               );
             },
@@ -481,7 +488,11 @@ class _ManagerAnnouncementPreview extends StatelessWidget {
 }
 
 class _ManagerQuickActions extends StatelessWidget {
-  const _ManagerQuickActions();
+  const _ManagerQuickActions({
+    required this.onOpenPaymentHistory,
+  });
+
+  final VoidCallback onOpenPaymentHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -520,7 +531,7 @@ class _ManagerQuickActions extends StatelessWidget {
           title: 'Transaction History',
           subtitle: 'Review approved and rejected payment decisions.',
           icon: Icons.history_rounded,
-          onTap: () => Navigator.pushNamed(context, '/manager-transactions'),
+          onTap: onOpenPaymentHistory,
         ),
       ],
     );

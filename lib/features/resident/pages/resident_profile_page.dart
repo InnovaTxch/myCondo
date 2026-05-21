@@ -83,7 +83,10 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       SessionTimerService().stopTimer();
 
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+        '/login',
+            (route) => false,
+      );
     } catch (_) {
       if (!mounted) return;
 

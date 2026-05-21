@@ -56,6 +56,18 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
     return true;
   }
 
+  void _selectTab(int index) {
+    final navigator = _navigatorKeys[index].currentState;
+
+    if (index == widget.currentIndex) {
+      navigator?.popUntil((route) => route.isFirst);
+      return;
+    }
+
+    navigator?.popUntil((route) => route.isFirst);
+    widget.onIndexChanged(index);
+  }
+
   Route<dynamic> _onGenerateRoute(int tabIndex, RouteSettings settings) {
     if (settings.name == Navigator.defaultRouteName) {
       return MaterialPageRoute(
@@ -103,7 +115,7 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
           }),
         ),
         bottomNavigationBar:
-            widget.bottomNavigationBar(widget.currentIndex, widget.onIndexChanged),
+            widget.bottomNavigationBar(widget.currentIndex, _selectTab),
       ),
     );
   }
