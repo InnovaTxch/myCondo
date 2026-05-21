@@ -333,7 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: primaryBlue.withOpacity(0.3),
+                        color: primaryBlue.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -469,8 +469,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     boxShadow: [
                       BoxShadow(
                         color: isMe
-                            ? primaryBlue.withOpacity(0.25)
-                            : Colors.black.withOpacity(0.06),
+                            ? primaryBlue.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -515,7 +515,7 @@ class _ChatScreenState extends State<ChatScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -539,7 +539,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _isTyping
-                      ? primaryBlue.withOpacity(0.4)
+                      ? primaryBlue.withValues(alpha: 0.4)
                       : Colors.transparent,
                   width: 1.5,
                 ),
@@ -607,7 +607,7 @@ class _ChatScreenState extends State<ChatScreen> {
               boxShadow: _isTyping
                   ? [
                       BoxShadow(
-                        color: primaryBlue.withOpacity(0.4),
+                        color: primaryBlue.withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       )

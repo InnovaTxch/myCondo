@@ -112,6 +112,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
 
     if (!mounted) return;
     await _load();
+    if (!mounted) return;
     setState(() => _isEditing = false);
     context.showAppSnackBar(
       const SnackBar(content: Text('Resident profile updated.')),
@@ -227,7 +228,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 14,
                                 offset: const Offset(0, 4),
                               ),
@@ -277,7 +278,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -369,7 +370,7 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<int>(
-          value: _selectedUnitId,
+          initialValue: _selectedUnitId,
           items: _units
               .map(
                 (unit) => DropdownMenuItem<int>(

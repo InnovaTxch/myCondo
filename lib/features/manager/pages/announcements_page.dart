@@ -195,10 +195,11 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         Navigator.of(context).pop(_didMutate);
-        return false;
       },
       child: Scaffold(
         backgroundColor: AppColors.lightBlueBackground,

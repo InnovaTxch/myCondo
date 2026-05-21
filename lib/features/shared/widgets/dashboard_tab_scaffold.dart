@@ -96,8 +96,15 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => _handleBackPressed(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final shouldPopRoute = _handleBackPressed();
+        if (shouldPopRoute) {
+          Navigator.of(context).pop();
+        }
+      },
       child: Scaffold(
         body: IndexedStack(
           index: widget.currentIndex,
