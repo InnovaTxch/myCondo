@@ -131,7 +131,9 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
                       margin: const EdgeInsets.only(right: 8),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? cat.$4.withOpacity(0.12) : const Color(0xFFF5F5F5),
+                        color: isSelected
+                            ? cat.$4.withValues(alpha: 0.12)
+                            : const Color(0xFFF5F5F5),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected ? cat.$4 : Colors.transparent,

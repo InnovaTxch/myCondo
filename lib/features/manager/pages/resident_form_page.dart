@@ -174,7 +174,7 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
                   },
                 ),
                 DropdownButtonFormField<int>(
-                  value: _selectedUnitId,
+                  initialValue: _selectedUnitId,
                   items: _units
                       .map(
                         (unit) => DropdownMenuItem<int>(

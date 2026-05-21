@@ -105,7 +105,7 @@ class _ResidentBillAddSheetState extends State<ResidentBillAddSheet> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _billType,
+                  initialValue: _billType,
                   decoration: const InputDecoration(
                     labelText: 'Bill type',
                     border: OutlineInputBorder(),

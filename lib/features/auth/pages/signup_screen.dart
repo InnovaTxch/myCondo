@@ -20,7 +20,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   Future<void> signUp() async {
     final isValid = _formKey.currentState!.validate();
@@ -66,8 +66,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.primaryBlue.withOpacity(0.55),
-                        AppColors.primaryBlue.withOpacity(0.80),
+                        AppColors.primaryBlue.withValues(alpha: 0.55),
+                        AppColors.primaryBlue.withValues(alpha: 0.80),
                       ],
                     ),
                   ),

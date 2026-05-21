@@ -75,8 +75,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: AppColors.primaryBlue,
       body: Column(
@@ -100,8 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColors.primaryBlue.withOpacity(0.55),
-                        AppColors.primaryBlue.withOpacity(0.80),
+                        AppColors.primaryBlue.withValues(alpha: 0.55),
+                        AppColors.primaryBlue.withValues(alpha: 0.80),
                       ],
                     ),
                   ),

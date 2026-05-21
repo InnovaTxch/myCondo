@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:mycondo/data/models/resident.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
@@ -124,7 +125,7 @@ class ResidentService {
         );
       }).toList();
     } catch (e) {
-      print("Error fetching units for manager: $e");
+      debugPrint("Error fetching units for manager: $e");
       return <Unit>[];
     }
   }

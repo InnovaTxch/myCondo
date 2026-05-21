@@ -24,8 +24,6 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
 
   // Blue color palette (consistent with chat_screen.dart)
   static const Color primaryBlue = Color(0xFF2563EB);
-  static const Color lightBlue = Color(0xFF3B82F6);
-  static const Color deepBlue = Color(0xFF1D4ED8);
   static const Color softBlue = Color(0xFFEFF6FF);
   static const Color midBlue = Color(0xFFBFDBFE);
   static const Color bgColor = Color(0xFFF0F4FF);
@@ -218,7 +216,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: primaryBlue.withOpacity(0.35),
+                  color: primaryBlue.withValues(alpha: 0.35),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -246,7 +244,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
           border: Border.all(color: midBlue, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: primaryBlue.withOpacity(0.06),
+              color: primaryBlue.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -331,7 +329,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
               residentId: residentId, residentName: name),
           borderRadius: BorderRadius.circular(16),
           splashColor: softBlue,
-          highlightColor: softBlue.withOpacity(0.5),
+          highlightColor: softBlue.withValues(alpha: 0.5),
           child: Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: 14, vertical: 12),
@@ -344,7 +342,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2563EB).withOpacity(0.05),
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.05),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -367,7 +365,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: colorPair[0].withOpacity(0.3),
+                            color: colorPair[0].withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
