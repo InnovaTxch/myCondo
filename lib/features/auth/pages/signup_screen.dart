@@ -13,7 +13,7 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen>{
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
@@ -22,84 +22,133 @@ class _SignupScreenState extends State<SignupScreen>{
 
   bool _isLoading = false;
 
-  // SIGNUP BUTTON PRESSED
-  Future <void> signUp() async {
+  Future<void> signUp() async {
     final isValid = _formKey.currentState!.validate();
-    if(!isValid) return;
+    if (!isValid) return;
 
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     PendingSignupStore.save(email: email, password: password);
 
-    if(!mounted) return;
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/onboarding');
-
   }
 
   @override
-  void dispose(){
-    super.dispose();
+  void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.lightBlueBackground,
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30),
-        child: ListView(
-          children: [
-            // Top Gap
-            const SizedBox(height: 60),
+      backgroundColor: AppColors.primaryBlue,
+      body: Column(
+        children: [
+          // ── Top: full-bleed image with blue overlay ──────────────────
+          Expanded(
+            flex: 4,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/house.png',
+                  fit: BoxFit.cover,
+                ),
 
-            Text(
-              "Create an\naccount.",
-              style: TextStyle(
-                fontFamily: "Urbanist",
-                fontSize: 45,
-                fontWeight: FontWeight.w500,
-                height: 1.0,
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.primaryBlue.withOpacity(0.55),
+                        AppColors.primaryBlue.withOpacity(0.80),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  left: 28,
+                  bottom: 36,
+                  right: 28,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "Create an\naccount.",
+                        style: TextStyle(
+                          fontFamily: "Urbanist",
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.pureWhite,
+                          height: 1.1,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Managers set up a condo. \nResidents join with condo and resident codes.",
+                        style: TextStyle(
+                          fontFamily: "Urbanist",
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white70,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Bottom: form card ─────────────────────────────────────────
+          Expanded(
+            flex: 7,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: AppColors.lightBlueBackground,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SignupForm(
+                      formKey: _formKey,
+                      emailController: _emailController,
+                      passwordController: _passwordController,
+                      confirmPasswordController: _confirmPasswordController,
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    SubmitButton(
+                      text: "Sign up",
+                      onPressed: _isLoading ? null : signUp,
+                      isLoading: _isLoading,
+                      color: AppColors.primaryBlue,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    LoginGateway(),
+                  ],
+                ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              "Managers can set up a condo. Residents can join with condo and resident codes.",
-              style: TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 15,
-                height: 1.35,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            SignupForm(
-              formKey: _formKey, 
-              emailController: _emailController, 
-              passwordController: _passwordController, 
-              confirmPasswordController: _confirmPasswordController
-            ),
-
-            const SizedBox(height: 20),
-
-            SubmitButton(
-              text: "Sign up", 
-              onPressed: _isLoading ? null : signUp, 
-              isLoading: _isLoading, 
-              color: AppColors.primaryBlue
-            ),
-
-            const SizedBox(height: 20),
-
-            LoginGateway()
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

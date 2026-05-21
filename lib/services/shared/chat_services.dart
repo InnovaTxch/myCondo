@@ -134,7 +134,7 @@ class MessagingService {
     }
   }
 
-  // chat
+  // ── chat ──────────────────────────────────────────────────────────────────
 
   Stream<List<Map<String, dynamic>>> messagesStream(int conversationId) {
     return _supabase
@@ -189,18 +189,18 @@ class MessagingService {
 
       final unreadMessages = lastReadAt == null
           ? await _supabase
-          .from('messages')
-          .select('id')
-          .eq('conversation_id', conversation['id'])
-          .neq('sender_id', profile.id)
-          .limit(1)
+              .from('messages')
+              .select('id')
+              .eq('conversation_id', conversation['id'])
+              .neq('sender_id', profile.id)
+              .limit(1)
           : await _supabase
-          .from('messages')
-          .select('id')
-          .eq('conversation_id', conversation['id'])
-          .neq('sender_id', profile.id)
-          .gt('created_at', lastReadAt)
-          .limit(1);
+              .from('messages')
+              .select('id')
+              .eq('conversation_id', conversation['id'])
+              .neq('sender_id', profile.id)
+              .gt('created_at', lastReadAt)
+              .limit(1);
 
       if ((unreadMessages as List<dynamic>).isNotEmpty) {
         return true;
@@ -261,18 +261,18 @@ class MessagingService {
 
       final unreadMessages = lastReadAt == null
           ? await _supabase
-          .from('messages')
-          .select('id')
-          .eq('conversation_id', conversation['id'])
-          .neq('sender_id', managerId)
-          .limit(1)
+              .from('messages')
+              .select('id')
+              .eq('conversation_id', conversation['id'])
+              .neq('sender_id', managerId)
+              .limit(1)
           : await _supabase
-          .from('messages')
-          .select('id')
-          .eq('conversation_id', conversation['id'])
-          .neq('sender_id', managerId)
-          .gt('created_at', lastReadAt)
-          .limit(1);
+              .from('messages')
+              .select('id')
+              .eq('conversation_id', conversation['id'])
+              .neq('sender_id', managerId)
+              .gt('created_at', lastReadAt)
+              .limit(1);
 
       if ((unreadMessages as List<dynamic>).isNotEmpty) {
         unreadResidentIds.add(conversation['resident_id'].toString());
@@ -290,5 +290,112 @@ class MessagingService {
         .stream(primaryKey: ['id'])
         .eq('manager_id', managerId)
         .asyncMap((_) => fetchManagerUnreadResidentIds(managerId));
+  }
+
+  // ── payment notifications ─────────────────────────────────────────────────
+
+  /// For the MANAGER: emits true when there are pending payments awaiting
+  /// approval from residents in their condo.
+  Stream<bool> hasPendingPaymentsStream() async* {
+    final profile = await _identity.requireCurrentProfile();
+
+    // Resolve condo's resident IDs so we only watch relevant payments.
+    final residentIds = await _getResidentIdsForManager(profile.id);
+    if (residentIds.isEmpty) {
+      yield false;
+      return;
+    }
+
+    yield await _hasPendingPayments(residentIds);
+
+    yield* _supabase
+        .from('payments')
+        .stream(primaryKey: ['id'])
+        .asyncMap((_) => _hasPendingPayments(residentIds))
+        .distinct();
+  }
+
+  Future<bool> _hasPendingPayments(List<String> residentIds) async {
+    final rows = await _supabase
+        .from('payments')
+        .select('id')
+        .inFilter('paid_by', residentIds)
+        .eq('status', 'pending')
+        .limit(1);
+
+    return (rows as List).isNotEmpty;
+  }
+
+  Future<List<String>> _getResidentIdsForManager(String managerId) async {
+    final manager = await _supabase
+        .from('managers')
+        .select('condo_id')
+        .eq('id', managerId)
+        .maybeSingle();
+
+    if (manager == null) return [];
+
+    final units = await _supabase
+        .from('units')
+        .select('id')
+        .eq('condo_id', manager['condo_id']);
+
+    final unitIds = (units as List)
+        .map((u) => (u as Map<String, dynamic>)['id'])
+        .toList();
+
+    if (unitIds.isEmpty) return [];
+
+    final residents = await _supabase
+        .from('residents')
+        .select('id')
+        .inFilter('unit_id', unitIds)
+        .eq('status', 'active');
+
+    return (residents as List)
+        .map((r) => (r as Map<String, dynamic>)['id'].toString())
+        .toList();
+  }
+
+  /// For the RESIDENT: emits true when any of their payments have been
+  /// approved or rejected since they last checked (i.e. status != pending).
+  /// Call [clearPaymentStatusNotification] once the resident opens the
+  /// Payments tab to reset the badge.
+  Stream<bool> hasPaymentStatusUpdateStream() async* {
+    final profile = await _identity.requireCurrentProfile();
+
+    yield await _hasUnseenPaymentStatusUpdate(profile.id);
+
+    yield* _supabase
+        .from('payments')
+        .stream(primaryKey: ['id'])
+        .eq('paid_by', profile.id)
+        .asyncMap((_) => _hasUnseenPaymentStatusUpdate(profile.id))
+        .distinct();
+  }
+
+  Future<bool> _hasUnseenPaymentStatusUpdate(String residentId) async {
+    final rows = await _supabase
+        .from('payments')
+        .select('id, status, payment_seen_by_resident')
+        .eq('paid_by', residentId)
+        .inFilter('status', ['completed', 'rejected'])
+        .eq('payment_seen_by_resident', false)
+        .limit(1);
+
+    return (rows as List).isNotEmpty;
+  }
+
+  /// Call this when the resident navigates to the Payments tab so the badge
+  /// is cleared. It marks all their processed payments as seen.
+  Future<void> clearPaymentStatusNotification() async {
+    final profile = await _identity.requireCurrentProfile();
+
+    await _supabase
+        .from('payments')
+        .update({'payment_seen_by_resident': true})
+        .eq('paid_by', profile.id)
+        .inFilter('status', ['completed', 'rejected'])
+        .eq('payment_seen_by_resident', false);
   }
 }
