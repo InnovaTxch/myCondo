@@ -21,19 +21,18 @@ class OnboardingService {
           .eq('auth_id', authId)
           .maybeSingle();
 
-      final profile = existingProfile ??
-          await _supabase
-              .from('profiles')
-              .insert({
-                'auth_id': authId,
-                'first_name': input.firstName.trim(),
-                'last_name': input.lastName.trim(),
-                'role': 'manager',
-              })
-              .select('id')
-              .single();
-
-      if (existingProfile != null) {
+      if (existingProfile == null) {
+        await _supabase
+            .from('profiles')
+            .insert({
+              'auth_id': authId,
+              'first_name': input.firstName.trim(),
+              'last_name': input.lastName.trim(),
+              'role': 'manager',
+            })
+            .select('id')
+            .single();
+      } else {
         await _supabase.from('profiles').update({
           'first_name': input.firstName.trim(),
           'last_name': input.lastName.trim(),

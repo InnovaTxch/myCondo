@@ -42,7 +42,7 @@ class ManagerDashboardService {
       }
     }
 
-    final residentsData = unitIds.isEmpty
+    final List<dynamic> residentsData = unitIds.isEmpty
         ? const []
         : await _supabase
             .from('residents')
@@ -50,12 +50,12 @@ class ManagerDashboardService {
             .inFilter('unit_id', unitIds)
             .eq('status', 'active');
 
-    final residentIds = (residentsData as List)
-        .map((row) => (row as Map<String, dynamic>)['id'].toString())
+    final residentIds = residentsData
+        .map((row) => row['id'].toString())
         .where((id) => id.isNotEmpty)
         .toList(growable: false);
 
-    final paymentsData = residentIds.isEmpty
+    final List<dynamic> paymentsData = residentIds.isEmpty
         ? const []
         : await _supabase
             .from('payments')
@@ -65,7 +65,7 @@ class ManagerDashboardService {
 
     final totalResidents = residentIds.length;
     final totalUnits = unitIds.length;
-    final paymentsToReview = (paymentsData as List).length;
+    final paymentsToReview = paymentsData.length;
 
     final occupancyPercent = totalCapacity > 0
         ? (totalResidents / totalCapacity).clamp(0, 1).toDouble()
