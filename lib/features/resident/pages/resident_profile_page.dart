@@ -83,10 +83,10 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       SessionTimerService().stopTimer();
 
       if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-        '/login',
-            (route) => false,
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).pushNamedAndRemoveUntil('/login', (route) => false);
     } catch (_) {
       if (!mounted) return;
 
@@ -129,7 +129,9 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         _firstName = updated.firstName;
         _lastName = updated.lastName;
       });
-      context.showAppSnackBar(const SnackBar(content: Text('Profile updated.')));
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Profile updated.')),
+      );
     } catch (e) {
       if (!mounted) return;
       context.showAppSnackBar(
@@ -308,7 +310,8 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                     const SizedBox(height: 10),
                     _ProfileActionTile(
                       title: 'Report an Issue',
-                      subtitle: 'Submit a maintenance request.',
+                      subtitle:
+                          'Open maintenance requests and submit a new one.',
                       icon: Icons.warning_amber_outlined,
                       onTap: () => Navigator.pushNamed(
                         context,
@@ -2014,5 +2017,3 @@ class _HelpItem extends StatelessWidget {
     );
   }
 }
-
-

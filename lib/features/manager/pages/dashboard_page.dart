@@ -9,10 +9,7 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 
 class ManagerDashboardPage extends StatefulWidget {
-  const ManagerDashboardPage({
-    super.key,
-    required this.onOpenPaymentHistory,
-  });
+  const ManagerDashboardPage({super.key, required this.onOpenPaymentHistory});
 
   final VoidCallback onOpenPaymentHistory;
 
@@ -488,9 +485,7 @@ class _ManagerAnnouncementPreview extends StatelessWidget {
 }
 
 class _ManagerQuickActions extends StatelessWidget {
-  const _ManagerQuickActions({
-    required this.onOpenPaymentHistory,
-  });
+  const _ManagerQuickActions({required this.onOpenPaymentHistory});
 
   final VoidCallback onOpenPaymentHistory;
 
@@ -525,6 +520,14 @@ class _ManagerQuickActions extends StatelessWidget {
           subtitle: 'Send dues and charges to selected residents.',
           icon: Icons.receipt_long_outlined,
           onTap: () => Navigator.pushNamed(context, '/add-bills'),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
+          title: 'Maintenance Requests',
+          subtitle: 'Review and update resident repair requests.',
+          icon: Icons.build_circle_outlined,
+          onTap: () =>
+              Navigator.pushNamed(context, '/manager-maintenance-requests'),
         ),
         const SizedBox(height: 10),
         _ActionTile(
