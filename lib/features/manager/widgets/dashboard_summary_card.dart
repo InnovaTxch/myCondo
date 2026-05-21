@@ -1,74 +1,79 @@
 import 'package:flutter/material.dart';
-import 'package:mycondo/theme/app_theme.dart';
+
 import 'package:mycondo/data/models/manager/dashboard_models.dart';
 import 'dashboard_skeleton_block.dart';
 
 class DashboardSummaryCard extends StatelessWidget {
-  const DashboardSummaryCard({super.key, required this.summary});
+  const DashboardSummaryCard({
+    super.key,
+    required this.summary,
+  });
 
   final DashboardSummary summary;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 22, 18, 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryBlue, Color(0xFF0B72D9)],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
+        color: const Color(0xFF80BDF2),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
           BoxShadow(
-            color: AppColors.primaryBlue.withOpacity(0.30),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Color(0x14000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // ── Top row: 3 metrics ────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.people_outline_rounded,
-                  label: 'Residents',
-                  value: summary.totalResidents?.toString(),
-                ),
+          Expanded(
+            flex: 44,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 6, right: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SummaryMetric(
+                    label: 'Total Residents',
+                    value: summary.totalResidents?.toString(),
+                  ),
+                  const SizedBox(height: 26),
+                  _SummaryMetric(
+                    label: 'Units',
+                    value: summary.totalUnits?.toString(),
+                  ),
+                ],
               ),
-              _Divider(),
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.apartment_outlined,
-                  label: 'Units',
-                  value: summary.totalUnits?.toString(),
-                ),
-              ),
-              _Divider(),
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.fact_check_outlined,
-                  label: 'Pending',
-                  value: summary.paymentsToReview?.toString(),
-                ),
-              ),
-            ],
+            ),
           ),
-
-          const SizedBox(height: 16),
-
-          // ── Divider ───────────────────────────────────────────────
-          Container(height: 1, color: Colors.white.withOpacity(0.15)),
-
-          const SizedBox(height: 16),
-
-          // ── Bottom row: occupancy bar ─────────────────────────────
-          _OccupancyBar(
-            progress: summary.occupancyPercent,
-            label: summary.progressLabel ?? 'Capacity used',
+          Container(
+            width: 1,
+            height: 126,
+            color: const Color(0xCCDAEEFF),
+          ),
+          Expanded(
+            flex: 56,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 10, right: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _SummaryMetric(
+                      label: 'Payments to\nReview',
+                      value: summary.paymentsToReview?.toString(),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _ProgressRing(
+                    progress: summary.occupancyPercent,
+                    label: summary.progressLabel ?? 'Capacity used',
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -76,65 +81,58 @@ class DashboardSummaryCard extends StatelessWidget {
   }
 }
 
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 52,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      color: Colors.white.withOpacity(0.20),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.icon,
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({
     required this.label,
     required this.value,
   });
 
-  final IconData icon;
   final String label;
   final String? value;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.white70, size: 18),
-        const SizedBox(height: 6),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 12,
+                color: const Color(0xCC163A56),
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        const SizedBox(height: 2),
         if (value != null)
           Text(
             value!,
-            style: const TextStyle(
-              fontFamily: "Urbanist",
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1,
-            ),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontSize: 34,
+                  height: 1,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w300,
+                ),
           )
         else
-          const DashboardSkeletonBlock(width: 32, height: 24, color: Color(0x66FFFFFF)),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: "Urbanist",
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: Colors.white70,
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: DashboardSkeletonBlock(
+              width: 34,
+              height: 28,
+              color: Color(0x99FFFFFF),
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
-class _OccupancyBar extends StatelessWidget {
-  const _OccupancyBar({required this.progress, required this.label});
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({
+    required this.progress,
+    required this.label,
+  });
 
   final double? progress;
   final String label;
@@ -142,46 +140,61 @@ class _OccupancyBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasProgress = progress != null;
-    final clamped = (progress ?? 0).clamp(0.0, 1.0);
-    final percent = hasProgress ? '${(clamped * 100).round()}%' : '--';
+    final clampedProgress = (progress ?? 0).clamp(0, 1).toDouble();
+    final percentText = hasProgress ? '${(clampedProgress * 100).round()}%' : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: "Urbanist",
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.white70,
+    return SizedBox(
+      width: 88,
+      height: 88,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 76,
+            height: 76,
+            child: CircularProgressIndicator(
+              value: clampedProgress,
+              strokeWidth: 6,
+              backgroundColor: const Color(0xFFD9ECFB),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                hasProgress ? Colors.black : const Color(0x80D9ECFB),
               ),
+              strokeCap: StrokeCap.round,
             ),
-            Text(
-              percent,
-              style: const TextStyle(
-                fontFamily: "Urbanist",
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: hasProgress ? clamped : null,
-            minHeight: 8,
-            backgroundColor: Colors.white.withOpacity(0.20),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
-        ),
-      ],
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (percentText != null)
+                Text(
+                  percentText,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1,
+                      ),
+                )
+              else
+                const DashboardSkeletonBlock(
+                  width: 38,
+                  height: 16,
+                  color: Color(0x99FFFFFF),
+                ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 8,
+                      color: const Color(0xFFDFF1FF),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

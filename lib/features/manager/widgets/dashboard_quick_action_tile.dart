@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mycondo/theme/app_theme.dart';
 
 class DashboardQuickActionTile extends StatelessWidget {
   final String title;
@@ -18,36 +17,28 @@ class DashboardQuickActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.pureWhite,
-      borderRadius: BorderRadius.circular(20),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(28),
       child: InkWell(
         onTap: onTap ?? () {},
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primaryBlue.withOpacity(0.10),
-            ),
-            boxShadow: [
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: const Color(0xFFE8E4DD)),
+            boxShadow: const [
               BoxShadow(
-                color: AppColors.primaryBlue.withOpacity(0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Color(0x10000000),
+                blurRadius: 14,
+                offset: Offset(0, 6),
               ),
             ],
           ),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, size: 22, color: AppColors.primaryBlue),
+              _QuickActionIcon(
+                icon: icon,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -56,35 +47,57 @@ class DashboardQuickActionTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontFamily: "Urbanist",
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.darkText,
-                        height: 1.1,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                            height: 1.1,
+                          ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        fontFamily: "Urbanist",
-                        fontSize: 11,
-                        color: AppColors.secondaryText,
-                        height: 1.3,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            color: const Color(0xFF8A8A8A),
+                            height: 1.25,
+                          ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(
+              const SizedBox(width: 10),
+              const Icon(
                 Icons.chevron_right_rounded,
-                size: 22,
-                color: AppColors.primaryBlue.withOpacity(0.4),
+                size: 24,
+                color: Color(0xFFD7D3CC),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionIcon extends StatelessWidget {
+  const _QuickActionIcon({
+    required this.icon,
+  });
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 38,
+      height: 38,
+      child: Align(
+        alignment: Alignment.center,
+        child: Icon(
+          icon,
+          size: 34,
+          color: Colors.black,
         ),
       ),
     );
