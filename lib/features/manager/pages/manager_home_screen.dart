@@ -18,6 +18,7 @@ class ManagerHomeScreen extends StatefulWidget {
     this.initialPageIndex = 0,
   });
 
+
   final int initialPageIndex;
 
   @override
@@ -45,8 +46,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
       currentIndex: _activePageIndex,
       onIndexChanged: changeActivePageIndex,
       routes: AppRoutes.routes,
-      tabs: const [
-        DashboardTabItem(root: ManagerDashboardPage()),
+      tabs: [
+        DashboardTabItem(root: ManagerDashboardPage(onOpenPaymentHistory: () => changeActivePageIndex(1)),),
         DashboardTabItem(root: ManagerTransactionHistoryPage()),
         DashboardTabItem(root: ManagerInboxScreen()),
         DashboardTabItem(root: CondoAboutPage(canEdit: true)),
