@@ -9,7 +9,6 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({
     super.key,
-    this.onOpenMessages,
     this.showPaymentNotificationBadge = false,
     this.showMaintenanceNotificationBadge = false,
     this.onPaymentNotificationsViewed,
@@ -17,7 +16,6 @@ class ResidentDashboard extends StatefulWidget {
     this.onAnnouncementNotificationsViewed,
   });
 
-  final VoidCallback? onOpenMessages;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -144,7 +142,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                   const _BillBreakdownButton(),
                   const SizedBox(height: 18),
                   _QuickActions(
-                    onOpenMessages: widget.onOpenMessages,
                     showPaymentNotificationBadge:
                         widget.showPaymentNotificationBadge,
                     showMaintenanceNotificationBadge:
@@ -688,14 +685,12 @@ class _InfoChip extends StatelessWidget {
 
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
-    this.onOpenMessages,
     required this.showPaymentNotificationBadge,
     required this.showMaintenanceNotificationBadge,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback? onOpenMessages;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -721,13 +716,6 @@ class _QuickActions extends StatelessWidget {
             onPaymentNotificationsViewed?.call();
             Navigator.pushNamed(context, '/resident-bills');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Message Manager',
-          subtitle: 'Ask about bills, repairs, or announcements.',
-          icon: Icons.chat_bubble_outline_rounded,
-          onTap: onOpenMessages ?? () {},
         ),
         const SizedBox(height: 10),
         _ActionTile(

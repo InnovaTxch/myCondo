@@ -153,7 +153,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       tabs: [
         DashboardTabItem(
           root: ResidentDashboard(
-            onOpenMessages: () => changeActivePageIndex(2),
             showPaymentNotificationBadge: _hasPaymentNotificationBadge,
             showMaintenanceNotificationBadge: _hasMaintenanceNotificationBadge,
             onPaymentNotificationsViewed: _clearPaymentBadge,
