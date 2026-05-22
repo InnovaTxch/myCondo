@@ -10,12 +10,14 @@ class NotificationService {
   Future<ManagerNotificationSnapshot> getManagerInitialSnapshot() async {
     final profile = await _identity.requireCurrentProfile();
     final residentIds = await _getResidentIdsForManager(profile.id);
-    final condoId = await _getManagerCondoId(profile.id);
 
     final hasPaymentNotifications =
         residentIds.isNotEmpty && await _hasPendingPayments(residentIds);
-    final hasMaintenanceNotifications =
-        condoId != null && await _hasOpenMaintenanceRequestsForManager(condoId);
+    // For managers, maintenance quick-action badge should behave like a
+    // "new submission" indicator, not "there is open work". Existing requests
+    // are used as the realtime baseline, and only truly new insertions turn
+    // this flag on.
+    const hasMaintenanceNotifications = false;
 
     return ManagerNotificationSnapshot(
       hasPaymentNotifications: hasPaymentNotifications,
@@ -384,17 +386,6 @@ class NotificationService {
         .select('id')
         .inFilter('paid_by', residentIds)
         .eq('status', 'pending')
-        .limit(1);
-
-    return (rows as List<dynamic>).isNotEmpty;
-  }
-
-  Future<bool> _hasOpenMaintenanceRequestsForManager(int condoId) async {
-    final rows = await _supabase
-        .from('maintenance_requests')
-        .select('id')
-        .eq('condo_id', condoId)
-        .inFilter('status', ['pending', 'in_progress'])
         .limit(1);
 
     return (rows as List<dynamic>).isNotEmpty;
