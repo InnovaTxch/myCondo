@@ -3,16 +3,14 @@ import 'package:mycondo/data/models/shared/bill.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentBillAddSheet extends StatefulWidget {
-  const ResidentBillAddSheet({
-    super.key,
-    required this.onSubmit,
-  });
+  const ResidentBillAddSheet({super.key, required this.onSubmit});
 
   final Future<void> Function({
     required String billType,
     required DateTime dueDate,
     required List<Bill> bills,
-  }) onSubmit;
+  })
+  onSubmit;
 
   @override
   State<ResidentBillAddSheet> createState() => _ResidentBillAddSheetState();
@@ -75,9 +73,14 @@ class _ResidentBillAddSheetState extends State<ResidentBillAddSheet> {
       );
       if (!mounted) return;
       Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Bill creation failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not create the bill.',
+        debugLabel: 'ResidentBillAddSheet.submit',
+      );
       setState(() => _isSaving = false);
     }
   }
@@ -166,8 +169,7 @@ class _ResidentBillAddSheetState extends State<ResidentBillAddSheet> {
                           flex: 2,
                           child: TextFormField(
                             controller: _amountControllers[index],
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             decoration: const InputDecoration(

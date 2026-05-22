@@ -48,17 +48,23 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
       setState(() {
         _units = units;
         final requestedUnitId = widget.initialUnitId;
-        final hasRequestedUnit = requestedUnitId != null &&
+        final hasRequestedUnit =
+            requestedUnitId != null &&
             availableUnits.any((unit) => unit.id == requestedUnitId);
         _selectedUnitId = hasRequestedUnit
             ? requestedUnitId
             : (availableUnits.isNotEmpty ? availableUnits.first.id : null);
         _isLoadingUnits = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isLoadingUnits = false);
-      context.showAppSnackBar(SnackBar(content: Text('Failed to load units: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not load units.',
+        debugLabel: 'ResidentFormPage.loadUnits',
+      );
     }
   }
 
@@ -83,11 +89,14 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
       );
       if (!mounted) return;
       await _showProfileDialog(resident);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to create resident profile: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not create the resident profile.',
+        debugLabel: 'ResidentFormPage.save',
       );
       return;
     }

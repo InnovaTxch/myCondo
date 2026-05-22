@@ -5,6 +5,7 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({
@@ -58,10 +59,13 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
         const SnackBar(content: Text('Announcement acknowledged.')),
       );
       await _refresh();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to acknowledge announcement: $error')),
+      context.showAppError(
+        error,
+        stackTrace: stackTrace,
+        fallbackMessage: 'Could not acknowledge the announcement.',
+        debugLabel: 'ResidentDashboard.acknowledgeAnnouncement',
       );
     } finally {
       if (mounted) {
@@ -87,6 +91,9 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
               }
 
               if (snapshot.hasError) {
+                debugPrint(
+                  '[ResidentDashboard.load] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                );
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -95,7 +102,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                       height: 260,
                       child: AppErrorState(
                         message: 'Unable to load your dashboard. Try again.',
-                        details: '${snapshot.error}',
                         onRetry: _refresh,
                       ),
                     ),
@@ -660,7 +666,8 @@ class _QuickActions extends StatelessWidget {
       children: [
         _ActionTile(
           title: 'View Bill Breakdown',
-          subtitle: 'See all bill charges, due dates, and payment status details.',
+          subtitle:
+              'See all bill charges, due dates, and payment status details.',
           icon: Icons.list_alt_rounded,
           onTap: () => Navigator.pushNamed(context, '/resident-bill-breakdown'),
         ),

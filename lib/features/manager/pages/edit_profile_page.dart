@@ -48,11 +48,14 @@ class _ManagerEditProfilePageState extends State<ManagerEditProfilePage> {
         _email = profile['email']?.toString() ?? '';
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      context.showAppSnackBar(
-        SnackBar(content: Text('Could not load profile: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not load your profile right now.',
+        debugLabel: 'ManagerEditProfilePage.loadProfile',
       );
     }
   }
@@ -73,10 +76,13 @@ class _ManagerEditProfilePageState extends State<ManagerEditProfilePage> {
         const SnackBar(content: Text('Profile updated.')),
       );
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Could not update profile: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not update your profile.',
+        debugLabel: 'ManagerEditProfilePage.save',
       );
       setState(() => _isSaving = false);
     }

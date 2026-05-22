@@ -78,9 +78,14 @@ class _MaintenanceRequestsPageState extends State<MaintenanceRequestsPage> {
         const SnackBar(content: Text('Maintenance request updated.')),
       );
       await _refreshAll();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Update failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not update this maintenance request.',
+        debugLabel: 'MaintenanceRequestsPage.updateRequest',
+      );
     }
   }
 
@@ -234,9 +239,11 @@ class _RequestsTab extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
+            debugPrint(
+              '[MaintenanceRequestsPage.loadRequests] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+            );
             return AppErrorState(
               message: 'Unable to load maintenance requests.',
-              details: '${snapshot.error}',
               onRetry: onRefresh,
             );
           }

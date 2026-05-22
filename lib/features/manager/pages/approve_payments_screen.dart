@@ -107,6 +107,9 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                               }
 
                               if (snapshot.hasError) {
+                                debugPrint(
+                                  '[ApprovePaymentsScreen.loadPayments] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                                );
                                 return ListView(
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),
@@ -115,7 +118,6 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
                                     AppErrorState(
                                       message:
                                           'Unable to load payments. Try again.',
-                                      details: '${snapshot.error}',
                                       onRetry: _loadPayments,
                                     ),
                                   ],
@@ -231,9 +233,14 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
     try {
       await _repository.approvePayment(payment);
       await _loadPayments();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Approve failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not approve the payment.',
+        debugLabel: 'ApprovePaymentsScreen.approve',
+      );
     }
   }
 
@@ -256,9 +263,14 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
     try {
       await _repository.rejectPayment(payment: payment, reason: reason);
       await _loadPayments();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Reject failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not deny the payment.',
+        debugLabel: 'ApprovePaymentsScreen.reject',
+      );
     }
   }
 

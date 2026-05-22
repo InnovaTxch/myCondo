@@ -12,6 +12,7 @@ import 'package:mycondo/features/manager/widgets/unit_bill_progress_badge.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -71,9 +72,16 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
           .getCurrentMonthPaymentSummaries(unitIds: unitIds);
       if (!mounted) return;
       setState(() => _unitBillSummaries = unitBillSummaries);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.toString());
+      debugPrint('[ManageResidentsPage.loadResidents] $e');
+      debugPrint(st.toString());
+      setState(
+        () => _errorMessage = UserFriendlyError.messageFor(
+          e,
+          fallback: 'Unable to load residents. Try again.',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -99,10 +107,13 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
         );
         return;
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Unable to load units: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not load available units.',
+        debugLabel: 'ManageResidentsPage.openAddResident',
       );
       return;
     }
@@ -156,10 +167,13 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
       context.showAppSnackBar(
         const SnackBar(content: Text('Unit added. You can now add residents.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to save unit: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not save this unit.',
+        debugLabel: 'ManageResidentsPage.saveInlineUnit',
       );
     } finally {
       if (mounted) {

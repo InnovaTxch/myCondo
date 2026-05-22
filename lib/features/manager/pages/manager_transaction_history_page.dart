@@ -78,7 +78,8 @@ class _ManagerTransactionHistoryPageState
                 searchController: _searchController,
                 onSearchChanged: (_) => setState(() {}),
                 statusFilter: _statusFilter,
-                onStatusChanged: (value) => setState(() => _statusFilter = value),
+                onStatusChanged: (value) =>
+                    setState(() => _statusFilter = value),
                 monthFilter: _monthFilter,
                 onMonthChanged: (value) => setState(() => _monthFilter = value),
                 onClearFilters: _clearFilters,
@@ -93,8 +94,13 @@ class _ManagerTransactionHistoryPageState
                     }
 
                     if (snapshot.hasError) {
+                      debugPrint(
+                        '[ManagerTransactionHistoryPage.loadTransactions] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                      );
                       return AppErrorState(
-                        message: 'Unable to load transactions: ${snapshot.error}',
+                        message:
+                            'Unable to load transactions. Please try again.',
+                        onRetry: _refresh,
                       );
                     }
 
@@ -143,14 +149,17 @@ class _ManagerTransactionHistoryPageState
     final query = _searchController.text.trim().toLowerCase();
 
     return payments.where((payment) {
-      if (_statusFilter != null && payment.status != _statusFilter) return false;
+      if (_statusFilter != null && payment.status != _statusFilter) {
+        return false;
+      }
       if (!_matchesMonthFilter(payment.date)) return false;
 
       if (query.isNotEmpty) {
         final amount = payment.amount / 100;
         final amountText = amount.toStringAsFixed(2);
 
-        final matchesSearch = payment.residentName.toLowerCase().contains(query) ||
+        final matchesSearch =
+            payment.residentName.toLowerCase().contains(query) ||
             payment.room.toLowerCase().contains(query) ||
             payment.billType.toLowerCase().contains(query) ||
             amountText.contains(query) ||
@@ -171,12 +180,12 @@ class _ManagerTransactionHistoryPageState
 
     final now = DateTime.now();
 
-    final subtractMonths = _monthFilter == PaymentHistoryMonthFilter.thisMonth ? 0 : 1;
+    final subtractMonths = _monthFilter == PaymentHistoryMonthFilter.thisMonth
+        ? 0
+        : 1;
     final targetMonth = DateTime(now.year, now.month - subtractMonths);
 
     return paymentDate.year == targetMonth.year &&
         paymentDate.month == targetMonth.month;
   }
 }
-
-

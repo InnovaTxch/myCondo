@@ -92,10 +92,15 @@ class _MaintenanceRequestFormPageState
         const SnackBar(content: Text('Maintenance request submitted.')),
       );
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      context.showAppSnackBar(SnackBar(content: Text('Submission failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not submit your maintenance request.',
+        debugLabel: 'MaintenanceRequestFormPage.submit',
+      );
     }
   }
 

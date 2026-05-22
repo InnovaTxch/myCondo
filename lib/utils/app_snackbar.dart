@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/theme/app_theme.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
 
-enum AppSnackTone {
-  info,
-  success,
-  warning,
-  error,
-}
+enum AppSnackTone { info, success, warning, error }
 
 extension AppSnackBars on BuildContext {
   /// Shows a SnackBar immediately by clearing any current/queued SnackBars first.
@@ -14,10 +10,7 @@ extension AppSnackBars on BuildContext {
   /// Flutter's [ScaffoldMessengerState.showSnackBar] queues by default, which can
   /// delay status feedback. For status updates, we want the latest to replace
   /// the previous one right away.
-  void showAppSnackBar(
-    SnackBar snackBar, {
-    bool replaceCurrent = true,
-  }) {
+  void showAppSnackBar(SnackBar snackBar, {bool replaceCurrent = true}) {
     final messenger = ScaffoldMessenger.of(this);
     if (replaceCurrent) {
       messenger.clearSnackBars();
@@ -60,12 +53,31 @@ extension AppSnackBars on BuildContext {
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(color: foregroundColor),
-        ),
+        content: Text(message, style: TextStyle(color: foregroundColor)),
         backgroundColor: backgroundColor,
       ),
+    );
+  }
+
+  void showAppError(
+    Object error, {
+    StackTrace? stackTrace,
+    required String fallbackMessage,
+    String? debugLabel,
+    bool replaceCurrent = true,
+  }) {
+    final label = (debugLabel == null || debugLabel.trim().isEmpty)
+        ? 'AppError'
+        : debugLabel.trim();
+    debugPrint('[$label] $error');
+    if (stackTrace != null) {
+      debugPrint(stackTrace.toString());
+    }
+
+    showAppMessage(
+      UserFriendlyError.messageFor(error, fallback: fallbackMessage),
+      tone: AppSnackTone.error,
+      replaceCurrent: replaceCurrent,
     );
   }
 }
