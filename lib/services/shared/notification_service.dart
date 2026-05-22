@@ -261,6 +261,7 @@ class NotificationService {
 
             for (final raw in rows as List<dynamic>) {
               final row = raw as Map<String, dynamic>;
+              if (!_isAnnouncementVisibleNow(row)) continue;
               final id = _asInt(row['id']);
               if (id == null) continue;
 
@@ -469,9 +470,14 @@ class NotificationService {
   Future<Set<int>> _fetchAnnouncementIdsForCondo(int condoId) async {
     final rows = await _supabase
         .from('announcements')
-        .select('id')
+        .select('id, starts_at, ends_at, status')
         .eq('condo_id', condoId);
-    return _extractIntIdSet(rows);
+    return (rows as List<dynamic>)
+        .whereType<Map<String, dynamic>>()
+        .where(_isAnnouncementVisibleNow)
+        .map((row) => _asInt(row['id']))
+        .whereType<int>()
+        .toSet();
   }
 
   Set<int> _extractIntIdSet(dynamic rows) {
@@ -488,6 +494,27 @@ class NotificationService {
 
   String _normalizedStatus(dynamic value) {
     return value == null ? '' : value.toString().trim().toLowerCase();
+  }
+
+  bool _isAnnouncementVisibleNow(Map<String, dynamic> row) {
+    final status = _normalizedStatus(row['status']);
+    if (status == 'archived') return false;
+
+    final now = DateTime.now().toUtc();
+    final startsAt = _asDateTime(row['starts_at'])?.toUtc();
+    if (startsAt != null && startsAt.isAfter(now)) return false;
+
+    final endsAt = _asDateTime(row['ends_at'])?.toUtc();
+    if (endsAt != null && !endsAt.isAfter(now)) return false;
+
+    return true;
+  }
+
+  DateTime? _asDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 }
 

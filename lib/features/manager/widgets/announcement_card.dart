@@ -38,8 +38,15 @@ class AnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _styles[announcement.category] ?? _styles['info']!;
-    final postedDate = DateFormat("MMM d, yyyy 'at' h:mm a")
-        .format(announcement.createdAt.toLocal());
+    final postedDate = DateFormat(
+      "MMM d, yyyy 'at' h:mm a",
+    ).format(announcement.createdAt.toLocal());
+    final expiresDate = announcement.endsAt == null
+        ? null
+        : DateFormat(
+            "MMM d, yyyy 'at' h:mm a",
+          ).format(announcement.endsAt!.toLocal());
+    final statusText = announcement.status.toUpperCase();
 
     return Container(
       width: double.infinity,
@@ -93,6 +100,23 @@ class AnnouncementCard extends StatelessWidget {
                     color: Color(0xFF999999),
                     fontWeight: FontWeight.w400,
                   ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    _MetaChip(
+                      label: statusText,
+                      background: style.background,
+                      textColor: style.tint,
+                    ),
+                    const SizedBox(width: 6),
+                    if (expiresDate != null)
+                      _MetaChip(
+                        label: 'Expires $expiresDate',
+                        background: const Color(0xFFF3F4F6),
+                        textColor: const Color(0xFF5C6673),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -165,4 +189,35 @@ class _CategoryStyle {
     required this.background,
     required this.iconBg,
   });
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({
+    required this.label,
+    required this.background,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color background;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          color: textColor,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
 }

@@ -9,18 +9,31 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResidentService {
   final SupabaseClient _supabase = Supabase.instance.client;
-  final ResidentBillRepository _billRepository = ResidentBillRepository.instance;
+  final ResidentBillRepository _billRepository =
+      ResidentBillRepository.instance;
   final ProfileIdentityService _identity = ProfileIdentityService();
 
   Future<ResidentDashboardData> fetchDashboardData() async {
     final context = await _requireResidentContext();
     final bills = await _billRepository.getBillsForResident(context.id);
     final announcements = await fetchAnnouncementsForResident();
+    final ackRequiredIds = announcements
+        .where((announcement) => announcement.requiresAck)
+        .map((announcement) => announcement.id)
+        .toList();
+    final acknowledgedAnnouncementIds = await _fetchAcknowledgedAnnouncementIds(
+      profileId: context.id,
+      announcementIds: ackRequiredIds,
+    );
 
     final openBills = bills.where((bill) => !bill.isPaid).toList();
     final overdueBills = openBills.where((bill) {
       final today = DateTime.now();
-      final dueDay = DateTime(bill.dueDate.year, bill.dueDate.month, bill.dueDate.day);
+      final dueDay = DateTime(
+        bill.dueDate.year,
+        bill.dueDate.month,
+        bill.dueDate.day,
+      );
       final currentDay = DateTime(today.year, today.month, today.day);
       return dueDay.isBefore(currentDay);
     }).toList();
@@ -35,18 +48,25 @@ class ResidentService {
         (total, bill) => total + bill.outstandingAmount,
       ),
       nextDueDate: _nextDueDate(openBills),
-      latestAnnouncement: _pickHighlightedAnnouncement(announcements),
+      announcements: announcements,
+      acknowledgedAnnouncementIds: acknowledgedAnnouncementIds,
       openBills: openBills,
     );
   }
 
   Future<List<Announcement>> fetchAnnouncementsForResident() async {
     final context = await _requireResidentContext();
+    final nowIso = DateTime.now().toUtc().toIso8601String();
 
     final data = await _supabase
         .from('announcements')
         .select()
         .eq('condo_id', context.condoId)
+        .neq('status', 'archived')
+        .lte('starts_at', nowIso)
+        .or('ends_at.is.null,ends_at.gt.$nowIso')
+        .order('is_pinned', ascending: false)
+        .order('starts_at', ascending: false)
         .order('created_at', ascending: false);
 
     return (data as List)
@@ -57,6 +77,17 @@ class ResidentService {
   Future<List<ResidentBillGroup>> fetchBillsForCurrentResident() async {
     final context = await _requireResidentContext();
     return _billRepository.getBillsForResident(context.id);
+  }
+
+  Future<void> acknowledgeAnnouncement(int announcementId) async {
+    final profile = await _identity.requireCurrentProfile(
+      missingMessage: 'No signed-in profile found.',
+    );
+    await _supabase.from('announcement_acknowledgements').upsert({
+      'announcement_id': announcementId,
+      'profile_id': profile.id,
+      'acknowledged_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'announcement_id,profile_id');
   }
 
   Future<void> submitPayment({
@@ -104,11 +135,14 @@ class ResidentService {
       final int condoId = condoData['condo_id'];
       final List<dynamic> data = await _supabase
           .from('units')
-          .select('id, name, residents(id, status, profiles!residents_id_fkey(first_name))')
+          .select(
+            'id, name, residents(id, status, profiles!residents_id_fkey(first_name))',
+          )
           .eq('condo_id', condoId);
 
       return data.map((unitRow) {
-        final List<dynamic> residentRows = (unitRow['residents'] as List?) ?? [];
+        final List<dynamic> residentRows =
+            (unitRow['residents'] as List?) ?? [];
 
         return Unit(
           id: unitRow['id'] as int,
@@ -117,7 +151,10 @@ class ResidentService {
               .map(
                 (resRow) => Resident(
                   id: resRow['id'] as String,
-                  name: ((resRow['profiles']?['first_name']) as String? ?? 'Resident').trim(),
+                  name:
+                      ((resRow['profiles']?['first_name']) as String? ??
+                              'Resident')
+                          .trim(),
                   unitName: unitRow['name'] as String,
                 ),
               )
@@ -136,15 +173,23 @@ class ResidentService {
     return sorted.first.dueDate;
   }
 
-  Announcement? _pickHighlightedAnnouncement(List<Announcement> announcements) {
-    if (announcements.isEmpty) return null;
-    for (final ann in announcements) {
-      if (ann.category == 'urgent') return ann;
-    }
-    for (final ann in announcements) {
-      if (ann.category == 'reminder') return ann;
-    }
-    return announcements.first;
+  Future<Set<int>> _fetchAcknowledgedAnnouncementIds({
+    required String profileId,
+    required List<int> announcementIds,
+  }) async {
+    if (announcementIds.isEmpty) return <int>{};
+
+    final rows = await _supabase
+        .from('announcement_acknowledgements')
+        .select('announcement_id')
+        .inFilter('announcement_id', announcementIds)
+        .eq('profile_id', profileId)
+        .limit(announcementIds.length);
+
+    return (rows as List<dynamic>)
+        .map((row) => row['announcement_id'])
+        .whereType<int>()
+        .toSet();
   }
 
   Future<_ResidentContext> _requireResidentContext() async {
@@ -170,7 +215,9 @@ class ResidentService {
       id: resident['id'] as String? ?? profileIdentity.id,
       firstName: (profile['first_name'] as String? ?? '').trim(),
       unitName: (unit['name'] as String? ?? '').trim(),
-      condoId: condoIdValue is int ? condoIdValue : int.parse(condoIdValue.toString()),
+      condoId: condoIdValue is int
+          ? condoIdValue
+          : int.parse(condoIdValue.toString()),
     );
   }
 }
@@ -183,7 +230,8 @@ class ResidentDashboardData {
     required this.overdueBillsCount,
     required this.outstandingAmount,
     required this.nextDueDate,
-    required this.latestAnnouncement,
+    required this.announcements,
+    required this.acknowledgedAnnouncementIds,
     required this.openBills,
   });
 
@@ -193,7 +241,8 @@ class ResidentDashboardData {
   final int overdueBillsCount;
   final int outstandingAmount;
   final DateTime? nextDueDate;
-  final Announcement? latestAnnouncement;
+  final List<Announcement> announcements;
+  final Set<int> acknowledgedAnnouncementIds;
   final List<ResidentBillGroup> openBills;
 }
 
