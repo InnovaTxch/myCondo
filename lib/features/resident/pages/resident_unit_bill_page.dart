@@ -165,7 +165,7 @@ class _ResidentUnitBillPageState extends State<ResidentUnitBillPage> {
                         _loadLedgerForMonth(month);
                         return const Center(child: CircularProgressIndicator());
                       }
-                      return Padding(
+                      return SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
                         child: _ResidentUnitLedgerCard(
                           ledger: ledger,
@@ -201,50 +201,135 @@ class _ResidentUnitLedgerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final monthLabel = DateFormat('MMMM yyyy').format(ledger.month);
+    final dueLabel = DateFormat('MMM d, yyyy').format(ledger.dueDate);
+    final statusColor = _statusColor(ledger.status);
+    DateTime? fullyPaidAt;
+    for (final payment in ledger.payments) {
+      if (fullyPaidAt == null || payment.paidAt.isAfter(fullyPaidAt)) {
+        fullyPaidAt = payment.paidAt;
+      }
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFCF7),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2ECF5)),
+        border: Border.all(color: const Color(0xFFE8E1D7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  monthLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      monthLabel,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Due $dueLabel',
+                      style: const TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (ledger.hasAssignedBill)
-                Text(
-                  _statusLabel(ledger.status),
-                  style: TextStyle(
-                    color: _statusColor(ledger.status),
-                    fontWeight: FontWeight.w800,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _statusLabel(ledger.status),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
             ],
           ),
           if (!ledger.hasAssignedBill) ...[
             const SizedBox(height: 14),
-            const Expanded(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  'No unit bill has been assigned for this month.',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontWeight: FontWeight.w600,
-                  ),
+            const Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                'No unit bill has been assigned for this month.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ] else ...[
             const SizedBox(height: 12),
+            const Divider(height: 2, color: Color(0xFFE8E1D7)),
+            const SizedBox(height: 10),
+            const _LedgerSectionLabel('Bill Breakdown'),
+            const SizedBox(height: 8),
+            if (ledger.charges.isEmpty)
+              const Text(
+                'No charge breakdown available.',
+                style: TextStyle(color: AppColors.secondaryText),
+              )
+            else
+              ...ledger.charges.map(
+                (charge) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              charge.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              charge.isOneTime ? 'One-time' : 'Monthly',
+                              style: const TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        currency.format(charge.amount / 100),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            const Divider(height: 2, color: Color(0xFFE8E1D7)),
+            const SizedBox(height: 10),
+            const _LedgerSectionLabel('Total'),
+            const SizedBox(height: 8),
             Row(
               children: [
                 const Expanded(
@@ -259,36 +344,22 @@ class _ResidentUnitLedgerCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ledger.payments.isEmpty
-                  ? const Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        'No approved payments yet for this month.',
-                        style: TextStyle(color: AppColors.secondaryText),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: ledger.payments.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 6),
-                      itemBuilder: (context, index) {
-                        final payment = ledger.payments[index];
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${payment.residentName} paid on ${DateFormat('MMM d').format(payment.paidAt)}',
-                              ),
-                            ),
-                            Text('- ${currency.format(payment.amount / 100)}'),
-                          ],
-                        );
-                      },
-                    ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Approved Payments',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  '- ${currency.format(ledger.paidAmount / 100)}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
-            const Divider(height: 14),
+            const SizedBox(height: 6),
             Row(
               children: [
                 const Expanded(
@@ -308,6 +379,57 @@ class _ResidentUnitLedgerCard extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            const Divider(height: 2, color: Color(0xFFE8E1D7)),
+            const SizedBox(height: 10),
+            const _LedgerSectionLabel('Payments'),
+            const SizedBox(height: 8),
+            if (ledger.payments.isEmpty)
+              const Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  'No approved payments yet for this month.',
+                  style: TextStyle(color: AppColors.secondaryText),
+                ),
+              )
+            else
+              ...ledger.payments.asMap().entries.map((entry) {
+                final index = entry.key;
+                final payment = entry.value;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == ledger.payments.length - 1 ? 0 : 6,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              payment.residentName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              DateFormat('MMM d, yyyy').format(payment.paidAt),
+                              style: const TextStyle(
+                                color: AppColors.secondaryText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text('- ${currency.format(payment.amount / 100)}'),
+                    ],
+                  ),
+                );
+              }),
             if (ledger.hasPendingPayment) ...[
               const SizedBox(height: 10),
               Container(
@@ -335,6 +457,18 @@ class _ResidentUnitLedgerCard extends StatelessWidget {
                   onPressed: onPay,
                   icon: const Icon(Icons.payments_outlined, size: 18),
                   label: const Text('Pay Unit Bill'),
+                ),
+              ),
+            ],
+            if (ledger.status == 'paid' && fullyPaidAt != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                '*Fully paid on ${DateFormat('MMM d, yyyy').format(fullyPaidAt.toLocal())}',
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
@@ -368,6 +502,25 @@ class _ResidentUnitLedgerCard extends StatelessWidget {
       default:
         return AppColors.warningOrange;
     }
+  }
+}
+
+class _LedgerSectionLabel extends StatelessWidget {
+  const _LedgerSectionLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: AppColors.secondaryText,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.6,
+      ),
+    );
   }
 }
 
