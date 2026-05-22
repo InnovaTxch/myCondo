@@ -12,14 +12,12 @@ import 'package:mycondo/services/shared/session_timer_service.dart';
 class ManagerDashboardPage extends StatefulWidget {
   const ManagerDashboardPage({
     super.key,
-    required this.onOpenPaymentHistory,
     this.showPaymentNotificationBadge = false,
     this.showMaintenanceNotificationBadge = false,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback onOpenPaymentHistory;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -142,7 +140,6 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                   ),
                   const SizedBox(height: 18),
                   _ManagerQuickActions(
-                    onOpenPaymentHistory: widget.onOpenPaymentHistory,
                     showPaymentNotificationBadge:
                         widget.showPaymentNotificationBadge,
                     showMaintenanceNotificationBadge:
@@ -610,14 +607,12 @@ class _InfoChip extends StatelessWidget {
 
 class _ManagerQuickActions extends StatelessWidget {
   const _ManagerQuickActions({
-    required this.onOpenPaymentHistory,
     required this.showPaymentNotificationBadge,
     required this.showMaintenanceNotificationBadge,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback onOpenPaymentHistory;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -669,13 +664,6 @@ class _ManagerQuickActions extends StatelessWidget {
             onMaintenanceNotificationsViewed?.call();
             Navigator.pushNamed(context, '/manager-maintenance-requests');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Transaction History',
-          subtitle: 'Review approved and rejected payment decisions.',
-          icon: Icons.history_rounded,
-          onTap: onOpenPaymentHistory,
         ),
       ],
     );
