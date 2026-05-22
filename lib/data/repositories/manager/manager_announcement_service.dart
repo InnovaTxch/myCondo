@@ -13,12 +13,132 @@ class ManagerAnnouncementService {
         .from('announcements')
         .select()
         .eq('condo_id', manager.condoId)
+        .neq('status', 'archived')
+        .order('is_pinned', ascending: false)
+        .order('starts_at', ascending: false)
         .order('created_at', ascending: false);
 
     return (data as List)
         .map((json) => Announcement.fromJson(json as Map<String, dynamic>))
         .toList();
   }
+
+  Future<List<Announcement>> getVisibleAnnouncementsForManager() async {
+    final manager = await _requireManagerContext();
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+
+    final data = await _supabase
+        .from('announcements')
+        .select()
+        .eq('condo_id', manager.condoId)
+        .neq('status', 'archived')
+        .lte('starts_at', nowIso)
+        .or('ends_at.is.null,ends_at.gt.$nowIso')
+        .order('is_pinned', ascending: false)
+        .order('starts_at', ascending: false)
+        .order('created_at', ascending: false);
+
+    return (data as List)
+        .map((json) => Announcement.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Announcement?> getHomeAnnouncementForManager() async {
+    final manager = await _requireManagerContext();
+
+    try {
+      final data = await _supabase.rpc(
+        'get_home_announcement',
+        params: {
+          'p_condo_id': manager.condoId,
+          'p_profile_id': manager.managerId,
+        },
+      );
+
+      final rows = data as List<dynamic>;
+      if (rows.isEmpty) return null;
+
+      return Announcement.fromJson(rows.first as Map<String, dynamic>);
+    } on PostgrestException catch (error) {
+      if (!_isMissingFunction(error)) rethrow;
+      final announcements = await getAnnouncements();
+      return _pickHomeAnnouncementFallback(announcements);
+    }
+  }
+
+  Announcement? _pickHomeAnnouncementFallback(
+    List<Announcement> announcements,
+  ) {
+    if (announcements.isEmpty) return null;
+    final visible = announcements.where(_isVisibleNow).toList();
+    if (visible.isEmpty) return null;
+
+    visible.sort((a, b) {
+      final pin = _boolRank(b.isPinned) - _boolRank(a.isPinned);
+      if (pin != 0) return pin;
+
+      final ack = _boolRank(b.requiresAck) - _boolRank(a.requiresAck);
+      if (ack != 0) return ack;
+
+      final category = _categoryRank(b.category) - _categoryRank(a.category);
+      if (category != 0) return category;
+
+      final priority = _priorityRank(b.priority) - _priorityRank(a.priority);
+      if (priority != 0) return priority;
+
+      final aEnds = a.endsAt;
+      final bEnds = b.endsAt;
+      if (aEnds != null && bEnds != null) {
+        final byEndsSooner = aEnds.compareTo(bEnds);
+        if (byEndsSooner != 0) return byEndsSooner;
+      } else if (aEnds != null && bEnds == null) {
+        return -1;
+      } else if (aEnds == null && bEnds != null) {
+        return 1;
+      }
+
+      return b.createdAt.compareTo(a.createdAt);
+    });
+
+    return visible.first;
+  }
+
+  bool _isVisibleNow(Announcement announcement) {
+    final now = DateTime.now();
+    if (announcement.status == 'archived') return false;
+    if (announcement.startsAt.isAfter(now)) return false;
+    final endsAt = announcement.endsAt;
+    if (endsAt != null && !endsAt.isAfter(now)) return false;
+    return true;
+  }
+
+  int _categoryRank(String category) {
+    switch (category) {
+      case 'urgent':
+        return 3;
+      case 'reminder':
+        return 2;
+      default:
+        return 1;
+    }
+  }
+
+  int _priorityRank(String priority) {
+    switch (priority) {
+      case 'high':
+        return 3;
+      case 'medium':
+        return 2;
+      default:
+        return 1;
+    }
+  }
+
+  int _boolRank(bool value) => value ? 1 : 0;
+
+  bool _isMissingFunction(PostgrestException error) =>
+      error.code == 'PGRST202' ||
+      error.message.toLowerCase().contains('could not find the function');
 
   Future<void> createAnnouncement(Announcement announcement) async {
     final manager = await _requireManagerContext();
@@ -30,13 +150,23 @@ class ManagerAnnouncementService {
   }
 
   Future<void> updateAnnouncement(
-      int id, String title, String message, String category) async {
+    int id,
+    String title,
+    String message,
+    String category, {
+    DateTime? endsAt,
+  }) async {
     final manager = await _requireManagerContext();
-    await _supabase.from('announcements').update({
-      'title': title,
-      'content': message,
-      'category': category,
-    }).eq('id', id).eq('condo_id', manager.condoId);
+    await _supabase
+        .from('announcements')
+        .update({
+          'title': title,
+          'content': message,
+          'category': category,
+          'ends_at': endsAt?.toUtc().toIso8601String(),
+        })
+        .eq('id', id)
+        .eq('condo_id', manager.condoId);
   }
 
   Future<void> deleteAnnouncement(int id) async {
@@ -95,10 +225,7 @@ class ManagerAnnouncementService {
 }
 
 class _ManagerContext {
-  const _ManagerContext({
-    required this.managerId,
-    required this.condoId,
-  });
+  const _ManagerContext({required this.managerId, required this.condoId});
 
   final String managerId;
   final int condoId;
