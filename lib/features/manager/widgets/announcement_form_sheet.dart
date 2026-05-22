@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -12,8 +13,13 @@ class AnnouncementFormSheet extends StatefulWidget {
   });
 
   final Announcement? existing;
-  final Future<void> Function(String title, String message, String category)
-      onSave;
+  final Future<void> Function(
+    String title,
+    String message,
+    String category,
+    DateTime? expiresAt,
+  )
+  onSave;
   final String managerName;
 
   @override
@@ -24,6 +30,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _messageCtrl;
   late String _category;
+  DateTime? _expiresAt;
   bool _saving = false;
 
   static const List<(String, String, IconData, Color)> _categories = [
@@ -38,6 +45,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
     _titleCtrl = TextEditingController(text: widget.existing?.title ?? '');
     _messageCtrl = TextEditingController(text: widget.existing?.message ?? '');
     _category = widget.existing?.category ?? 'info';
+    _expiresAt = widget.existing?.endsAt?.toLocal();
   }
 
   @override
@@ -60,7 +68,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
     setState(() => _saving = true);
     try {
       // `announcements.content` is NOT NULL in Supabase, so use empty string when omitted.
-      await widget.onSave(title, message, _category);
+      await widget.onSave(title, message, _category, _expiresAt);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -71,6 +79,50 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _pickExpiry() async {
+    final now = DateTime.now();
+    final initial = _expiresAt ?? now.add(const Duration(days: 1));
+
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (selectedDate == null || !mounted) return;
+
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (selectedTime == null || !mounted) return;
+
+    final candidate = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    final minimumStart = widget.existing?.startsAt.toLocal() ?? now;
+    if (!candidate.isAfter(minimumStart)) {
+      context.showAppSnackBar(
+        const SnackBar(
+          content: Text('Expiry must be later than the announcement start.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _expiresAt = candidate);
+  }
+
+  String _expiryLabel() {
+    if (_expiresAt == null) return 'No expiry (stays until removed)';
+    return DateFormat("MMM d, yyyy 'at' h:mm a").format(_expiresAt!);
   }
 
   @override
@@ -86,135 +138,199 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
-                  borderRadius: BorderRadius.circular(99),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDDDDD),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
                 ),
               ),
-            ),
-            Text(
-              isEdit ? 'Edit Announcement' : 'Post New Announcement',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.darkText,
+              Text(
+                isEdit ? 'Edit Announcement' : 'Post New Announcement',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.darkText,
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
-            // Category selector
-            const Text(
-              'Category',
-              style: TextStyle(
+              const SizedBox(height: 18),
+              // Category selector
+              const Text(
+                'Category',
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF888888)),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: _categories.map((cat) {
-                final isSelected = _category == cat.$1;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _category = cat.$1),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? cat.$4.withValues(alpha: 0.12)
-                            : const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? cat.$4 : Colors.transparent,
-                          width: 1.5,
+                  color: Color(0xFF888888),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: _categories.map((cat) {
+                  final isSelected = _category == cat.$1;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _category = cat.$1),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? cat.$4.withValues(alpha: 0.12)
+                              : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? cat.$4 : Colors.transparent,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              cat.$3,
+                              color: isSelected
+                                  ? cat.$4
+                                  : const Color(0xFFAAAAAA),
+                              size: 20,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              cat.$2,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? cat.$4
+                                    : const Color(0xFFAAAAAA),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(cat.$3,
-                              color: isSelected ? cat.$4 : const Color(0xFFAAAAAA),
-                              size: 20),
-                          const SizedBox(height: 4),
-                          Text(
-                            cat.$2,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected ? cat.$4 : const Color(0xFFAAAAAA),
-                            ),
-                          ),
-                        ],
-                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              // Title field
+              _InputLabel(label: 'Title'),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _titleCtrl,
+                textCapitalization: TextCapitalization.words,
+                decoration: _inputDecoration('e.g. Power Outage Notice'),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 14),
+              // Message field
+              _InputLabel(label: 'Message'),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _messageCtrl,
+                maxLines: 3,
+                decoration: _inputDecoration('Write your announcement here...'),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 14),
+              _InputLabel(label: 'Disappear On (Optional)'),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _saving ? null : _pickExpiry,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F7F7),
+                    foregroundColor: const Color(0xFF444444),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    side: const BorderSide(color: Color(0xFFEEEEEE)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            // Title field
-            _InputLabel(label: 'Title'),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _titleCtrl,
-              textCapitalization: TextCapitalization.words,
-              decoration: _inputDecoration('e.g. Power Outage Notice'),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 14),
-            // Message field
-            _InputLabel(label: 'Message'),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _messageCtrl,
-              maxLines: 3,
-              decoration: _inputDecoration('Write your announcement here...'),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 22),
-            // Submit button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.event_outlined,
+                        size: 18,
+                        color: Color(0xFF7A7A7A),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _expiryLabel(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF4A4A4A),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_expiresAt != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _saving
+                        ? null
+                        : () => setState(() => _expiresAt = null),
+                    icon: const Icon(Icons.close_rounded, size: 16),
+                    label: const Text('Clear expiry'),
+                  ),
+                ),
+              const SizedBox(height: 22),
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
-                  onPressed: _saving || _titleCtrl.text.trim().isEmpty ? null : _submit,
+                  onPressed: _saving || _titleCtrl.text.trim().isEmpty
+                      ? null
+                      : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.darkText,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          isEdit ? 'Save Changes' : 'Post Announcement',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        isEdit ? 'Save Changes' : 'Post Announcement',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -226,8 +342,7 @@ class _AnnouncementFormSheetState extends State<AnnouncementFormSheet> {
       hintStyle: const TextStyle(color: Color(0xFFBBBBBB), fontSize: 13),
       filled: true,
       fillColor: const Color(0xFFF7F7F7),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -260,4 +375,3 @@ class _InputLabel extends StatelessWidget {
     );
   }
 }
-

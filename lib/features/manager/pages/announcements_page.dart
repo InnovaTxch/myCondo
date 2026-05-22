@@ -55,9 +55,15 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
       builder: (_) => AnnouncementFormSheet(
         existing: existing,
         managerName: _managerName,
-        onSave: (title, message, category) async {
+        onSave: (title, message, category, expiresAt) async {
           if (existing != null) {
-            await _service.updateAnnouncement(existing.id, title, message, category);
+            await _service.updateAnnouncement(
+              existing.id,
+              title,
+              message,
+              category,
+              endsAt: expiresAt,
+            );
           } else {
             await _service.createAnnouncement(
               Announcement(
@@ -66,6 +72,7 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
                 message: message,
                 category: category,
                 createdAt: DateTime.now(),
+                endsAt: expiresAt,
                 postedBy: _managerName,
               ),
             );
@@ -174,8 +181,9 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
   Map<String, List<Announcement>> _grouped() {
     final now = DateTime.now();
     final todayKey = DateFormat('yyyy-MM-dd').format(now);
-    final yesterdayKey =
-        DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+    final yesterdayKey = DateFormat(
+      'yyyy-MM-dd',
+    ).format(now.subtract(const Duration(days: 1)));
 
     final Map<String, List<Announcement>> groups = {};
     for (final ann in _announcements) {
@@ -203,106 +211,110 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
       },
       child: Scaffold(
         backgroundColor: AppColors.lightBlueBackground,
+        floatingActionButton: SafeArea(
+          minimum: const EdgeInsets.only(right: 4, bottom: 4),
+          child: _PostNewButton(onTap: () => _openPostForm()),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         body: SafeArea(
-        child: Column(
-          children: [
-            // ─── Header ───────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(_didMutate),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.chevron_left_rounded,
-                            size: 22, color: Color(0xFF333333)),
-                        SizedBox(width: 2),
-                        Text(
-                          'Back',
-                          style: TextStyle(
-                            fontSize: 14,
+          child: Column(
+            children: [
+              // ─── Header ───────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(_didMutate),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.chevron_left_rounded,
+                            size: 22,
                             color: Color(0xFF333333),
-                            fontWeight: FontWeight.w500,
                           ),
+                          SizedBox(width: 2),
+                          Text(
+                            'Back',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF333333),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 16, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Announcements',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkText,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ─── Body ─────────────────────────────────────────────────
+              Expanded(
+                child: _loading
+                    ? const AppLoadingState(
+                        strokeWidth: 2,
+                        color: Color(0xFF3A8FE8),
+                      )
+                    : _announcements.isEmpty
+                    ? RefreshIndicator(
+                        onRefresh: _refresh,
+                        color: const Color(0xFF3A8FE8),
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.6,
+                              child: AppEmptyState(
+                                icon: Icons.campaign_outlined,
+                                title: 'No announcements yet',
+                                message: 'Tap "Post New" to create one.',
+                                actionLabel: '+ Post New',
+                                onAction: () => _openPostForm(),
+                                card: false,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 16, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Announcements',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  _PostNewButton(onTap: () => _openPostForm()),
-                ],
-              ),
-            ),
-            // ─── Body ─────────────────────────────────────────────────
-            Expanded(
-              child: _loading
-                  ? const AppLoadingState(
-                      strokeWidth: 2,
-                      color: Color(0xFF3A8FE8),
-                    )
-                  : _announcements.isEmpty
-                      ? RefreshIndicator(
-                          onRefresh: _refresh,
-                          color: const Color(0xFF3A8FE8),
-                          child: ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              SizedBox(
-                                height: MediaQuery.sizeOf(context).height * 0.6,
-                                child: AppEmptyState(
-                                  icon: Icons.campaign_outlined,
-                                  title: 'No announcements yet',
-                                  message: 'Tap "Post New" to create one.',
-                                  actionLabel: '+ Post New',
-                                  onAction: () => _openPostForm(),
-                                  card: false,
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _refresh,
+                        color: const Color(0xFF3A8FE8),
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          children: [
+                            for (final entry in _grouped().entries) ...[
+                              _GroupLabel(label: entry.key),
+                              ...entry.value.map(
+                                (ann) => AnnouncementCard(
+                                  announcement: ann,
+                                  onEdit: () => _openPostForm(existing: ann),
+                                  onDelete: () => _deleteAnnouncement(ann),
                                 ),
                               ),
                             ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _refresh,
-                          color: const Color(0xFF3A8FE8),
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                            children: [
-                              for (final entry in _grouped().entries) ...[
-                                _GroupLabel(label: entry.key),
-                                ...entry.value.map(
-                                  (ann) => AnnouncementCard(
-                                    announcement: ann,
-                                    onEdit: () =>
-                                        _openPostForm(existing: ann),
-                                    onDelete: () =>
-                                        _deleteAnnouncement(ann),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                          ],
                         ),
-            ),
-          ],
-        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -366,6 +378,3 @@ class _GroupLabel extends StatelessWidget {
     );
   }
 }
-
-
-
