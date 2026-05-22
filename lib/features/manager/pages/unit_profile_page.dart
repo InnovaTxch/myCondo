@@ -485,85 +485,115 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     );
   }
 
-  Future<void> _openAddOneTimeBillSheet(DateTime month) async {
+  Future<void> _openAddOneTimeBillSheet(
+    DateTime month, {
+    required int initialDueDay,
+  }) async {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    var selectedDueDay = initialDueDay.clamp(1, 28);
+    final dueDayOptions = List<int>.generate(28, (index) => index + 1);
 
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Add One-Time Bill - ${DateFormat('MMMM yyyy').format(month)}',
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add One-Time Bill - ${DateFormat('MMMM yyyy').format(month)}',
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'This bill applies only to this selected month.',
+                        style: TextStyle(color: AppColors.secondaryText),
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText:
+                              'Bill Name (Cleaning service, repairs, etc.)',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if ((value ?? '').trim().isEmpty) {
+                            return 'Bill name is required.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Amount (PHP)',
+                          border: OutlineInputBorder(),
+                          prefixText: 'PHP ',
+                        ),
+                        validator: (value) {
+                          final amount = double.tryParse((value ?? '').trim());
+                          if (amount == null || amount <= 0) {
+                            return 'Enter an amount greater than zero.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<int>(
+                        initialValue: selectedDueDay,
+                        decoration: const InputDecoration(
+                          labelText: 'Due Day (1-28)',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: dueDayOptions
+                            .map(
+                              (day) => DropdownMenuItem<int>(
+                                value: day,
+                                child: Text(day.toString()),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setSheetState(() => selectedDueDay = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (!formKey.currentState!.validate()) return;
+                            Navigator.pop(context, true);
+                          },
+                          child: const Text('Issue One-Time Bill'),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'This bill applies only to this selected month.',
-                    style: TextStyle(color: AppColors.secondaryText),
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Bill Name (Cleaning service, repairs, etc.)',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if ((value ?? '').trim().isEmpty) {
-                        return 'Bill name is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Amount (PHP)',
-                      border: OutlineInputBorder(),
-                      prefixText: 'PHP ',
-                    ),
-                    validator: (value) {
-                      final amount = double.tryParse((value ?? '').trim());
-                      if (amount == null || amount <= 0) {
-                        return 'Enter an amount greater than zero.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (!formKey.currentState!.validate()) return;
-                        Navigator.pop(context, true);
-                      },
-                      child: const Text('Issue One-Time Bill'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -578,9 +608,93 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         month: month,
         name: nameController.text.trim(),
         amount: (amount * 100).round(),
+        dueDay: selectedDueDay,
       );
       _ledgerByMonth.remove(_monthKey(month));
       await _loadLedgerForMonth(month);
+    });
+  }
+
+  Future<void> _openSetDueDateSheet({
+    required DateTime month,
+    required int initialDueDay,
+  }) async {
+    final dueDayOptions = List<int>.generate(28, (index) => index + 1);
+    var selectedDueDay = initialDueDay.clamp(1, 28);
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Set Due Date - ${DateFormat('MMMM yyyy').format(month)}',
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Choose the day of the month when this unit bill is due.',
+                      style: TextStyle(color: AppColors.secondaryText),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedDueDay,
+                      decoration: const InputDecoration(
+                        labelText: 'Due Day (1-28)',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: dueDayOptions
+                          .map(
+                            (day) => DropdownMenuItem<int>(
+                              value: day,
+                              child: Text(day.toString()),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setSheetState(() => selectedDueDay = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Save Due Date'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    if (confirmed != true) return;
+
+    await _withSaving(() async {
+      await _repository.setUnitBillDueDay(
+        unitId: widget.unitId,
+        month: month,
+        dueDay: selectedDueDay,
+      );
+      _ledgerByMonth.remove(_monthKey(month));
+      await _loadLedgerForMonth(month);
+      await _loadAll(showLoading: false);
     });
   }
 
@@ -902,6 +1016,7 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
 
   Widget _buildMonthlyPaymentsCard() {
     final ledger = _ledgerByMonth[_monthKey(_selectedMonth)];
+    final currentDueDay = (ledger?.dueDate.day ?? 28).clamp(1, 28);
 
     return Card(
       color: Colors.white,
@@ -943,9 +1058,26 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
               child: OutlinedButton.icon(
                 onPressed: _isSaving
                     ? null
-                    : () => _openAddOneTimeBillSheet(_selectedMonth),
+                    : () => _openAddOneTimeBillSheet(
+                        _selectedMonth,
+                        initialDueDay: currentDueDay,
+                      ),
                 icon: const Icon(Icons.add_card_outlined, size: 16),
                 label: const Text('Add One-Time Bill'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSaving
+                    ? null
+                    : () => _openSetDueDateSheet(
+                        month: _selectedMonth,
+                        initialDueDay: currentDueDay,
+                      ),
+                icon: const Icon(Icons.event_outlined, size: 16),
+                label: const Text('Set Due Date (1-28)'),
               ),
             ),
             const SizedBox(height: 8),
@@ -990,6 +1122,7 @@ class _MonthlyLedgerPanel extends StatelessWidget {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final statusColor = _statusColor(ledger.status);
     final monthLabel = DateFormat('MMMM yyyy').format(ledger.month);
+    final dueLabel = DateFormat('MMM d, yyyy').format(ledger.dueDate);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -1005,9 +1138,23 @@ class _MonthlyLedgerPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  monthLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      monthLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Due $dueLabel',
+                      style: const TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (ledger.hasAssignedBill)

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/models/manager/resident_bill_group.dart';
+import 'package:mycondo/data/models/shared/bill.dart';
+import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
@@ -18,7 +21,10 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
   static const int _basePageIndex = 1200;
 
   final ResidentService _service = ResidentService();
+  final UnitBillingRepository _unitBillingRepository =
+      UnitBillingRepository.instance;
   late Future<List<ResidentBillGroup>> _billsFuture;
+  final Map<String, Future<UnitMonthlyLedger>> _unitLedgerFutureByMonth = {};
   late final DateTime _baseMonth;
   late final PageController _monthPageController;
   DateTime _selectedMonth = _toMonth(DateTime.now());
@@ -45,8 +51,14 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
     final future = _service.fetchBillsForCurrentResident();
     setState(() {
       _billsFuture = future;
+      _unitLedgerFutureByMonth.clear();
     });
     await future;
+    try {
+      await _unitLedgerForMonth(_selectedMonth);
+    } catch (_) {
+      // Keep resident bill refresh resilient even if unit ledger fails to load.
+    }
   }
 
   Future<void> _openMonthPicker() async {
@@ -166,80 +178,120 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
                             .toList()
                           ..sort((a, b) => b.issuedAt.compareTo(a.issuedAt));
 
-                    final totalIssued = monthBills.fold<int>(
-                      0,
-                      (total, bill) => total + bill.totalAmount,
-                    );
-                    final totalOutstanding = monthBills.fold<int>(
-                      0,
-                      (total, bill) => total + bill.outstandingAmount,
-                    );
-                    final totalOverdue = monthBills.fold<int>(
-                      0,
-                      (total, bill) =>
-                          total +
-                          (bill.status == 'overdue'
-                              ? bill.outstandingAmount
-                              : 0),
-                    );
-
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        screenWidth < 380 ? 4 : 6,
-                        0,
-                        screenWidth < 380 ? 4 : 6,
-                        0,
-                      ),
-                      child: RefreshIndicator(
-                        onRefresh: _refresh,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(
-                            4,
-                            8,
-                            4,
-                            screenWidth < 380 ? 18 : 24,
-                          ),
-                          children: [
-                            if (monthBills.isNotEmpty) ...[
-                              _MonthSummaryPanel(
-                                screenWidth: screenWidth,
-                                billCount: monthBills.length,
-                                totalIssued: currency.format(
-                                  totalIssued / 100,
-                                ),
-                                totalOverdue: currency.format(
-                                  totalOverdue / 100,
-                                ),
-                                totalOutstanding: currency.format(
-                                  totalOutstanding / 100,
-                                ),
-                                overdueColor: totalOverdue > 0
-                                    ? statusColors.destructive
-                                    : statusColors.success,
-                                outstandingColor: totalOutstanding > 0
-                                    ? statusColors.warningStrong
-                                    : statusColors.success,
-                              ),
-                              const SizedBox(height: 14),
-                            ],
-                            if (monthBills.isEmpty)
-                              const AppEmptyState(
-                                icon: Icons.receipt_long_outlined,
-                                title: 'No bills issued this month',
-                                message:
-                                    'Choose a different month to view issued bills.',
-                              )
-                            else
+                    return FutureBuilder<UnitMonthlyLedger>(
+                      future: _unitLedgerForMonth(month),
+                      builder: (context, unitSnapshot) {
+                        final entries =
+                            [
                               ...monthBills.map(
-                                (bill) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: _BreakdownCard(bill: bill),
-                                ),
+                                _BillBreakdownEntry.fromResidentBill,
                               ),
-                          ],
-                        ),
-                      ),
+                              if (unitSnapshot.hasData &&
+                                  unitSnapshot.data!.hasAssignedBill)
+                                _BillBreakdownEntry.fromUnitLedger(
+                                  unitSnapshot.data!,
+                                ),
+                            ]..sort((a, b) {
+                              if (a.isSharedUnitBill != b.isSharedUnitBill) {
+                                return a.isSharedUnitBill ? -1 : 1;
+                              }
+                              return b.issuedAt.compareTo(a.issuedAt);
+                            });
+
+                        final totalIssued = entries.fold<int>(
+                          0,
+                          (total, bill) => total + bill.totalAmount,
+                        );
+                        final totalOutstanding = entries.fold<int>(
+                          0,
+                          (total, bill) => total + bill.outstandingAmount,
+                        );
+                        final totalOverdue = entries.fold<int>(
+                          0,
+                          (total, bill) =>
+                              total +
+                              (bill.status == 'overdue'
+                                  ? bill.outstandingAmount
+                                  : 0),
+                        );
+
+                        return Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            screenWidth < 380 ? 4 : 6,
+                            0,
+                            screenWidth < 380 ? 4 : 6,
+                            0,
+                          ),
+                          child: RefreshIndicator(
+                            onRefresh: _refresh,
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: EdgeInsets.fromLTRB(
+                                4,
+                                8,
+                                4,
+                                screenWidth < 380 ? 18 : 24,
+                              ),
+                              children: [
+                                if (entries.isNotEmpty) ...[
+                                  _MonthSummaryPanel(
+                                    screenWidth: screenWidth,
+                                    billCount: entries.length,
+                                    totalIssued: currency.format(
+                                      totalIssued / 100,
+                                    ),
+                                    totalOverdue: currency.format(
+                                      totalOverdue / 100,
+                                    ),
+                                    totalOutstanding: currency.format(
+                                      totalOutstanding / 100,
+                                    ),
+                                    overdueColor: totalOverdue > 0
+                                        ? statusColors.destructive
+                                        : statusColors.success,
+                                    outstandingColor: totalOutstanding > 0
+                                        ? statusColors.warningStrong
+                                        : statusColors.success,
+                                  ),
+                                  const SizedBox(height: 14),
+                                ],
+                                if (entries.isEmpty &&
+                                    unitSnapshot.connectionState ==
+                                        ConnectionState.waiting)
+                                  const AppLoadingState()
+                                else if (entries.isEmpty)
+                                  const AppEmptyState(
+                                    icon: Icons.receipt_long_outlined,
+                                    title: 'No bills issued this month',
+                                    message:
+                                        'Choose a different month to view issued bills.',
+                                  )
+                                else
+                                  ...entries.map(
+                                    (entry) => Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 10,
+                                      ),
+                                      child: _BreakdownCard(entry: entry),
+                                    ),
+                                  ),
+                                if (unitSnapshot.hasError)
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      'Unable to load unit bill details for this month.',
+                                      style: TextStyle(
+                                        color: AppColors.secondaryText,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -276,23 +328,32 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
     if (width < 380) return 12;
     return 20;
   }
+
+  Future<UnitMonthlyLedger> _unitLedgerForMonth(DateTime month) {
+    final key = _monthKey(month);
+    return _unitLedgerFutureByMonth.putIfAbsent(
+      key,
+      () =>
+          _unitBillingRepository.getUnitMonthlyLedgerForResident(month: month),
+    );
+  }
 }
 
 class _BreakdownCard extends StatelessWidget {
-  const _BreakdownCard({required this.bill});
+  const _BreakdownCard({required this.entry});
 
-  final ResidentBillGroup bill;
+  final _BillBreakdownEntry entry;
 
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final issuedLabel = DateFormat(
       'MMM d, yyyy',
-    ).format(_toLocalIssuedAt(bill));
-    final dueLabel = DateFormat('MMM d, yyyy').format(bill.dueDate);
+    ).format(entry.issuedAt.toLocal());
+    final dueLabel = DateFormat('MMM d, yyyy').format(entry.dueDate.toLocal());
     final statusColors = context.appStatusColors;
     final statusColor = _statusColor(
-      status: bill.status,
+      status: entry.status,
       statusColors: statusColors,
     );
 
@@ -311,30 +372,35 @@ class _BreakdownCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  bill.billType,
+                  entry.billType,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  _formatStatus(bill.status),
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _formatStatus(entry.status),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -357,7 +423,7 @@ class _BreakdownCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...bill.bills.map(
+          ...entry.bills.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -376,21 +442,107 @@ class _BreakdownCard extends StatelessWidget {
           const Divider(height: 20),
           _SummaryRow(
             label: 'Total Issued',
-            value: currency.format(bill.totalAmount / 100),
+            value: currency.format(entry.totalAmount / 100),
             valueColor: AppColors.darkText,
             strong: true,
           ),
           const SizedBox(height: 6),
           _SummaryRow(
             label: 'Outstanding',
-            value: currency.format(bill.outstandingAmount / 100),
-            valueColor: bill.outstandingAmount > 0
+            value: currency.format(entry.outstandingAmount / 100),
+            valueColor: entry.outstandingAmount > 0
                 ? statusColors.warningStrong
                 : statusColors.success,
             strong: true,
           ),
+          if (entry.status == 'paid' && entry.fullyPaidAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '*Fully paid on ${DateFormat('MMM d, yyyy').format(entry.fullyPaidAt!.toLocal())}',
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _BillBreakdownEntry {
+  const _BillBreakdownEntry({
+    required this.billType,
+    required this.issuedAt,
+    required this.dueDate,
+    required this.status,
+    required this.bills,
+    required this.totalAmount,
+    required this.outstandingAmount,
+    required this.isSharedUnitBill,
+    required this.fullyPaidAt,
+  });
+
+  final String billType;
+  final DateTime issuedAt;
+  final DateTime dueDate;
+  final String status;
+  final List<Bill> bills;
+  final int totalAmount;
+  final int outstandingAmount;
+  final bool isSharedUnitBill;
+  final DateTime? fullyPaidAt;
+
+  factory _BillBreakdownEntry.fromResidentBill(ResidentBillGroup bill) {
+    DateTime? fullyPaidAt;
+    for (final payment in bill.payments) {
+      if (payment.status != 'completed') continue;
+      final paidAt = payment.createdAt;
+      if (fullyPaidAt == null || paidAt.isAfter(fullyPaidAt)) {
+        fullyPaidAt = paidAt;
+      }
+    }
+
+    return _BillBreakdownEntry(
+      billType: bill.billType,
+      issuedAt: bill.issuedAt,
+      dueDate: bill.dueDate,
+      status: bill.status,
+      bills: bill.bills,
+      totalAmount: bill.totalAmount,
+      outstandingAmount: bill.outstandingAmount,
+      isSharedUnitBill: false,
+      fullyPaidAt: fullyPaidAt,
+    );
+  }
+
+  factory _BillBreakdownEntry.fromUnitLedger(UnitMonthlyLedger ledger) {
+    final chargeBreakdown = ledger.charges
+        .map((charge) => Bill(name: charge.name, amount: charge.amount))
+        .toList();
+    DateTime? fullyPaidAt;
+    for (final payment in ledger.payments) {
+      final paidAt = payment.paidAt;
+      if (fullyPaidAt == null || paidAt.isAfter(fullyPaidAt)) {
+        fullyPaidAt = paidAt;
+      }
+    }
+
+    return _BillBreakdownEntry(
+      billType: 'Unit Bill (Shared)',
+      issuedAt: DateTime(ledger.month.year, ledger.month.month, 1),
+      dueDate: ledger.dueDate,
+      status: ledger.status,
+      bills: chargeBreakdown.isEmpty
+          ? [Bill(name: 'Shared Unit Bill', amount: ledger.totalAmount)]
+          : chargeBreakdown,
+      totalAmount: ledger.totalAmount,
+      outstandingAmount: ledger.remainingAmount,
+      isSharedUnitBill: true,
+      fullyPaidAt: fullyPaidAt,
     );
   }
 }
@@ -695,6 +847,9 @@ DateTime _toMonth(DateTime date) {
 bool _isSameMonth(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month;
 }
+
+String _monthKey(DateTime month) =>
+    '${month.year}-${month.month.toString().padLeft(2, '0')}';
 
 String _formatStatus(String status) {
   final words = status
