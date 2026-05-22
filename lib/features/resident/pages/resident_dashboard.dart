@@ -139,8 +139,6 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                     onOpened: widget.onAnnouncementNotificationsViewed,
                   ),
                   const SizedBox(height: 18),
-                  const _BillBreakdownButton(),
-                  const SizedBox(height: 18),
                   _QuickActions(
                     showPaymentNotificationBadge:
                         widget.showPaymentNotificationBadge,
@@ -343,46 +341,6 @@ class _MetricItem extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _BillBreakdownButton extends StatelessWidget {
-  const _BillBreakdownButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: () => _openBreakdown(context),
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8E4DD)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.list_alt_rounded, color: Colors.black, size: 28),
-              SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'View Bill Breakdown',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Color(0xFFD7D3CC)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openBreakdown(BuildContext context) {
-    Navigator.pushNamed(context, '/resident-bill-breakdown');
   }
 }
 
@@ -700,6 +658,13 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _ActionTile(
+          title: 'View Bill Breakdown',
+          subtitle: 'See all bill charges, due dates, and payment status details.',
+          icon: Icons.list_alt_rounded,
+          onTap: () => Navigator.pushNamed(context, '/resident-bill-breakdown'),
+        ),
+        const SizedBox(height: 10),
         _ActionTile(
           title: 'Unit Bill',
           subtitle: 'View shared unit dues, payments, and remaining balance.',
