@@ -12,6 +12,7 @@ class DashboardAnnouncement {
   const DashboardAnnouncement({
     required this.title,
     required this.message,
+    this.category = 'info',
     this.icon = Icons.warning_rounded,
     this.tint = const Color(0xFFE5534B),
     this.backgroundColor = const Color(0xFFFBEAEA),
@@ -20,6 +21,7 @@ class DashboardAnnouncement {
 
   final String title;
   final String message;
+  final String category;
   final IconData icon;
   final Color tint;
   final Color backgroundColor;

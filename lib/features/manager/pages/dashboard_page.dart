@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mycondo/theme/app_theme.dart';
 
 import 'package:mycondo/data/models/manager/announcement_models.dart';
@@ -46,7 +47,7 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
     final results = await Future.wait([
       _dashboardService.getFirstName(),
       _dashboardService.getDashboardSummary(),
-      _announcementService.getAnnouncements(),
+      _announcementService.getVisibleAnnouncementsForManager(),
     ]);
 
     final managerName = results[0] as String?;
@@ -56,7 +57,7 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
     return _ManagerDashboardViewData(
       managerName: managerName,
       summary: summary,
-      highlightedAnnouncement: _toHighlightedAnnouncement(announcements),
+      announcements: announcements,
     );
   }
 
@@ -76,65 +77,6 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
     if (!mounted) return;
     if (changed == true) {
       await _refresh();
-    }
-  }
-
-  DashboardAnnouncement? _toHighlightedAnnouncement(
-    List<Announcement> announcements,
-  ) {
-    if (announcements.isEmpty) return null;
-
-    Announcement selected = announcements.first;
-    for (final announcement in announcements) {
-      if (announcement.category == 'urgent') {
-        selected = announcement;
-        break;
-      }
-      if (announcement.category == 'reminder' &&
-          selected.category != 'urgent') {
-        selected = announcement;
-      }
-    }
-
-    final style = _categoryStyle(selected.category);
-    return DashboardAnnouncement(
-      title: selected.title,
-      message: _summarize(selected.message),
-      icon: style.icon,
-      tint: style.tint,
-      backgroundColor: style.background,
-      onTap: _openAnnouncements,
-    );
-  }
-
-  String _summarize(String message, {int maxLength = 110}) {
-    final normalized = message.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (normalized.length <= maxLength) return normalized;
-    return '${normalized.substring(0, maxLength - 3)}...';
-  }
-
-  ({IconData icon, Color tint, Color background}) _categoryStyle(
-    String category,
-  ) {
-    switch (category) {
-      case 'urgent':
-        return (
-          icon: Icons.warning_rounded,
-          tint: const Color(0xFFCC3333),
-          background: const Color(0xFFFDEDED),
-        );
-      case 'reminder':
-        return (
-          icon: Icons.access_time_rounded,
-          tint: const Color(0xFFB07D10),
-          background: const Color(0xFFFFF8E6),
-        );
-      default:
-        return (
-          icon: Icons.info_outline_rounded,
-          tint: const Color(0xFF1A73C8),
-          background: const Color(0xFFEBF3FD),
-        );
     }
   }
 
@@ -195,7 +137,7 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                   _ManagerSummaryCard(summary: data.summary),
                   const SizedBox(height: 18),
                   _ManagerAnnouncementPreview(
-                    announcement: data.highlightedAnnouncement,
+                    announcements: data.announcements,
                     onTap: _openAnnouncements,
                   ),
                   const SizedBox(height: 18),
@@ -224,12 +166,12 @@ class _ManagerDashboardViewData {
   const _ManagerDashboardViewData({
     required this.managerName,
     required this.summary,
-    required this.highlightedAnnouncement,
+    required this.announcements,
   });
 
   final String? managerName;
   final DashboardSummary summary;
-  final DashboardAnnouncement? highlightedAnnouncement;
+  final List<Announcement> announcements;
 }
 
 class _ManagerGreeting extends StatelessWidget {
@@ -421,82 +363,245 @@ class _MetricItem extends StatelessWidget {
 
 class _ManagerAnnouncementPreview extends StatelessWidget {
   const _ManagerAnnouncementPreview({
-    required this.announcement,
+    required this.announcements,
     required this.onTap,
   });
 
-  final DashboardAnnouncement? announcement;
+  final List<Announcement> announcements;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final preview = announcement;
+    if (announcements.isEmpty) {
+      return const _EmptyManagerAnnouncementCard();
+    }
+
+    final announcement = announcements.first;
+    final style = _styleFor(announcement.category);
+    final reason = _priorityReason(announcement);
+    final message = _summarize(announcement.message);
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE6E3DE)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: style.border, width: 2.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 14,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: preview?.backgroundColor ?? const Color(0xFFEBF3FD),
-                  borderRadius: BorderRadius.circular(12),
+                  color: style.tint.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(
-                  preview?.icon ?? Icons.campaign_outlined,
-                  color: preview?.tint ?? const Color(0xFF1A73C8),
-                  size: 22,
-                ),
+                child: Icon(style.icon, color: style.tint, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Announcements',
+                    Row(
+                      children: [
+                        const Text(
+                          'Announcements',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1D2329),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _InfoChip(
+                          label: reason,
+                          textColor: style.tint,
+                          background: style.tint.withValues(alpha: 0.13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      announcement.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        color: style.tint,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        height: 1.15,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      preview?.title ?? 'No announcements yet',
-                      style: TextStyle(
-                        color: preview?.tint ?? Colors.black,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                      _postedLabel(announcement.createdAt),
+                      style: const TextStyle(
+                        color: Color(0xFF5A6570),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    if (message.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        message,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF404A54),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
                     Text(
-                      preview?.message ??
-                          'Post updates for residents and review recent notices here.',
-                      style: const TextStyle(
-                        color: Color(0xFF6A6A6A),
-                        height: 1.3,
+                      'Tap to manage announcements',
+                      style: TextStyle(
+                        color: style.tint,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: Color(0xFFAAA59D)),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: style.tint.withValues(alpha: 0.8),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  String _priorityReason(Announcement ann) {
+    if (ann.isPinned) return 'PINNED';
+    if (ann.requiresAck) return 'REQUIRES ACK';
+    if (ann.category == 'urgent') return 'URGENT';
+    if (ann.priority == 'high') return 'HIGH PRIORITY';
+    if (ann.category == 'reminder') return 'REMINDER';
+    return 'LATEST';
+  }
+
+  String _summarize(String message, {int maxLength = 110}) {
+    final normalized = message.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= maxLength) return normalized;
+    return '${normalized.substring(0, maxLength - 3)}...';
+  }
+
+  String _postedLabel(DateTime createdAt) {
+    return 'Posted ${DateFormat('MMM d, h:mm a').format(createdAt.toLocal())}';
+  }
+
+  ({IconData icon, Color tint, Color border}) _styleFor(String category) {
+    switch (category) {
+      case 'urgent':
+        return (
+          icon: Icons.warning_rounded,
+          tint: const Color(0xFFB72D2D),
+          border: const Color(0xFFE48A8A),
+        );
+      case 'reminder':
+        return (
+          icon: Icons.access_time_rounded,
+          tint: const Color(0xFFD4A017),
+          border: const Color(0xFFE8C56A),
+        );
+      default:
+        return (
+          icon: Icons.info_outline_rounded,
+          tint: const Color(0xFF1A73C8),
+          border: const Color(0xFF8EBCEA),
+        );
+    }
+  }
+}
+
+class _EmptyManagerAnnouncementCard extends StatelessWidget {
+  const _EmptyManagerAnnouncementCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.pushNamed(context, '/manager-announcements'),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE6E3DE), width: 1.2),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.campaign_outlined, color: Color(0xFF1A73C8), size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No announcements yet. Tap to open announcements.',
+                  style: TextStyle(
+                    color: Color(0xFF404A54),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: Color(0xFF6E7781)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.label,
+    required this.textColor,
+    required this.background,
+  });
+
+  final String label;
+  final Color textColor;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.3,
         ),
       ),
     );

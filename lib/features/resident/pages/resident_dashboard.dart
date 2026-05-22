@@ -31,6 +31,7 @@ class ResidentDashboard extends StatefulWidget {
 class _ResidentDashboardState extends State<ResidentDashboard> {
   final ResidentService _service = ResidentService();
   late Future<ResidentDashboardData> _dashboardFuture;
+  int? _acknowledgingAnnouncementId;
 
   @override
   void initState() {
@@ -45,6 +46,32 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
       _dashboardFuture = future;
     });
     await future;
+  }
+
+  Future<void> _acknowledgeAnnouncement(Announcement announcement) async {
+    if (_acknowledgingAnnouncementId != null) return;
+    setState(() {
+      _acknowledgingAnnouncementId = announcement.id;
+    });
+    try {
+      await _service.acknowledgeAnnouncement(announcement.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Announcement acknowledged.')),
+      );
+      await _refresh();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to acknowledge announcement: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _acknowledgingAnnouncementId = null;
+        });
+      }
+    }
   }
 
   @override
@@ -106,12 +133,15 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                   const SizedBox(height: 22),
                   _ResidentMatrix(data: data),
                   const SizedBox(height: 18),
-                  const _BillBreakdownButton(),
-                  const SizedBox(height: 18),
                   _AnnouncementPreview(
-                    announcement: data.latestAnnouncement,
+                    announcements: data.announcements,
+                    acknowledgedIds: data.acknowledgedAnnouncementIds,
+                    acknowledgingAnnouncementId: _acknowledgingAnnouncementId,
+                    onAcknowledge: _acknowledgeAnnouncement,
                     onOpened: widget.onAnnouncementNotificationsViewed,
                   ),
+                  const SizedBox(height: 18),
+                  const _BillBreakdownButton(),
                   const SizedBox(height: 18),
                   _QuickActions(
                     onOpenMessages: widget.onOpenMessages,
@@ -360,107 +390,299 @@ class _BillBreakdownButton extends StatelessWidget {
 }
 
 class _AnnouncementPreview extends StatelessWidget {
-  const _AnnouncementPreview({required this.announcement, this.onOpened});
+  const _AnnouncementPreview({
+    required this.announcements,
+    required this.acknowledgedIds,
+    required this.acknowledgingAnnouncementId,
+    required this.onAcknowledge,
+    this.onOpened,
+  });
 
-  final Announcement? announcement;
+  final List<Announcement> announcements;
+  final Set<int> acknowledgedIds;
+  final int? acknowledgingAnnouncementId;
+  final Future<void> Function(Announcement announcement) onAcknowledge;
   final VoidCallback? onOpened;
 
   @override
   Widget build(BuildContext context) {
-    final style = _categoryStyle(announcement?.category ?? 'info');
+    if (announcements.isEmpty) {
+      return const _EmptyAnnouncementCard();
+    }
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6E3DE)),
-      ),
+    final announcement = announcements.first;
+    final style = _styleFor(announcement.category);
+    final needsAcknowledgement =
+        announcement.requiresAck && !acknowledgedIds.contains(announcement.id);
+    final reason = _priorityReason(
+      announcement,
+      needsAcknowledgement: needsAcknowledgement,
+    );
+    final acknowledging = acknowledgingAnnouncementId == announcement.id;
+    final message = _summarize(announcement.message);
+
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: () {
           onOpened?.call();
           Navigator.pushNamed(context, '/resident-announcements');
         },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: style.background,
-                borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: style.border, width: 2.2),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 14,
+                offset: Offset(0, 6),
               ),
-              child: Icon(style.icon, color: style.tint, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Announcements',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    announcement?.title ?? 'No announcements yet',
-                    style: TextStyle(
-                      color: style.tint,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    announcement == null
-                        ? 'Announcements from management will appear here.'
-                        : _summarize(announcement!.message),
-                    style: const TextStyle(
-                      color: Color(0xFF6A6A6A),
-                      height: 1.3,
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: style.tint.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(style.icon, color: style.tint, size: 24),
               ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFFAAA59D)),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Announcements',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1D2329),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _InfoChip(
+                          label: reason,
+                          textColor: style.tint,
+                          background: style.tint.withValues(alpha: 0.13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      announcement.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: style.tint,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _postedLabel(announcement.createdAt),
+                      style: const TextStyle(
+                        color: Color(0xFF5A6570),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (message.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        message,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF404A54),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    if (needsAcknowledgement)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton(
+                          onPressed: acknowledging
+                              ? null
+                              : () => onAcknowledge(announcement),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: style.tint,
+                            foregroundColor: Colors.white,
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: acknowledging
+                              ? SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Acknowledge',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                        ),
+                      )
+                    else
+                      Text(
+                        'Tap to open all announcements',
+                        style: TextStyle(
+                          color: style.tint,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: style.tint.withValues(alpha: 0.8),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  String _summarize(String message) {
-    final normalized = message.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (normalized.length <= 96) return normalized;
-    return '${normalized.substring(0, 93)}...';
+  String _priorityReason(
+    Announcement ann, {
+    required bool needsAcknowledgement,
+  }) {
+    if (ann.isPinned) return 'PINNED';
+    if (needsAcknowledgement) return 'NEEDS ACK';
+    if (ann.category == 'urgent') return 'URGENT';
+    if (ann.priority == 'high') return 'HIGH PRIORITY';
+    if (ann.category == 'reminder') return 'REMINDER';
+    return 'LATEST';
   }
 
-  ({IconData icon, Color tint, Color background}) _categoryStyle(
-    String category,
-  ) {
+  String _postedLabel(DateTime createdAt) {
+    return 'Posted ${DateFormat('MMM d, h:mm a').format(createdAt.toLocal())}';
+  }
+
+  String _summarize(String message) {
+    final normalized = message.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 120) return normalized;
+    return '${normalized.substring(0, 117)}...';
+  }
+
+  ({IconData icon, Color tint, Color border}) _styleFor(String category) {
     switch (category) {
       case 'urgent':
         return (
           icon: Icons.warning_rounded,
-          tint: const Color(0xFFCC3333),
-          background: const Color(0xFFFDEDED),
+          tint: const Color(0xFFB72D2D),
+          border: const Color(0xFFE48A8A),
         );
       case 'reminder':
         return (
           icon: Icons.access_time_rounded,
-          tint: const Color(0xFFB07D10),
-          background: const Color(0xFFFFF8E6),
+          tint: const Color(0xFFD4A017),
+          border: const Color(0xFFE8C56A),
         );
       default:
         return (
           icon: Icons.info_outline_rounded,
           tint: const Color(0xFF1A73C8),
-          background: const Color(0xFFEBF3FD),
+          border: const Color(0xFF8EBCEA),
         );
     }
+  }
+}
+
+class _EmptyAnnouncementCard extends StatelessWidget {
+  const _EmptyAnnouncementCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.pushNamed(context, '/resident-announcements'),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE6E3DE), width: 1.2),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.campaign_outlined, color: Color(0xFF1A73C8), size: 24),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No announcements yet. Tap to open announcements.',
+                  style: TextStyle(
+                    color: Color(0xFF404A54),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: Color(0xFF6E7781)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.label,
+    required this.textColor,
+    required this.background,
+  });
+
+  final String label;
+  final Color textColor;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
   }
 }
 
