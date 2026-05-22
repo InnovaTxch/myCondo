@@ -630,6 +630,14 @@ class _ManagerQuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ActionTile(
+          title: 'Manage Units',
+          subtitle:
+              'Edit unit profile, monthly charges, and unit payment status.',
+          icon: Icons.apartment_outlined,
+          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
           title: 'Approve Payments',
           subtitle: 'Review cash and e-wallet submissions from residents.',
           icon: Icons.fact_check_outlined,
@@ -638,14 +646,6 @@ class _ManagerQuickActions extends StatelessWidget {
             onPaymentNotificationsViewed?.call();
             Navigator.pushNamed(context, '/approve-payments');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Manage Units',
-          subtitle:
-              'Edit unit profile, monthly charges, and unit payment status.',
-          icon: Icons.apartment_outlined,
-          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
         ),
         const SizedBox(height: 10),
         _ActionTile(
