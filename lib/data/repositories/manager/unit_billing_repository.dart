@@ -151,6 +151,7 @@ class UnitBillingRepository {
     required DateTime month,
     required String name,
     required int amount,
+    int? dueDay,
   }) async {
     if (name.trim().isEmpty) {
       throw Exception('Bill name is required.');
@@ -158,15 +159,13 @@ class UnitBillingRepository {
     if (amount <= 0) {
       throw Exception('Bill amount must be greater than zero.');
     }
+    final resolvedDueDay = dueDay ?? 28;
+    _validateDueDay(resolvedDueDay);
 
     final manager = await _identity.requireCurrentProfile(
       missingMessage: 'No manager profile is linked to this signed-in user.',
     );
-    final dueDate = DateTime(
-      month.year,
-      month.month + 1,
-      1,
-    ).subtract(const Duration(days: 1));
+    final dueDate = _buildDueDate(month: month, dueDay: resolvedDueDay);
 
     final created = await _supabase
         .from('one_time_fees')
@@ -184,6 +183,52 @@ class UnitBillingRepository {
       'name': name.trim(),
       'amount': amount,
     });
+  }
+
+  Future<void> setUnitBillDueDay({
+    required int unitId,
+    required DateTime month,
+    required int dueDay,
+  }) async {
+    _validateDueDay(dueDay);
+    final normalizedMonth = _toMonth(month);
+    final dueDate = _buildDueDate(month: normalizedMonth, dueDay: dueDay);
+    final monthlyBill = await _getUnitMonthlyBill(
+      unitId: unitId,
+      month: normalizedMonth,
+    );
+
+    if (monthlyBill == null) {
+      final billId = await _ensureUnitMonthlyBill(
+        unitId: unitId,
+        month: normalizedMonth,
+        dueDay: dueDay,
+      );
+      await _supabase
+          .from('monthly_bills')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', billId);
+    } else {
+      await _supabase
+          .from('monthly_bills')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', (monthlyBill['id'] as num).toInt());
+    }
+
+    final oneTimeFees = await _getUnitOneTimeFeeRows(
+      unitId: unitId,
+      month: normalizedMonth,
+    );
+    if (oneTimeFees.isEmpty) return;
+
+    for (final fee in oneTimeFees) {
+      final feeId = (fee['id'] as num?)?.toInt();
+      if (feeId == null) continue;
+      await _supabase
+          .from('one_time_fees')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', feeId);
+    }
   }
 
   Future<Map<int, UnitBillPaymentSummary>> getCurrentMonthPaymentSummaries({
@@ -422,6 +467,7 @@ class UnitBillingRepository {
   Future<int> _ensureUnitMonthlyBill({
     required int unitId,
     required DateTime month,
+    int? dueDay,
   }) async {
     final row = await _getUnitMonthlyBill(unitId: unitId, month: month);
     if (row != null) {
@@ -432,11 +478,7 @@ class UnitBillingRepository {
       missingMessage: 'No manager profile is linked to this signed-in user.',
     );
 
-    final dueDate = DateTime(
-      month.year,
-      month.month + 1,
-      1,
-    ).subtract(const Duration(days: 1));
+    final dueDate = _buildDueDate(month: month, dueDay: dueDay ?? 28);
 
     final created = await _supabase
         .from('monthly_bills')
@@ -759,6 +801,18 @@ class UnitBillingRepository {
   }
 
   DateTime _toMonth(DateTime date) => DateTime(date.year, date.month, 1);
+
+  DateTime _buildDueDate({required DateTime month, required int dueDay}) {
+    _validateDueDay(dueDay);
+    final normalized = _toMonth(month);
+    return DateTime(normalized.year, normalized.month, dueDay);
+  }
+
+  void _validateDueDay(int dueDay) {
+    if (dueDay < 1 || dueDay > 28) {
+      throw Exception('Due date must be between 1 and 28.');
+    }
+  }
 }
 
 class _UnitAccountabilityRow {
