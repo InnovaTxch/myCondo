@@ -1,87 +1,123 @@
 # myCondo
 
-myCondo is a Flutter condo management app for property managers and residents. It uses Supabase for authentication, PostgreSQL data storage, and role-based access to condo, billing, resident, announcement, and messaging data.
-
-## Table of Contents
-
-- [Current App State](#current-app-state)
-- [Known Limitations / Out of Scope (Current)](#known-limitations--out-of-scope-current)
-- [Run Options](#run-options)
-- [Tech Stack](#tech-stack)
-- [Important Payment Status Values](#important-payment-status-values)
-- [Project Structure](#project-structure)
-- [Architecture](#architecture)
-- [User Manual](#user-manual)
-- [Group Members](#group-members)
-
-## Group Members
-
-- Kent Francis Genilo
-- Angel May Janiola
-- Jasmine Magadan
-- Eleah Joy Melchor
-- Mae Maricar Yap
+myCondo is a Flutter condo management app for property managers and residents.  
+It uses Supabase for auth, Postgres data, role-based access control, and realtime updates.
 
 ## Current App State
 
-### Manager Side
+### Auth and onboarding
 
-- Dashboard with manager greeting, summary cards (residents, units, payments to review, capacity used), highlighted announcements, and quick actions.
-- Resident management with unit grouping, resident profiles, add/edit/vacate flows, and resident detail pages.
-- Bill creation for selected residents or units.
-- Per-resident bill management from resident details.
-- Announcements with create, edit, delete, and category styling.
-- Payment approval queue backed by Supabase:
-  - approve confirmation before applying payment
-  - deny flow requiring a rejection reason
-  - approved payments update bill status to `partial` or `paid`
-- Transaction history showing processed payments, both approved and denied.
-- Inbox/chat entry point for manager-resident conversations.
-- Editable condo About page:
-  - condo image
-  - condo name and location
-  - description
-  - gallery image URLs
+- Email/password login and signup.
+- Role-based routing via `AuthGate`:
+  - `manager` -> manager home
+  - `resident` -> resident home
+  - `unassigned` -> onboarding flow
+- Onboarding supports:
+  - Manager setup (first name, last name, condo name)
+  - Resident claim/join flow using BH code + resident code
 
-### Resident Side
+### Manager experience
 
-- Resident dashboard with amount due summary.
-- Resident metrics for open bills, next due date, and overdue bills.
-- Bills list and bill details view (read-only).
-- Payment history (read-only, for completed/approved payments recorded in the system).
-- Read-only announcements page.
-- Manager chat entry point.
-- Read-only condo About page.
-- Resident profile and logout.
+- Home shell with 5 tabs: dashboard, transactions, inbox, condo about, profile.
+- Dashboard includes:
+  - property snapshot (units, residents, payments to review, occupancy)
+  - latest announcements preview
+  - quick actions for residents, units, payments, bills, and maintenance
+- Resident management:
+  - grouped by unit
+  - add/edit/vacate flows
+  - resident details and per-resident bill context
+- Condo/unit management:
+  - manage condo/unit profile data and monthly billing context
+- Billing and payments:
+  - create bills
+  - approve/deny submitted payments
+  - denial requires a reason
+  - approvals update bill balances/status (`unpaid` / `partial` / `paid`)
+- Transaction history for processed payments.
+- Announcements:
+  - create/edit/delete
+  - visibility windows and category/priority support
+- Maintenance requests:
+  - status tabs (`pending`, `in_progress`, `resolved`, `cancelled`)
+  - manager notes and status updates
+- Messaging:
+  - manager inbox for resident conversations
+  - unread indicators
+- Editable Condo About page (image, name, location, description, gallery URLs).
 
-## Known Limitations / Out of Scope (Current)
+### Resident experience
 
-- Resident online payments are not integrated (no real payment gateway / GCash API integration yet).
-- Demo credentials are not publicly listed in the repo (ask the maintainer for access).
-- Some flows require seeded/demo data in Supabase to avoid empty dashboards and lists.
+- Home shell with 5 tabs: dashboard, payment history, chat, condo about, profile.
+- Dashboard includes:
+  - amount due
+  - open bills
+  - next due date
+  - overdue count
+  - quick actions (bill breakdown, unit bill, pay bill, maintenance)
+- Bill and payment flow:
+  - resident can submit bill payments
+  - amount validation against outstanding balance
+  - proof/reference required
+  - method captured in remark (GCash, Cash, Bank Transfer, Scanned QR, Upload QR)
+  - pending/approved/rejected feedback on bills
+- Payment history view for paid bills.
+- Unit bill and bill-breakdown pages.
+- Announcements:
+  - resident list view
+  - supports acknowledgement for announcements that require ack
+- Maintenance requests:
+  - create requests
+  - track status across `pending`, `in_progress`, `resolved`, `cancelled`
+  - view manager notes
+- Messaging with manager.
+- Read-only Condo About page.
+- Resident profile actions including logout and maintenance/chat shortcuts.
+
+## Realtime and session behavior
+
+- Realtime in-app notifications (Supabase stream-based) for:
+  - new payment submissions (manager)
+  - payment decisions (resident)
+  - maintenance request updates
+  - new announcements (resident)
+- Unread badges for chat and action-based notifications.
+- Presence tracking for online profiles.
+- Auto-logout inactivity timer:
+  - manager: 10 minutes
+  - resident: 15 minutes
+
+## Known Limitations / Out of Scope
+
+- No external payment gateway integration yet (manual submission + manager approval flow).
+- Payment proof is text/reference/link entry only (no in-app file upload pipeline yet).
+- Notifications are in-app realtime badges/popups; push notifications are not configured.
+- Demo credentials are not public in this repo; ask the maintainer.
+- Some screens depend on seeded data to be meaningful (`docs/DEMO.md`).
 
 ## Tech Stack
 
-- Flutter
-- Dart
+- Flutter + Dart
 - Supabase Auth
 - Supabase Postgres
-- Supabase Row Level Security
+- Supabase Realtime
+- Supabase Row Level Security (RLS)
+- `flutter_dotenv` for local env config
 
 ## Run Options
 
-### Option A: Use the Web Deployment (Fastest)
+### Option A: Hosted web build
 
-- Open: https://innovatxch.github.io/myCondo/
-- Demo credentials: Ask the maintainer for credentials.
-- Demo seed data reference: `docs/DEMO.md`
+- URL: https://innovatxch.github.io/myCondo/
+- Credentials: ask the maintainer
+- Demo seed reference: `docs/DEMO.md`
 
-### Option B: Run Locally (Full Flutter Setup)
+### Option B: Local run
 
-1. Install Flutter and Android tooling.
-2. Use a supported JDK for Android builds, preferably JDK 17.
-3. Create a `.env` file from `.env.example`.
-4. Add your Supabase values:
+1. Install Flutter SDK and platform tooling (Android Studio/Xcode as needed).
+2. For Android builds, use JDK 17.
+3. Create `.env` from `.env.example`.
+4. Set:
 
 ```env
 SUPABASE_URL=your_supabase_project_url
@@ -94,43 +130,46 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 flutter pub get
 ```
 
-6. Run the app:
+6. Run app:
 
 ```bash
 flutter run
 ```
 
-#### Run Locally (Web)
+7. Optional targets:
 
 ```bash
 flutter run -d chrome
-```
-
-#### Run Locally (Android)
-
-```bash
 flutter run -d android
 ```
 
-## Important Payment Status Values
+## Important Status Values
 
-The app expects `payments.status` to use:
+### `payments.status`
 
-- `pending` - submitted by resident, waiting for manager review
-- `completed` - approved by manager and counted toward bill balance
-- `rejected` - denied by manager, with `rejection_reason`
+- `pending` -> submitted by resident, waiting for manager review
+- `completed` -> approved by manager and applied to bill
+- `rejected` -> denied by manager with `rejection_reason`
 
-Bill status uses:
+### `bills.status`
 
 - `unpaid`
 - `partial`
 - `paid`
+
+### `maintenance_requests.status`
+
+- `pending`
+- `in_progress`
+- `resolved`
+- `cancelled`
 
 ## Project Structure
 
 ```text
 lib/
   app.dart
+  app_routes.dart
   main.dart
   data/
     models/
@@ -154,48 +193,89 @@ lib/
       widgets/
   services/
     shared/
+  theme/
   utils/
+docs/
+  DEMO.md
+supabase_public_dump.sql
 ```
 
 ## Architecture
 
-The app follows a feature-first structure with a shared data layer:
+- `features/` contains role-based UI and app flows.
+- `data/models/` defines typed domain objects.
+- `data/repositories/` encapsulates Supabase reads/writes.
+- `services/shared/` contains cross-feature behavior (chat, notifications, presence, session timer).
+- Routing is centralized in `app_routes.dart`, with auth/role gate logic in `AuthGate`.
 
-- `features/` contains role-specific and shared UI.
-- `data/models/` contains Dart models for Supabase rows.
-- `data/repositories/` contains Supabase queries and mutations.
-- `services/` contains cross-feature services such as chat.
+## System Flow (Mermaid)
 
-## User Manual
-
-For basic demo steps (accounts, condo codes, sample residents, and sample bills), see `docs/DEMO.md`.
-
-## Logical View
+### 1) Auth and onboarding
 
 ```mermaid
 flowchart TD
-  User["User"]
-  Auth["Supabase Auth + Role Lookup"]
-  Manager["Manager Experience"]
-  Resident["Resident Experience"]
-  Condo["Condo About + Announcements"]
-  Residents["Resident + Unit Management"]
-  Billing["Bills + Payment Approval"]
-  Chat["Manager-Resident Chat"]
-  DB[("Supabase Postgres")]
+  U["User"] --> AG["AuthGate"]
+  AG -->|manager| MH["Manager Home"]
+  AG -->|resident| RH["Resident Home"]
+  AG -->|unassigned| OB["Onboarding"]
 
-  User --> Auth
-  Auth --> Manager
-  Auth --> Resident
-  Manager --> Residents
-  Manager --> Billing
-  Manager --> Condo
-  Manager --> Chat
-  Resident --> Billing
-  Resident --> Condo
-  Resident --> Chat
-  Residents --> DB
-  Billing --> DB
-  Condo --> DB
-  Chat --> DB
+  OB --> MS["Manager Setup"]
+  OB --> RS["Resident Join via BH and Resident Code"]
 ```
+
+### 2) Manager feature flow
+
+```mermaid
+flowchart TD
+  MH["Manager Home"] --> MD["Dashboard"]
+  MH --> MP["Payments Approval"]
+  MH --> MM["Maintenance Management"]
+  MH --> MI["Manager Inbox"]
+  MH --> MA["Announcements Management"]
+  MH --> MC["Condo and Unit Management"]
+
+  MD --> SB["Supabase"]
+  MP --> SB
+  MM --> SB
+  MI --> SB
+  MA --> SB
+  MC --> SB
+```
+
+### 3) Resident feature flow
+
+```mermaid
+flowchart TD
+  RH["Resident Home"] --> RD["Dashboard"]
+  RH --> RB["Bills and Payment Submission"]
+  RH --> RM["Maintenance Requests"]
+  RH --> RI["Resident and Manager Chat"]
+  RH --> RA["Resident Announcements"]
+
+  RD --> SB
+  RB --> SB
+  RM --> SB
+  RI --> SB
+  RA --> SB
+```
+
+### 4) Realtime loop
+
+```mermaid
+flowchart LR
+  SB["Supabase"] --> RT["Realtime Notifications and Presence"]
+  RT --> MH["Manager Home"]
+  RT --> RH["Resident Home"]
+```
+
+## User Manual / Demo Data
+
+- See `docs/DEMO.md` for sample accounts, condo code, resident codes, and sample records.
+
+## Group Members
+
+- Kent Francis Genilo
+- Angel May Janiola
+- Jasmine Magadan
+- Eleah Joy Melchor
+- Mae Maricar Yap
