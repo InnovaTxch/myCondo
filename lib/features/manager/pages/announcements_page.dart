@@ -168,10 +168,13 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
         await _service.deleteAnnouncement(ann.id);
         _didMutate = true;
         await _loadData();
-      } catch (e) {
+      } catch (e, st) {
         if (!mounted) return;
-        context.showAppSnackBar(
-          SnackBar(content: Text('Failed to delete announcement: $e')),
+        context.showAppError(
+          e,
+          stackTrace: st,
+          fallbackMessage: 'Could not delete the announcement.',
+          debugLabel: 'ManagerAnnouncementsPage.deleteAnnouncement',
         );
       }
     }

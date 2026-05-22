@@ -6,6 +6,7 @@ import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
 
 class ResidentUnitBillPage extends StatefulWidget {
   const ResidentUnitBillPage({super.key});
@@ -51,9 +52,16 @@ class _ResidentUnitBillPageState extends State<ResidentUnitBillPage> {
     });
     try {
       await _loadLedgerForMonth(_selectedMonth);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.toString());
+      debugPrint('[ResidentUnitBillPage.loadInitial] $e');
+      debugPrint(st.toString());
+      setState(
+        () => _errorMessage = UserFriendlyError.messageFor(
+          e,
+          fallback: 'Unable to load unit bill.',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -427,9 +435,14 @@ class _ResidentUnitPaymentSheetState extends State<_ResidentUnitPaymentSheet> {
       context.showAppSnackBar(
         const SnackBar(content: Text('Payment sent for approval.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Payment failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Payment submission failed. Please try again.',
+        debugLabel: 'ResidentUnitBillPage.submitPayment',
+      );
       setState(() => _isSaving = false);
     }
   }

@@ -65,13 +65,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
       // Let AuthGate handle routing based on the authenticated session + profile role.
       // Pushing dashboards from here causes stacked home shells.
       Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        context.showAppSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: AppColors.errorRed,
-          ),
+        context.showAppError(
+          e,
+          stackTrace: st,
+          fallbackMessage: 'Could not complete setup. Please try again.',
+          debugLabel: 'OnboardingPage.handleFinalSubmit',
         );
       }
     } finally {
@@ -107,13 +107,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
       await _authService.signOut();
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
-    } catch (e) {
+    } catch (e, st) {
       if (mounted) {
-        context.showAppSnackBar(
-          SnackBar(
-            content: Text("Error signing out: $e"),
-            backgroundColor: AppColors.errorRed,
-          ),
+        context.showAppError(
+          e,
+          stackTrace: st,
+          fallbackMessage: 'Could not sign out. Please try again.',
+          debugLabel: 'OnboardingPage.handleSignOut',
         );
       }
     } finally {
@@ -154,17 +154,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
               const SizedBox(height: 12),
               Text(
                 _isManager ? "Set up your condo" : "Join your condo",
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 _isManager
                     ? "Create your condo workspace and add resident profiles after setup."
                     : "Use the BH code and resident code from your manager.",
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  height: 1.35,
-                ),
+                style: TextStyle(color: AppColors.secondaryText, height: 1.35),
               ),
               const SizedBox(height: 32),
 
@@ -306,10 +306,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }

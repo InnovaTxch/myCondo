@@ -38,9 +38,14 @@ class _ResidentBillPaymentSheetState extends State<ResidentBillPaymentSheet> {
       await widget.onSubmit(amount);
       if (!mounted) return;
       Navigator.pop(context);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Payment failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not save the payment.',
+        debugLabel: 'ResidentBillPaymentSheet.submit',
+      );
       setState(() => _isSaving = false);
     }
   }

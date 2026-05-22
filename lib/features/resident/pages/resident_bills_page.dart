@@ -379,9 +379,14 @@ class _ResidentPaymentSheetState extends State<_ResidentPaymentSheet> {
       context.showAppSnackBar(
         const SnackBar(content: Text('Payment sent for approval.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Payment failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Payment submission failed. Please try again.',
+        debugLabel: 'ResidentBillsPage.submitPayment',
+      );
       setState(() => _isSaving = false);
     }
   }

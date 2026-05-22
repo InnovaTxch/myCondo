@@ -74,9 +74,15 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         _paymentMethods = settings.paymentMethods;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not load your profile right now.',
+        debugLabel: 'ResidentProfilePage.loadProfile',
+      );
     }
   }
 
@@ -92,21 +98,26 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         context,
         rootNavigator: true,
       ).pushNamedAndRemoveUntil('/login', (route) => false);
-    } catch (_) {
+    } catch (e, st) {
       if (!mounted) return;
-
-      context.showAppSnackBar(
-        const SnackBar(content: Text('Could not log out. Please try again.')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not log out. Please try again.',
+        debugLabel: 'ResidentProfilePage.logout',
       );
 
       setState(() => _isSigningOut = false);
     }
   }
 
-  void _showPasswordError(Object error) {
+  void _showPasswordError(Object error, [StackTrace? stackTrace]) {
     if (!mounted) return;
-    context.showAppSnackBar(
-      SnackBar(content: Text('Could not update password: $error')),
+    context.showAppError(
+      error,
+      stackTrace: stackTrace,
+      fallbackMessage: 'Could not update your password.',
+      debugLabel: 'ResidentProfilePage.updatePassword',
     );
   }
 
@@ -137,10 +148,13 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
       context.showAppSnackBar(
         const SnackBar(content: Text('Profile updated.')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Could not update profile: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not update your profile.',
+        debugLabel: 'ResidentProfilePage.updateProfile',
       );
     }
   }
@@ -932,7 +946,7 @@ class _ChangePasswordSheet extends StatefulWidget {
   const _ChangePasswordSheet({required this.onSubmit, required this.onError});
 
   final Future<void> Function(String password) onSubmit;
-  final ValueChanged<Object> onError;
+  final void Function(Object error, [StackTrace? stackTrace]) onError;
 
   @override
   State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
@@ -960,10 +974,10 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       await widget.onSubmit(_passwordController.text);
       if (!mounted) return;
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      widget.onError(e);
+      widget.onError(e, st);
     }
   }
 

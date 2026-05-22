@@ -6,6 +6,7 @@ import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
 
 class ManagerUnitProfilePage extends StatefulWidget {
   const ManagerUnitProfilePage({super.key, required this.unitId});
@@ -58,9 +59,16 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         _payers = payers;
       });
       await _loadLedgerForMonth(_selectedMonth);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.toString());
+      debugPrint('[ManagerUnitProfilePage.loadAll] $e');
+      debugPrint(st.toString());
+      setState(
+        () => _errorMessage = UserFriendlyError.messageFor(
+          e,
+          fallback: 'Unable to load unit profile.',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -580,9 +588,14 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     setState(() => _isSaving = true);
     try {
       await action();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Action failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not complete that action.',
+        debugLabel: 'ManagerUnitProfilePage.withSaving',
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -751,7 +764,6 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
           ? Center(
               child: AppErrorState(
                 message: 'Unable to load unit profile.',
-                details: _errorMessage,
                 onRetry: () => _loadAll(showLoading: true),
               ),
             )

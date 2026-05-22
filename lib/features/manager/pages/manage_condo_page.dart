@@ -7,6 +7,7 @@ import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/manager/pages/unit_profile_page.dart';
 import 'package:mycondo/features/manager/widgets/unit_bill_progress_badge.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 
@@ -71,9 +72,16 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
         _units = units;
         _unitBillSummaries = unitBillSummaries;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.toString());
+      debugPrint('[ManageCondoPage.loadUnits] $e');
+      debugPrint(st.toString());
+      setState(
+        () => _errorMessage = UserFriendlyError.messageFor(
+          e,
+          fallback: 'Unable to load units. Try again.',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -350,10 +358,13 @@ class _UnitFormSheetState extends State<_UnitFormSheet> {
 
       if (!mounted) return;
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to save unit: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not save this unit.',
+        debugLabel: 'ManageCondoPage.saveUnit',
       );
       setState(() => _isSaving = false);
     }
