@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DashboardSummary {
+  int? activeUnits;
   int? totalResidents;
   int? totalUnits;
   int? paymentsToReview;

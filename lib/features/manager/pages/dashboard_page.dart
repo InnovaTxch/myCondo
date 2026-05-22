@@ -263,7 +263,7 @@ class _ManagerSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${summary.totalResidents ?? 0} residents',
+            '${summary.activeUnits ?? 0} active units',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -278,16 +278,16 @@ class _ManagerSummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MetricItem(
-                  icon: Icons.people_alt_outlined,
-                  label: 'Residents',
-                  value: '${summary.totalResidents ?? 0}',
+                  icon: Icons.meeting_room_outlined,
+                  label: 'Units',
+                  value: '${summary.totalUnits ?? 0}',
                 ),
               ),
               Expanded(
                 child: _MetricItem(
-                  icon: Icons.meeting_room_outlined,
-                  label: 'Units',
-                  value: '${summary.totalUnits ?? 0}',
+                  icon: Icons.people_alt_outlined,
+                  label: 'Residents',
+                  value: '${summary.totalResidents ?? 0}',
                 ),
               ),
               Expanded(

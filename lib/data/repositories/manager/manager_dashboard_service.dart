@@ -46,9 +46,15 @@ class ManagerDashboardService {
         ? const []
         : await _supabase
             .from('residents')
-            .select('id')
+            .select('id, unit_id')
             .inFilter('unit_id', unitIds)
             .eq('status', 'active');
+
+    final activeUnitIds = residentsData
+        .map((row) => (row as Map<String, dynamic>)['unit_id'])
+        .where((unitId) => unitId != null)
+        .map((unitId) => (unitId as num).toInt())
+        .toSet();
 
     final residentIds = residentsData
         .map((row) => row['id'].toString())
@@ -63,6 +69,7 @@ class ManagerDashboardService {
             .inFilter('paid_by', residentIds)
             .eq('status', 'pending');
 
+    final activeUnits = activeUnitIds.length;
     final totalResidents = residentIds.length;
     final totalUnits = unitIds.length;
     final paymentsToReview = paymentsData.length;
@@ -72,6 +79,7 @@ class ManagerDashboardService {
         : null;
 
     return DashboardSummary()
+      ..activeUnits = activeUnits
       ..totalResidents = totalResidents
       ..totalUnits = totalUnits
       ..paymentsToReview = paymentsToReview
