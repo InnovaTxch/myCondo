@@ -9,7 +9,6 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 class ResidentDashboard extends StatefulWidget {
   const ResidentDashboard({
     super.key,
-    this.onOpenMessages,
     this.showPaymentNotificationBadge = false,
     this.showMaintenanceNotificationBadge = false,
     this.onPaymentNotificationsViewed,
@@ -17,7 +16,6 @@ class ResidentDashboard extends StatefulWidget {
     this.onAnnouncementNotificationsViewed,
   });
 
-  final VoidCallback? onOpenMessages;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -141,10 +139,7 @@ class _ResidentDashboardState extends State<ResidentDashboard> {
                     onOpened: widget.onAnnouncementNotificationsViewed,
                   ),
                   const SizedBox(height: 18),
-                  const _BillBreakdownButton(),
-                  const SizedBox(height: 18),
                   _QuickActions(
-                    onOpenMessages: widget.onOpenMessages,
                     showPaymentNotificationBadge:
                         widget.showPaymentNotificationBadge,
                     showMaintenanceNotificationBadge:
@@ -346,46 +341,6 @@ class _MetricItem extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _BillBreakdownButton extends StatelessWidget {
-  const _BillBreakdownButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: () => _openBreakdown(context),
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8E4DD)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.list_alt_rounded, color: Colors.black, size: 28),
-              SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'View Bill Breakdown',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Color(0xFFD7D3CC)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openBreakdown(BuildContext context) {
-    Navigator.pushNamed(context, '/resident-bill-breakdown');
   }
 }
 
@@ -688,14 +643,12 @@ class _InfoChip extends StatelessWidget {
 
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
-    this.onOpenMessages,
     required this.showPaymentNotificationBadge,
     required this.showMaintenanceNotificationBadge,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback? onOpenMessages;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -705,6 +658,13 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _ActionTile(
+          title: 'View Bill Breakdown',
+          subtitle: 'See all bill charges, due dates, and payment status details.',
+          icon: Icons.list_alt_rounded,
+          onTap: () => Navigator.pushNamed(context, '/resident-bill-breakdown'),
+        ),
+        const SizedBox(height: 10),
         _ActionTile(
           title: 'Unit Bill',
           subtitle: 'View shared unit dues, payments, and remaining balance.',
@@ -721,13 +681,6 @@ class _QuickActions extends StatelessWidget {
             onPaymentNotificationsViewed?.call();
             Navigator.pushNamed(context, '/resident-bills');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Message Manager',
-          subtitle: 'Ask about bills, repairs, or announcements.',
-          icon: Icons.chat_bubble_outline_rounded,
-          onTap: onOpenMessages ?? () {},
         ),
         const SizedBox(height: 10),
         _ActionTile(

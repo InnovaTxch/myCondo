@@ -135,7 +135,6 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
       tabs: [
         DashboardTabItem(
           root: ManagerDashboardPage(
-            onOpenPaymentHistory: () => changeActivePageIndex(1),
             showPaymentNotificationBadge: _hasPaymentNotificationBadge,
             showMaintenanceNotificationBadge: _hasMaintenanceNotificationBadge,
             onPaymentNotificationsViewed: _clearPaymentBadge,

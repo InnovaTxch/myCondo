@@ -12,14 +12,12 @@ import 'package:mycondo/services/shared/session_timer_service.dart';
 class ManagerDashboardPage extends StatefulWidget {
   const ManagerDashboardPage({
     super.key,
-    required this.onOpenPaymentHistory,
     this.showPaymentNotificationBadge = false,
     this.showMaintenanceNotificationBadge = false,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback onOpenPaymentHistory;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -142,7 +140,6 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                   ),
                   const SizedBox(height: 18),
                   _ManagerQuickActions(
-                    onOpenPaymentHistory: widget.onOpenPaymentHistory,
                     showPaymentNotificationBadge:
                         widget.showPaymentNotificationBadge,
                     showMaintenanceNotificationBadge:
@@ -263,7 +260,7 @@ class _ManagerSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${summary.totalResidents ?? 0} residents',
+            '${summary.activeUnits ?? 0} active units',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -278,16 +275,16 @@ class _ManagerSummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _MetricItem(
-                  icon: Icons.people_alt_outlined,
-                  label: 'Residents',
-                  value: '${summary.totalResidents ?? 0}',
+                  icon: Icons.meeting_room_outlined,
+                  label: 'Units',
+                  value: '${summary.totalUnits ?? 0}',
                 ),
               ),
               Expanded(
                 child: _MetricItem(
-                  icon: Icons.meeting_room_outlined,
-                  label: 'Units',
-                  value: '${summary.totalUnits ?? 0}',
+                  icon: Icons.people_alt_outlined,
+                  label: 'Residents',
+                  value: '${summary.totalResidents ?? 0}',
                 ),
               ),
               Expanded(
@@ -610,14 +607,12 @@ class _InfoChip extends StatelessWidget {
 
 class _ManagerQuickActions extends StatelessWidget {
   const _ManagerQuickActions({
-    required this.onOpenPaymentHistory,
     required this.showPaymentNotificationBadge,
     required this.showMaintenanceNotificationBadge,
     this.onPaymentNotificationsViewed,
     this.onMaintenanceNotificationsViewed,
   });
 
-  final VoidCallback onOpenPaymentHistory;
   final bool showPaymentNotificationBadge;
   final bool showMaintenanceNotificationBadge;
   final VoidCallback? onPaymentNotificationsViewed;
@@ -635,6 +630,14 @@ class _ManagerQuickActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ActionTile(
+          title: 'Manage Units',
+          subtitle:
+              'Edit unit profile, monthly charges, and unit payment status.',
+          icon: Icons.apartment_outlined,
+          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
           title: 'Approve Payments',
           subtitle: 'Review cash and e-wallet submissions from residents.',
           icon: Icons.fact_check_outlined,
@@ -643,14 +646,6 @@ class _ManagerQuickActions extends StatelessWidget {
             onPaymentNotificationsViewed?.call();
             Navigator.pushNamed(context, '/approve-payments');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Manage Units',
-          subtitle:
-              'Edit unit profile, monthly charges, and unit payment status.',
-          icon: Icons.apartment_outlined,
-          onTap: () => Navigator.pushNamed(context, '/manage-condo'),
         ),
         const SizedBox(height: 10),
         _ActionTile(
@@ -669,13 +664,6 @@ class _ManagerQuickActions extends StatelessWidget {
             onMaintenanceNotificationsViewed?.call();
             Navigator.pushNamed(context, '/manager-maintenance-requests');
           },
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          title: 'Transaction History',
-          subtitle: 'Review approved and rejected payment decisions.',
-          icon: Icons.history_rounded,
-          onTap: onOpenPaymentHistory,
         ),
       ],
     );
