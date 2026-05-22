@@ -185,43 +185,67 @@ class _ResidentStatusCountTab extends StatelessWidget {
     return FutureBuilder<List<MaintenanceRequestRecord>>(
       future: requestsFuture,
       builder: (context, snapshot) {
-        final count = snapshot.hasData ? snapshot.data!.length : 0;
-        final countLabel = count > 99 ? '99+' : '$count';
-        final hasItems = count > 0;
+        final count = snapshot.data?.length ?? 0;
+        final colors = _countChipColors(label);
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 6, right: 18, top: 4),
-              child: Text(label, textAlign: TextAlign.center),
-            ),
-            if (hasItems)
-              Positioned(
-                right: 0,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBlue,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    countLabel,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+        return Padding(
+          padding: const EdgeInsets.only(left: 6, right: 2, top: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, textAlign: TextAlign.center),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: colors.foreground,
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         );
       },
+    );
+  }
+
+  ({Color background, Color foreground}) _countChipColors(String label) {
+    final normalized = label.trim().toLowerCase();
+    if (normalized == 'pending') {
+      return (
+        background: const Color(0xFFF9ECCE),
+        foreground: const Color(0xFF8A5A00),
+      );
+    }
+    if (normalized == 'in progress') {
+      return (
+        background: const Color(0xFFDDEBFF),
+        foreground: const Color(0xFF1A73C8),
+      );
+    }
+    if (normalized == 'resolved') {
+      return (
+        background: const Color(0xFFDBF2E3),
+        foreground: const Color(0xFF1F8E3D),
+      );
+    }
+    if (normalized == 'cancelled') {
+      return (
+        background: const Color(0xFFF6E2E2),
+        foreground: const Color(0xFF9F3A3A),
+      );
+    }
+    return (
+      background: const Color(0xFFE9EDF5),
+      foreground: const Color(0xFF4E5B70),
     );
   }
 }
