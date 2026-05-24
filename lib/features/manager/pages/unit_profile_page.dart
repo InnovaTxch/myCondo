@@ -7,6 +7,7 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
+import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 
 class ManagerUnitProfilePage extends StatefulWidget {
   const ManagerUnitProfilePage({super.key, required this.unitId});
@@ -863,6 +864,16 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     });
   }
 
+  Future<void> _openResidentDetails(String residentId) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResidentDetailsPage(residentId: residentId),
+      ),
+    );
+    await _loadAll(showLoading: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final unit = _unit;
@@ -922,7 +933,7 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
                   : 'Capacity: ${unit.capacity}',
             ),
             const SizedBox(height: 4),
-            Text('Occupied: ${unit.occupied} resident(s)'),
+            _buildOccupantsExpansion(),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -1104,6 +1115,71 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         ),
       ),
     );
+  }
+
+
+  Widget _buildOccupantTile(UnitPaymentPayer resident) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            child: Text(_initials(resident.name)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              resident.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () => _openResidentDetails(resident.id),
+            child: const Text('View Info'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOccupantsExpansion() {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey<String>('unit-occupants-${widget.unitId}'),
+        maintainState: true,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 6),
+        title: Text('Occupied: ${_payers.length} resident(s)'),
+        children: _payers.isEmpty
+            ? const [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'No residents in this unit yet.',
+                style: TextStyle(color: AppColors.secondaryText),
+              ),
+            ),
+          ),
+        ]
+            : _payers.map(_buildOccupantTile).toList(),
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .toList();
+
+    if (parts.isEmpty) return '?';
+    return parts.map((part) => part[0].toUpperCase()).join();
   }
 
   static DateTime _toMonth(DateTime date) => DateTime(date.year, date.month, 1);
