@@ -175,20 +175,52 @@ class _ManagerTransactionHistoryPageState
     }).toList();
   }
 
-  bool _matchesMonthFilter(String value) {
-    if (_monthFilter == PaymentHistoryMonthFilter.all) return true;
+  bool _matchesDateFilter(String value) {
+    if (_dateFilter == PaymentHistoryDateFilter.all) return true;
 
     final paymentDate = DateTime.tryParse(value)?.toLocal();
     if (paymentDate == null) return false;
 
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-    final subtractMonths = _monthFilter == PaymentHistoryMonthFilter.thisMonth
-        ? 0
-        : 1;
-    final targetMonth = DateTime(now.year, now.month - subtractMonths);
+    late final DateTime start;
+    late final DateTime endExclusive;
 
-    return paymentDate.year == targetMonth.year &&
-        paymentDate.month == targetMonth.month;
+    switch (_dateFilter) {
+      case PaymentHistoryDateFilter.today:
+        start = today;
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.yesterday:
+        start = today.subtract(const Duration(days: 1));
+        endExclusive = today;
+        break;
+      case PaymentHistoryDateFilter.threeDaysAgo:
+        start = today.subtract(const Duration(days: 3));
+        endExclusive = start.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.thisWeek:
+        start = today.subtract(Duration(days: today.weekday - 1));
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.thisMonth:
+        start = DateTime(today.year, today.month, 1);
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.customRange:
+        final range = _customDateRange;
+        if (range == null) return true;
+        start = DateTime(range.start.year, range.start.month, range.start.day);
+        endExclusive = DateTime(
+          range.end.year,
+          range.end.month,
+          range.end.day + 1,
+        );
+        break;
+      case PaymentHistoryDateFilter.all:
+        return true;
+    }
+    return !paymentDate.isBefore(start) && paymentDate.isBefore(endExclusive);
   }
 }
