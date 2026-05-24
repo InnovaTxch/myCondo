@@ -1,8 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/theme/app_theme.dart';
 
-enum PaymentHistoryMonthFilter { all, thisMonth, lastMonth }
+enum PaymentHistoryDateFilter {
+  all,
+  today,
+  yesterday,
+  threeDaysAgo,
+  thisWeek,
+  thisMonth,
+  customRange,
+}
+
+const _dateFilterOptions = [
+  PaymentHistoryDateFilter.all,
+  PaymentHistoryDateFilter.today,
+  PaymentHistoryDateFilter.yesterday,
+  PaymentHistoryDateFilter.threeDaysAgo,
+  PaymentHistoryDateFilter.thisWeek,
+  PaymentHistoryDateFilter.thisMonth,
+  PaymentHistoryDateFilter.customRange,
+];
 
 class ManagerPaymentHistoryFilters extends StatelessWidget {
   const ManagerPaymentHistoryFilters({
@@ -11,8 +30,10 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
     required this.onSearchChanged,
     required this.statusFilter,
     required this.onStatusChanged,
-    required this.monthFilter,
-    required this.onMonthChanged,
+    required this.dateFilter,
+    required this.customDateRange,
+    required this.onDateChanged,
+    required this.onCustomDateRangeChanged,
     required this.onClearFilters,
   });
 
@@ -20,12 +41,14 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final PaymentStatus? statusFilter;
   final ValueChanged<PaymentStatus?> onStatusChanged;
-  final PaymentHistoryMonthFilter monthFilter;
-  final ValueChanged<PaymentHistoryMonthFilter> onMonthChanged;
+  final PaymentHistoryDateFilter dateFilter;
+  final DateTimeRange? customDateRange;
+  final ValueChanged<PaymentHistoryDateFilter> onDateChanged;
+  final ValueChanged<DateTimeRange?> onCustomDateRangeChanged;
   final VoidCallback onClearFilters;
 
   bool get _hasActiveFilters =>
-      statusFilter != null || monthFilter != PaymentHistoryMonthFilter.all;
+      statusFilter != null || dateFilter != PaymentHistoryDateFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -64,26 +87,33 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
         ),
         if (_hasActiveFilters) ...[
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (statusFilter != null)
-                _activeChip(
-                  label: _statusLabel(statusFilter!),
-                  onDeleted: () => onStatusChanged(null),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                if (statusFilter != null)...[
+                  _activeChip(
+                    label: _statusLabel(statusFilter!),
+                    onDeleted: () => onStatusChanged(null),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (dateFilter != PaymentHistoryDateFilter.all)...[
+                  _activeChip(
+                    label: _dateLabel(dateFilter, customDateRange),
+                    onDeleted: () {
+                      onDateChanged(PaymentHistoryDateFilter.all);
+                      onCustomDateRangeChanged(null);
+                    },
+                  ),
+                const SizedBox(width: 8),
+                ],
+                TextButton(
+                  onPressed: onClearFilters,
+                  child: const Text('Clear all'),
                 ),
-              if (monthFilter != PaymentHistoryMonthFilter.all)
-                _activeChip(
-                  label: _monthLabel(monthFilter),
-                  onDeleted: () => onMonthChanged(PaymentHistoryMonthFilter.all),
-                ),
-              TextButton(
-                onPressed: onClearFilters,
-                child: const Text('Clear all'),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ],
@@ -108,9 +138,25 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
     );
   }
 
+  Widget _dateChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onSelected,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: _choiceChip(
+        label: label,
+        selected: selected,
+        onSelected: onSelected,
+      ),
+    );
+  }
+
   void _openFilterSheet(BuildContext context) {
     var tempStatus = statusFilter;
-    var tempMonth = monthFilter;
+    var tempDate = dateFilter;
+    var tempRange = customDateRange;
 
     showModalBottomSheet<void>(
       context: context,
@@ -193,39 +239,50 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 18),
-                          const _FilterLabel('Month'),
+                          const _FilterLabel('Date'),
                           const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              _choiceChip(
-                                label: 'All months',
-                                selected:
-                                    tempMonth == PaymentHistoryMonthFilter.all,
-                                onSelected: () => setSheetState(
-                                  () => tempMonth =
-                                      PaymentHistoryMonthFilter.all,
-                                ),
-                              ),
-                              _choiceChip(
-                                label: 'This month',
-                                selected: tempMonth ==
-                                    PaymentHistoryMonthFilter.thisMonth,
-                                onSelected: () => setSheetState(
-                                  () => tempMonth =
-                                      PaymentHistoryMonthFilter.thisMonth,
-                                ),
-                              ),
-                              _choiceChip(
-                                label: 'Last month',
-                                selected: tempMonth ==
-                                    PaymentHistoryMonthFilter.lastMonth,
-                                onSelected: () => setSheetState(
-                                  () => tempMonth =
-                                      PaymentHistoryMonthFilter.lastMonth,
-                                ),
-                              ),
-                            ],
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _dateFilterOptions.map((filter) {
+                                return _dateChip(
+                                  label: _dateLabel(
+                                    filter,
+                                    filter == PaymentHistoryDateFilter.customRange ? tempRange : null,
+                                  ),
+                                  selected: tempDate == filter,
+                                  onSelected: () async {
+                                    if (filter == PaymentHistoryDateFilter.customRange) {
+                                      final picked = await showDialog<DateTimeRange>(
+                                        context: context,
+                                        builder: (context) {
+                                          return DateRangePickerDialog(
+                                            initialDateRange: tempRange,
+                                            firstDate: DateTime(1970, 1, 1),
+                                            lastDate: DateTime.now(),
+                                            helpText: 'Select date range',
+                                            saveText: 'Apply',
+                                          );
+                                        },
+                                      );
+
+                                      if (picked == null) return;
+
+                                      setSheetState(() {
+                                        tempDate = PaymentHistoryDateFilter.customRange;
+                                        tempRange = picked;
+                                      });
+                                      return;
+                                    }
+
+                                    setSheetState(() {
+                                      tempDate = filter;
+                                      tempRange = null;
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
                           ),
                           const SizedBox(height: 22),
                           Row(
@@ -234,9 +291,8 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
                                 child: OutlinedButton(
                                   onPressed: () {
                                     onStatusChanged(null);
-                                    onMonthChanged(
-                                      PaymentHistoryMonthFilter.all,
-                                    );
+                                    onDateChanged(PaymentHistoryDateFilter.all);
+                                    onCustomDateRangeChanged(null);
                                     Navigator.pop(context);
                                   },
                                   child: const Text('Clear filters'),
@@ -247,7 +303,8 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
                                 child: ElevatedButton(
                                   onPressed: () {
                                     onStatusChanged(tempStatus);
-                                    onMonthChanged(tempMonth);
+                                    onDateChanged(tempDate);
+                                    onCustomDateRangeChanged(tempRange);
                                     Navigator.pop(context);
                                   },
                                   child: const Text('Apply'),
@@ -294,16 +351,29 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
     return status == PaymentStatus.approved ? 'Approved' : 'Denied';
   }
 
-  String _monthLabel(PaymentHistoryMonthFilter filter) {
+  String _dateLabel(PaymentHistoryDateFilter filter, DateTimeRange? customRange,) {
     switch (filter) {
-      case PaymentHistoryMonthFilter.thisMonth:
+      case PaymentHistoryDateFilter.today:
+        return 'Today';
+      case PaymentHistoryDateFilter.yesterday:
+        return 'Yesterday';
+      case PaymentHistoryDateFilter.threeDaysAgo:
+        return '3 days ago';
+      case PaymentHistoryDateFilter.thisWeek:
+        return 'This week';
+      case PaymentHistoryDateFilter.thisMonth:
         return 'This month';
-      case PaymentHistoryMonthFilter.lastMonth:
-        return 'Last month';
-      case PaymentHistoryMonthFilter.all:
-        return 'All months';
+      case PaymentHistoryDateFilter.customRange:
+        return customRange == null ? 'Select range' : _formatRange(customRange);
+      case PaymentHistoryDateFilter.all:
+        return 'All dates';
     }
   }
+}
+
+String _formatRange(DateTimeRange range) {
+  final formatter = DateFormat('MMM d');
+  return '${formatter.format(range.start)} - ${formatter.format(range.end)}';
 }
 
 class _FilterLabel extends StatelessWidget {
