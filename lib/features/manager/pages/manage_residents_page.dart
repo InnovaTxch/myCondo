@@ -13,6 +13,7 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
+import 'package:mycondo/features/manager/pages/unit_profile_page.dart';
 
 class ManageResidentsPage extends StatefulWidget {
   const ManageResidentsPage({super.key});
@@ -135,6 +136,16 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
       ),
     );
     await _loadResidents();
+  }
+
+  Future<void> _openUnitProfile(UnitOption unit) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ManagerUnitProfilePage(unitId: unit.id),
+      ),
+    );
+    await _loadResidents(showLoading: false);
   }
 
   Future<void> _saveInlineUnit() async {
@@ -286,8 +297,8 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     final unit = group.unit;
     final isFull = unit.isFull;
     final billSummary =
-        _unitBillSummaries[unit.id] ??
-        UnitBillPaymentSummary.empty(unitId: unit.id, month: DateTime.now());
+      _unitBillSummaries[unit.id] ??
+      UnitBillPaymentSummary.empty(unitId: unit.id, month: DateTime.now());
 
     return Card(
       color: Colors.white,
@@ -303,11 +314,18 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Unit ${unit.name}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                  InkWell(
+                    onTap: () => _openUnitProfile(unit),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                      child: Text(
+                        'Unit ${unit.name}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -473,3 +491,5 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     );
   }
 }
+
+
