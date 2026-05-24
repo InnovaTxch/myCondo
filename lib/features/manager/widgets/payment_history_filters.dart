@@ -87,26 +87,33 @@ class ManagerPaymentHistoryFilters extends StatelessWidget {
         ),
         if (_hasActiveFilters) ...[
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (statusFilter != null)
-                _activeChip(
-                  label: _statusLabel(statusFilter!),
-                  onDeleted: () => onStatusChanged(null),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                if (statusFilter != null)...[
+                  _activeChip(
+                    label: _statusLabel(statusFilter!),
+                    onDeleted: () => onStatusChanged(null),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (dateFilter != PaymentHistoryDateFilter.all)...[
+                  _activeChip(
+                    label: _dateLabel(dateFilter, customDateRange),
+                    onDeleted: () {
+                      onDateChanged(PaymentHistoryDateFilter.all);
+                      onCustomDateRangeChanged(null);
+                    },
+                  ),
+                const SizedBox(width: 8),
+                ],
+                TextButton(
+                  onPressed: onClearFilters,
+                  child: const Text('Clear all'),
                 ),
-              if (monthFilter != PaymentHistoryMonthFilter.all)
-                _activeChip(
-                  label: _monthLabel(monthFilter),
-                  onDeleted: () => onMonthChanged(PaymentHistoryMonthFilter.all),
-                ),
-              TextButton(
-                onPressed: onClearFilters,
-                child: const Text('Clear all'),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ],
