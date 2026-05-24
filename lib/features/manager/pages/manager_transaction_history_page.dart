@@ -4,7 +4,7 @@ import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
-import 'package:mycondo/features/manager/widgets/manager_payment_history_filters.dart';
+import 'package:mycondo/features/manager/widgets/payment_history_filters.dart';
 
 class ManagerTransactionHistoryPage extends StatefulWidget {
   const ManagerTransactionHistoryPage({super.key});
@@ -21,7 +21,8 @@ class _ManagerTransactionHistoryPageState
 
   final _searchController = TextEditingController();
   PaymentStatus? _statusFilter;
-  PaymentHistoryMonthFilter _monthFilter = PaymentHistoryMonthFilter.all;
+  PaymentHistoryDateFilter _dateFilter = PaymentHistoryDateFilter.all;
+  DateTimeRange? _customDateRange;
 
   @override
   void dispose() {
@@ -38,7 +39,8 @@ class _ManagerTransactionHistoryPageState
   void _clearFilters() {
     setState(() {
       _statusFilter = null;
-      _monthFilter = PaymentHistoryMonthFilter.all;
+      _dateFilter = PaymentHistoryDateFilter.all;
+      _customDateRange = null;
     });
   }
 
@@ -78,10 +80,11 @@ class _ManagerTransactionHistoryPageState
                 searchController: _searchController,
                 onSearchChanged: (_) => setState(() {}),
                 statusFilter: _statusFilter,
-                onStatusChanged: (value) =>
-                    setState(() => _statusFilter = value),
-                monthFilter: _monthFilter,
-                onMonthChanged: (value) => setState(() => _monthFilter = value),
+                onStatusChanged: (value) => setState(() => _statusFilter = value),
+                dateFilter: _dateFilter,
+                customDateRange: _customDateRange,
+                onDateChanged: (value) => setState(() => _dateFilter = value),
+                onCustomDateRangeChanged: (value) => setState(() => _customDateRange = value),
                 onClearFilters: _clearFilters,
               ),
               const SizedBox(height: 16),
@@ -152,7 +155,7 @@ class _ManagerTransactionHistoryPageState
       if (_statusFilter != null && payment.status != _statusFilter) {
         return false;
       }
-      if (!_matchesMonthFilter(payment.date)) return false;
+      if (!_matchesDateFilter(payment.date)) return false;
 
       if (query.isNotEmpty) {
         final amount = payment.amount / 100;
