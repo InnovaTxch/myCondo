@@ -4,6 +4,7 @@ import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/manager/manager_profile_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_about_sheet.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ManagerProfilePage extends StatefulWidget {
@@ -89,6 +90,18 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     final updated = await Navigator.pushNamed(context, '/manager-edit-profile');
     if (!mounted || updated != true) return;
     await _loadProfile(showLoading: false);
+  }
+
+  void _openAboutApp() {
+    showAppAboutSheet(context);
+  }
+
+  VoidCallback? _menuAction(String label) {
+    return switch (label) {
+      'Edit Profile' => _openEditProfile,
+      'About the app' => _openAboutApp,
+      _ => null,
+    };
   }
 
   @override
@@ -242,9 +255,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                               style: const TextStyle(fontSize: 14),
                             ),
                             trailing: const Icon(Icons.chevron_right, size: 18),
-                            onTap: item.$1 == 'Edit Profile'
-                                ? _openEditProfile
-                                : null,
+                            onTap: _menuAction(item.$1),
                           ),
                         ),
                       );
