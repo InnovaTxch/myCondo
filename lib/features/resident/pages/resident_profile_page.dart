@@ -5,6 +5,7 @@ import 'package:mycondo/data/repositories/resident/resident_profile_service.dart
 import 'package:mycondo/data/repositories/resident/resident_settings_service.dart';
 import 'package:mycondo/services/shared/session_timer_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/features/shared/widgets/app_about_sheet.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 
 class ResidentProfilePage extends StatefulWidget {
@@ -182,6 +183,10 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     );
   }
 
+  void _openAboutApp() {
+    showAppAboutSheet(context);
+  }
+
   Future<void> _openNotificationsSheet() async {
     final settings = _notifications;
     if (settings == null) return;
@@ -352,6 +357,13 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                       subtitle: 'View quick answers and support notes.',
                       icon: Icons.help_outline,
                       onTap: _openHelpCenter,
+                    ),
+                    const SizedBox(height: 10),
+                    _ProfileActionTile(
+                      title: 'About the app',
+                      subtitle: 'Version, build details, and support notes.',
+                      icon: Icons.info_outline_rounded,
+                      onTap: _openAboutApp,
                     ),
                     const SizedBox(height: 22),
                     ElevatedButton.icon(
