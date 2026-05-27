@@ -60,6 +60,26 @@ class MaintenanceRequestService {
         .toList();
   }
 
+  Future<void> cancelMyRequest({required int requestId}) async {
+    final profileIdentity = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
+
+    final now = DateTime.now().toUtc().toIso8601String();
+    final updated = await _supabase
+        .from('maintenance_requests')
+        .update({'status': 'cancelled', 'updated_at': now, 'resolved_at': null})
+        .eq('id', requestId)
+        .eq('resident_id', profileIdentity.id)
+        .inFilter('status', ['pending', 'in_progress'])
+        .select('id')
+        .maybeSingle();
+
+    if (updated == null) {
+      throw StateError('This request can no longer be cancelled.');
+    }
+  }
+
   Future<_MaintenanceResidentContext> _requireResidentContext() async {
     final profileIdentity = await _identity.requireCurrentProfile(
       missingMessage: 'No resident profile is linked to this signed-in user.',
