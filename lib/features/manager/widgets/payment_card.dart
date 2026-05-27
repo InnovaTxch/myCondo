@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/models/payment_item.dart';
+import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 
 class PaymentCard extends StatelessWidget {
   const PaymentCard({
@@ -38,11 +39,32 @@ class PaymentCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      payment.residentName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                    // ── Resident name is now tappable → resident profile ──
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ResidentDetailsPage(
+                            residentId: payment.residentId,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            payment.residentName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryBlue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.open_in_new_rounded,
+                              size: 13, color: AppColors.primaryBlue),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -125,13 +147,13 @@ class PaymentCard extends StatelessWidget {
             _InfoRow(label: 'Reason', value: payment.rejectionReason!),
           ],
           const SizedBox(height: 12),
-          _buildActionArea(),
+          _buildActionArea(context),
         ],
       ),
     );
   }
 
-  Widget _buildActionArea() {
+  Widget _buildActionArea(BuildContext context) {
     switch (payment.status) {
       case PaymentStatus.pending:
         return Row(
