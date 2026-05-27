@@ -11,13 +11,24 @@ class ResidentSettingsService {
   Future<ResidentSettingsBundle> fetchSettings() async {
     final residentId = await _requireResidentId();
 
+    final rows = await _supabase
+        .from('resident_preferences')
+        .select()
+        .eq('resident_id', residentId)
+        .maybeSingle();
+
+    final methodRows = await _supabase
+        .from('resident_payment_methods')
+        .select()
+        .eq('resident_id', residentId)
+        .order('is_default', ascending: false);
+
     return ResidentSettingsBundle(
-      notifications: ResidentNotificationPreferences.fromMap(
-        residentId,
-        null,
-      ),
-      messaging: ResidentMessagingPreferences.fromMap(residentId, null),
-      paymentMethods: const [],
+      notifications: ResidentNotificationPreferences.fromMap(residentId, rows),
+      messaging: ResidentMessagingPreferences.fromMap(residentId, rows),
+      paymentMethods: (methodRows as List<dynamic>)
+          .map((e) => ResidentPaymentMethod.fromMap(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -43,11 +54,38 @@ class ResidentSettingsService {
   }
 
   Future<void> savePaymentMethods(List<ResidentPaymentMethod> methods) async {
-    return;
+    final residentId = await _requireResidentId();
+
+    // Delete then re-insert for simplicity (small list, low frequency)
+    await _supabase
+        .from('resident_payment_methods')
+        .delete()
+        .eq('resident_id', residentId);
+
+    if (methods.isEmpty) return;
+
+    await _supabase.from('resident_payment_methods').insert(
+          methods
+              .map(
+                (m) => {
+                  'resident_id': residentId,
+                  'label': m.label,
+                  'account_name': m.accountName,
+                  'account_number': m.accountNumber,
+                  'instructions': m.instructions,
+                  'is_default': m.isDefault,
+                },
+              )
+              .toList(),
+        );
   }
 
   Future<void> _upsertPreferences(Map<String, dynamic> values) async {
-    return;
+    final residentId = await _requireResidentId();
+    await _supabase.from('resident_preferences').upsert({
+      'resident_id': residentId,
+      ...values,
+    });
   }
 
   Future<String> _requireResidentId() async {
