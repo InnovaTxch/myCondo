@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/manager/maintenance_requests_service.dart';
+import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -524,6 +525,24 @@ class _RequestCard extends StatelessWidget {
                   ),
                 ),
               ),
+              // ── Resident profile shortcut ──
+              if (request.residentId.isNotEmpty)
+                IconButton(
+                  tooltip: 'View resident',
+                  icon: const Icon(
+                    Icons.person_outline_rounded,
+                    size: 18,
+                    color: Color(0xFF5E6B75),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ResidentDetailsPage(
+                        residentId: request.residentId,
+                      ),
+                    ),
+                  ),
+                ),
               TextButton(onPressed: onUpdate, child: const Text('Update')),
             ],
           ),
