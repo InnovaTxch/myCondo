@@ -1,4 +1,5 @@
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MaintenanceRequestService {
@@ -7,6 +8,8 @@ class MaintenanceRequestService {
 
   final SupabaseClient _supabase;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<MaintenanceResidentDetails> fetchResidentDetails() async {
     final context = await _requireResidentContext();
@@ -20,18 +23,31 @@ class MaintenanceRequestService {
   Future<void> submitRequest(MaintenanceRequestInput input) async {
     final context = await _requireResidentContext();
 
-    await _supabase.from('maintenance_requests').insert({
-      'resident_id': context.residentId,
-      'unit_id': context.unitId,
-      'condo_id': context.condoId,
-      'reporter_first_name': input.firstName.trim(),
-      'reporter_last_name': input.lastName.trim(),
-      'room_number': input.roomNumber.trim(),
-      'priority': input.priority.toLowerCase(),
-      'problem_type': input.problemType,
-      'description': input.description.trim(),
-      'status': 'pending',
-    });
+    final inserted = await _supabase
+        .from('maintenance_requests')
+        .insert({
+          'resident_id': context.residentId,
+          'unit_id': context.unitId,
+          'condo_id': context.condoId,
+          'reporter_first_name': input.firstName.trim(),
+          'reporter_last_name': input.lastName.trim(),
+          'room_number': input.roomNumber.trim(),
+          'priority': input.priority.toLowerCase(),
+          'problem_type': input.problemType,
+          'description': input.description.trim(),
+          'status': 'pending',
+        })
+        .select('id')
+        .single();
+
+    final requestId = (inserted['id'] as num?)?.toInt();
+    if (requestId != null) {
+      await _pushDispatcher.dispatchMaintenanceSubmitted(
+        requestId: requestId,
+        condoId: context.condoId,
+        residentId: context.residentId,
+      );
+    }
   }
 
   Future<List<MaintenanceRequestRecord>> fetchMyRequests({
@@ -58,6 +74,26 @@ class MaintenanceRequestService {
     return (rows as List<dynamic>)
         .map((raw) => MaintenanceRequestRecord.fromMap(raw))
         .toList();
+  }
+
+  Future<void> cancelMyRequest({required int requestId}) async {
+    final profileIdentity = await _identity.requireCurrentProfile(
+      missingMessage: 'No resident profile is linked to this signed-in user.',
+    );
+
+    final now = DateTime.now().toUtc().toIso8601String();
+    final updated = await _supabase
+        .from('maintenance_requests')
+        .update({'status': 'cancelled', 'updated_at': now, 'resolved_at': null})
+        .eq('id', requestId)
+        .eq('resident_id', profileIdentity.id)
+        .inFilter('status', ['pending', 'in_progress'])
+        .select('id')
+        .maybeSingle();
+
+    if (updated == null) {
+      throw StateError('This request can no longer be cancelled.');
+    }
   }
 
   Future<_MaintenanceResidentContext> _requireResidentContext() async {

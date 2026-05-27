@@ -93,6 +93,9 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
               }
 
               if (snapshot.hasError) {
+                debugPrint(
+                  '[ManagerDashboardPage.loadDashboard] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                );
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -101,7 +104,6 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                       height: 260,
                       child: AppErrorState(
                         message: 'Unable to load the manager dashboard.',
-                        details: '${snapshot.error}',
                         onRetry: _refresh,
                       ),
                     ),

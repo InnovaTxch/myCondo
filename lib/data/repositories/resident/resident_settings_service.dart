@@ -10,13 +10,15 @@ class ResidentSettingsService {
 
   Future<ResidentSettingsBundle> fetchSettings() async {
     final residentId = await _requireResidentId();
+    final row = await _supabase
+        .from('notification_preferences')
+        .select()
+        .eq('profile_id', residentId)
+        .maybeSingle();
 
     return ResidentSettingsBundle(
-      notifications: ResidentNotificationPreferences.fromMap(
-        residentId,
-        null,
-      ),
-      messaging: ResidentMessagingPreferences.fromMap(residentId, null),
+      notifications: ResidentNotificationPreferences.fromMap(residentId, row),
+      messaging: ResidentMessagingPreferences.fromMap(residentId, row),
       paymentMethods: const [],
     );
   }
@@ -47,7 +49,12 @@ class ResidentSettingsService {
   }
 
   Future<void> _upsertPreferences(Map<String, dynamic> values) async {
-    return;
+    final residentId = await _requireResidentId();
+    await _supabase.from('notification_preferences').upsert({
+      'profile_id': residentId,
+      ...values,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }, onConflict: 'profile_id');
   }
 
   Future<String> _requireResidentId() async {
@@ -63,7 +70,6 @@ class ResidentSettingsService {
 
     return resident['id'].toString();
   }
-
 }
 
 class ResidentSettingsBundle {

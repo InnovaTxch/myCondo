@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -7,7 +6,6 @@ import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/auth/widgets/login_form.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
 import 'package:mycondo/features/auth/widgets/signup_gateway.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mycondo/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _keepSignedIn = false;
 
   Future<void> signIn() async {
     final isValid = _formKey.currentState!.validate();
@@ -35,7 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await authService.signInWithEmailPassword(email, password);
+      await authService.signInWithEmailPassword(
+        email,
+        password,
+        keepSignedIn: _keepSignedIn,
+      );
 
       if (!mounted) return;
       context.showAppSnackBar(
@@ -43,27 +46,16 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-    } on SocketException {
-      if (!mounted) return;
-      _showError("No internet connection. Please check your network.");
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      _showError(e.message);
     } catch (e) {
       if (!mounted) return;
-      _showError("An unexpected error occurred: $e");
+      context.showAppError(
+        e,
+        fallbackMessage: 'Login failed. Please try again.',
+        debugLabel: 'LoginScreen.signIn',
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _showError(String message) {
-    context.showAppSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.errorRed,
-      ),
-    );
   }
 
   @override
@@ -86,10 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
               fit: StackFit.expand,
               children: [
                 // Background image
-                Image.asset(
-                  'assets/images/house.png',
-                  fit: BoxFit.cover,
-                ),
+                Image.asset('assets/images/house.png', fit: BoxFit.cover),
 
                 // Blue overlay
                 Container(
@@ -147,9 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
               width: double.infinity,
               decoration: const BoxDecoration(
                 color: AppColors.lightBlueBackground,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(32),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
@@ -160,6 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       formKey: _formKey,
                       emailController: _emailController,
                       passwordController: _passwordController,
+                      keepSignedIn: _keepSignedIn,
+                      onKeepSignedInChanged: (value) {
+                        setState(() => _keepSignedIn = value);
+                      },
                     ),
                     const SizedBox(height: 24),
 

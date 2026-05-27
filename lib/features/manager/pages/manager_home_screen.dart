@@ -14,6 +14,7 @@ import 'package:mycondo/features/shared/widgets/dashboard_tab_scaffold.dart';
 import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/services/shared/notification_service.dart';
 import 'package:mycondo/services/shared/presence_service.dart';
+import 'package:mycondo/services/push/push_notification_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerHomeScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   void initState() {
     super.initState();
     _activePageIndex = widget.initialPageIndex;
+    unawaited(PushNotificationService.instance.registerCurrentProfileDevice());
     presenceService.start();
     _loadInitialNotificationSnapshot();
     _actionPopupSubscription = _notificationService

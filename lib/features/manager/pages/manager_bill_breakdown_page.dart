@@ -81,9 +81,11 @@ class _ManagerBillBreakdownPageState extends State<ManagerBillBreakdownPage> {
             return const AppLoadingState();
           }
           if (snapshot.hasError) {
+            debugPrint(
+              '[ManagerBillBreakdownPage.loadBills] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+            );
             return AppErrorState(
               message: 'Unable to load bills. Try again.',
-              details: '${snapshot.error}',
               onRetry: _refresh,
             );
           }
@@ -335,9 +337,14 @@ class _ManagerBillBreakdownPageState extends State<ManagerBillBreakdownPage> {
     try {
       await _repository.deleteBill(bill);
       await _refresh();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not delete the bill.',
+        debugLabel: 'ManagerBillBreakdownPage.deleteBill',
+      );
     }
   }
 

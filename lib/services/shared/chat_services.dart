@@ -1,9 +1,11 @@
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MessagingService {
   final _supabase = Supabase.instance.client;
   final _identity = ProfileIdentityService();
+  final _pushDispatcher = PushEventDispatcherService();
 
   Future<String?> get currentProfileId async {
     return (await _identity.getCurrentProfile())?.id;
@@ -160,6 +162,11 @@ class MessagingService {
         .from('conversations')
         .update({'updated_at': DateTime.now().toIso8601String()})
         .eq('id', conversationId);
+
+    await _pushDispatcher.dispatchMessageSent(
+      conversationId: conversationId,
+      senderId: profile.id,
+    );
   }
 
   String _conversationOwnerColumn(String? role) {

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
+import 'package:mycondo/features/resident/pages/maintenance_request_form_page.dart';
+import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
 import 'package:mycondo/theme/app_theme.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class MaintenanceRequestPage extends StatefulWidget {
   const MaintenanceRequestPage({super.key});
@@ -47,13 +50,97 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
     await Future.wait(_requestsByStatus.values);
   }
 
-  Future<void> _openForm() async {
+  Future<void> _openForm({MaintenanceRequestFormPrefill? prefill}) async {
     final created = await Navigator.pushNamed(
       context,
       '/resident-maintenance-request-form',
+      arguments: prefill,
     );
     if (!mounted || created != true) return;
     await _refreshAll();
+  }
+
+  Future<void> _openManagerChat() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const ResidentManagerChatScreen(showBackButton: true),
+      ),
+    );
+  }
+
+  Future<void> _submitFollowUp(MaintenanceRequestRecord request) async {
+    final notes = request.managerNotes.trim();
+    final description = StringBuffer(
+      'Follow-up for request #${request.id} (${request.problemType}).\n',
+    );
+    if (notes.isNotEmpty) {
+      description.write('Manager note: $notes\n');
+    }
+    description.write('\n');
+
+    await _openForm(
+      prefill: MaintenanceRequestFormPrefill(
+        priority: request.priority,
+        problemType: request.problemType,
+        description: description.toString(),
+        sourceRequestId: request.id,
+        isFollowUp: true,
+      ),
+    );
+  }
+
+  Future<void> _requestAgain(MaintenanceRequestRecord request) async {
+    await _openForm(
+      prefill: MaintenanceRequestFormPrefill(
+        priority: request.priority,
+        problemType: request.problemType,
+        description: request.description.trim(),
+        sourceRequestId: request.id,
+      ),
+    );
+  }
+
+  Future<void> _cancelRequest(MaintenanceRequestRecord request) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancel request?'),
+          content: const Text(
+            'This will mark the request as cancelled. You can still submit another request later.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Keep'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Cancel Request'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _service.cancelMyRequest(requestId: request.id);
+      if (!mounted) return;
+      context.showAppSnackBar(
+        const SnackBar(content: Text('Request cancelled.')),
+      );
+      await _refreshAll();
+    } catch (e, st) {
+      if (!mounted) return;
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage:
+            'Could not cancel this request right now. Please try again later.',
+        debugLabel: 'MaintenanceRequestPage.cancelRequest',
+      );
+    }
   }
 
   @override
@@ -98,6 +185,10 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
               statuses: _statusTabs,
               requestsByStatus: _requestsByStatus,
               onRefreshStatus: _refreshRequests,
+              onMessageManager: _openManagerChat,
+              onSubmitFollowUp: _submitFollowUp,
+              onCancelRequest: _cancelRequest,
+              onRequestAgain: _requestAgain,
             ),
           ],
         ),
@@ -111,11 +202,20 @@ class _ResidentRequestsSection extends StatelessWidget {
     required this.statuses,
     required this.requestsByStatus,
     required this.onRefreshStatus,
+    required this.onMessageManager,
+    required this.onSubmitFollowUp,
+    required this.onCancelRequest,
+    required this.onRequestAgain,
   });
 
   final List<String> statuses;
   final Map<String, Future<List<MaintenanceRequestRecord>>> requestsByStatus;
   final Future<void> Function(String status) onRefreshStatus;
+  final Future<void> Function() onMessageManager;
+  final Future<void> Function(MaintenanceRequestRecord request)
+  onSubmitFollowUp;
+  final Future<void> Function(MaintenanceRequestRecord request) onCancelRequest;
+  final Future<void> Function(MaintenanceRequestRecord request) onRequestAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -153,6 +253,10 @@ class _ResidentRequestsSection extends StatelessWidget {
                     (status) => _ResidentRequestsTab(
                       future: requestsByStatus[status]!,
                       onRefresh: () => onRefreshStatus(status),
+                      onMessageManager: onMessageManager,
+                      onSubmitFollowUp: onSubmitFollowUp,
+                      onCancelRequest: onCancelRequest,
+                      onRequestAgain: onRequestAgain,
                     ),
                   )
                   .toList(),
@@ -185,52 +289,88 @@ class _ResidentStatusCountTab extends StatelessWidget {
     return FutureBuilder<List<MaintenanceRequestRecord>>(
       future: requestsFuture,
       builder: (context, snapshot) {
-        final count = snapshot.hasData ? snapshot.data!.length : 0;
-        final countLabel = count > 99 ? '99+' : '$count';
-        final hasItems = count > 0;
+        final count = snapshot.data?.length ?? 0;
+        final colors = _countChipColors(label);
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 6, right: 18, top: 4),
-              child: Text(label, textAlign: TextAlign.center),
-            ),
-            if (hasItems)
-              Positioned(
-                right: 0,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBlue,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    countLabel,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+        return Padding(
+          padding: const EdgeInsets.only(left: 6, right: 2, top: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, textAlign: TextAlign.center),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: colors.foreground,
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         );
       },
+    );
+  }
+
+  ({Color background, Color foreground}) _countChipColors(String label) {
+    final normalized = label.trim().toLowerCase();
+    if (normalized == 'pending') {
+      return (
+        background: const Color(0xFFF9ECCE),
+        foreground: const Color(0xFF8A5A00),
+      );
+    }
+    if (normalized == 'in progress') {
+      return (
+        background: const Color(0xFFDDEBFF),
+        foreground: const Color(0xFF1A73C8),
+      );
+    }
+    if (normalized == 'resolved') {
+      return (
+        background: const Color(0xFFDBF2E3),
+        foreground: const Color(0xFF1F8E3D),
+      );
+    }
+    if (normalized == 'cancelled') {
+      return (
+        background: const Color(0xFFF6E2E2),
+        foreground: const Color(0xFF9F3A3A),
+      );
+    }
+    return (
+      background: const Color(0xFFE9EDF5),
+      foreground: const Color(0xFF4E5B70),
     );
   }
 }
 
 class _ResidentRequestsTab extends StatelessWidget {
-  const _ResidentRequestsTab({required this.future, required this.onRefresh});
+  const _ResidentRequestsTab({
+    required this.future,
+    required this.onRefresh,
+    required this.onMessageManager,
+    required this.onSubmitFollowUp,
+    required this.onCancelRequest,
+    required this.onRequestAgain,
+  });
 
   final Future<List<MaintenanceRequestRecord>> future;
   final Future<void> Function() onRefresh;
+  final Future<void> Function() onMessageManager;
+  final Future<void> Function(MaintenanceRequestRecord request)
+  onSubmitFollowUp;
+  final Future<void> Function(MaintenanceRequestRecord request) onCancelRequest;
+  final Future<void> Function(MaintenanceRequestRecord request) onRequestAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +433,13 @@ class _ResidentRequestsTab extends StatelessWidget {
             itemCount: requests.length,
             separatorBuilder: (_, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              return _ResidentRequestTile(request: requests[index]);
+              return _ResidentRequestTile(
+                request: requests[index],
+                onMessageManager: onMessageManager,
+                onSubmitFollowUp: onSubmitFollowUp,
+                onCancelRequest: onCancelRequest,
+                onRequestAgain: onRequestAgain,
+              );
             },
           );
         },
@@ -303,9 +449,20 @@ class _ResidentRequestsTab extends StatelessWidget {
 }
 
 class _ResidentRequestTile extends StatelessWidget {
-  const _ResidentRequestTile({required this.request});
+  const _ResidentRequestTile({
+    required this.request,
+    required this.onMessageManager,
+    required this.onSubmitFollowUp,
+    required this.onCancelRequest,
+    required this.onRequestAgain,
+  });
 
   final MaintenanceRequestRecord request;
+  final Future<void> Function() onMessageManager;
+  final Future<void> Function(MaintenanceRequestRecord request)
+  onSubmitFollowUp;
+  final Future<void> Function(MaintenanceRequestRecord request) onCancelRequest;
+  final Future<void> Function(MaintenanceRequestRecord request) onRequestAgain;
 
   @override
   Widget build(BuildContext context) {
@@ -386,9 +543,80 @@ class _ResidentRequestTile extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _actionsForStatus(request.status)
+                .map(
+                  (action) => OutlinedButton.icon(
+                    onPressed: action.onPressed,
+                    icon: Icon(action.icon, size: 16),
+                    label: Text(
+                      action.label,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: action.color,
+                      side: BorderSide(
+                        color: action.color.withValues(alpha: 0.4),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         ],
       ),
     );
+  }
+
+  List<_ResidentCardAction> _actionsForStatus(String status) {
+    final normalized = status.trim().toLowerCase();
+    final hasManagerNote = request.managerNotes.trim().isNotEmpty;
+
+    final message = _ResidentCardAction(
+      label: 'Message Manager',
+      icon: Icons.chat_bubble_outline_rounded,
+      color: const Color(0xFF1A73C8),
+      onPressed: onMessageManager,
+    );
+    final followUp = _ResidentCardAction(
+      label: 'Submit Follow-up',
+      icon: Icons.reply_rounded,
+      color: const Color(0xFF455A6B),
+      onPressed: () => onSubmitFollowUp(request),
+    );
+    final cancel = _ResidentCardAction(
+      label: 'Cancel Request',
+      icon: Icons.close_rounded,
+      color: const Color(0xFF9F3A3A),
+      onPressed: () => onCancelRequest(request),
+    );
+    final again = _ResidentCardAction(
+      label: 'Request Again',
+      icon: Icons.refresh_rounded,
+      color: const Color(0xFF1F8E3D),
+      onPressed: () => onRequestAgain(request),
+    );
+
+    if (normalized == 'pending') {
+      return hasManagerNote ? [message, followUp, cancel] : [message, cancel];
+    }
+    if (normalized == 'in_progress') {
+      return hasManagerNote ? [message, followUp, cancel] : [message, cancel];
+    }
+    if (normalized == 'resolved') {
+      return hasManagerNote ? [again, followUp, message] : [again, message];
+    }
+    if (normalized == 'cancelled') return [again, message];
+    return [message];
   }
 
   String _statusLabel(String status) {
@@ -397,4 +625,18 @@ class _ResidentRequestTile extends StatelessWidget {
     if (normalized.isEmpty) return 'Pending';
     return '${normalized[0].toUpperCase()}${normalized.substring(1)}';
   }
+}
+
+class _ResidentCardAction {
+  const _ResidentCardAction({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Future<void> Function() onPressed;
 }

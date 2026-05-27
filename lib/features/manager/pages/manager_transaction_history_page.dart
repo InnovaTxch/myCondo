@@ -4,7 +4,7 @@ import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
-import 'package:mycondo/features/manager/widgets/manager_payment_history_filters.dart';
+import 'package:mycondo/features/manager/widgets/payment_history_filters.dart';
 
 class ManagerTransactionHistoryPage extends StatefulWidget {
   const ManagerTransactionHistoryPage({super.key});
@@ -21,7 +21,8 @@ class _ManagerTransactionHistoryPageState
 
   final _searchController = TextEditingController();
   PaymentStatus? _statusFilter;
-  PaymentHistoryMonthFilter _monthFilter = PaymentHistoryMonthFilter.all;
+  PaymentHistoryDateFilter _dateFilter = PaymentHistoryDateFilter.all;
+  DateTimeRange? _customDateRange;
 
   @override
   void dispose() {
@@ -38,7 +39,8 @@ class _ManagerTransactionHistoryPageState
   void _clearFilters() {
     setState(() {
       _statusFilter = null;
-      _monthFilter = PaymentHistoryMonthFilter.all;
+      _dateFilter = PaymentHistoryDateFilter.all;
+      _customDateRange = null;
     });
   }
 
@@ -79,8 +81,10 @@ class _ManagerTransactionHistoryPageState
                 onSearchChanged: (_) => setState(() {}),
                 statusFilter: _statusFilter,
                 onStatusChanged: (value) => setState(() => _statusFilter = value),
-                monthFilter: _monthFilter,
-                onMonthChanged: (value) => setState(() => _monthFilter = value),
+                dateFilter: _dateFilter,
+                customDateRange: _customDateRange,
+                onDateChanged: (value) => setState(() => _dateFilter = value),
+                onCustomDateRangeChanged: (value) => setState(() => _customDateRange = value),
                 onClearFilters: _clearFilters,
               ),
               const SizedBox(height: 16),
@@ -93,8 +97,13 @@ class _ManagerTransactionHistoryPageState
                     }
 
                     if (snapshot.hasError) {
+                      debugPrint(
+                        '[ManagerTransactionHistoryPage.loadTransactions] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                      );
                       return AppErrorState(
-                        message: 'Unable to load transactions: ${snapshot.error}',
+                        message:
+                            'Unable to load transactions. Please try again.',
+                        onRetry: _refresh,
                       );
                     }
 
@@ -143,14 +152,17 @@ class _ManagerTransactionHistoryPageState
     final query = _searchController.text.trim().toLowerCase();
 
     return payments.where((payment) {
-      if (_statusFilter != null && payment.status != _statusFilter) return false;
-      if (!_matchesMonthFilter(payment.date)) return false;
+      if (_statusFilter != null && payment.status != _statusFilter) {
+        return false;
+      }
+      if (!_matchesDateFilter(payment.date)) return false;
 
       if (query.isNotEmpty) {
         final amount = payment.amount / 100;
         final amountText = amount.toStringAsFixed(2);
 
-        final matchesSearch = payment.residentName.toLowerCase().contains(query) ||
+        final matchesSearch =
+            payment.residentName.toLowerCase().contains(query) ||
             payment.room.toLowerCase().contains(query) ||
             payment.billType.toLowerCase().contains(query) ||
             amountText.contains(query) ||
@@ -163,20 +175,52 @@ class _ManagerTransactionHistoryPageState
     }).toList();
   }
 
-  bool _matchesMonthFilter(String value) {
-    if (_monthFilter == PaymentHistoryMonthFilter.all) return true;
+  bool _matchesDateFilter(String value) {
+    if (_dateFilter == PaymentHistoryDateFilter.all) return true;
 
     final paymentDate = DateTime.tryParse(value)?.toLocal();
     if (paymentDate == null) return false;
 
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-    final subtractMonths = _monthFilter == PaymentHistoryMonthFilter.thisMonth ? 0 : 1;
-    final targetMonth = DateTime(now.year, now.month - subtractMonths);
+    late final DateTime start;
+    late final DateTime endExclusive;
 
-    return paymentDate.year == targetMonth.year &&
-        paymentDate.month == targetMonth.month;
+    switch (_dateFilter) {
+      case PaymentHistoryDateFilter.today:
+        start = today;
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.yesterday:
+        start = today.subtract(const Duration(days: 1));
+        endExclusive = today;
+        break;
+      case PaymentHistoryDateFilter.threeDaysAgo:
+        start = today.subtract(const Duration(days: 3));
+        endExclusive = start.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.thisWeek:
+        start = today.subtract(Duration(days: today.weekday - 1));
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.thisMonth:
+        start = DateTime(today.year, today.month, 1);
+        endExclusive = today.add(const Duration(days: 1));
+        break;
+      case PaymentHistoryDateFilter.customRange:
+        final range = _customDateRange;
+        if (range == null) return true;
+        start = DateTime(range.start.year, range.start.month, range.start.day);
+        endExclusive = DateTime(
+          range.end.year,
+          range.end.month,
+          range.end.day + 1,
+        );
+        break;
+      case PaymentHistoryDateFilter.all:
+        return true;
+    }
+    return !paymentDate.isBefore(start) && paymentDate.isBefore(endExclusive);
   }
 }
-
-

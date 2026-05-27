@@ -63,8 +63,9 @@ class _ChatScreenState extends State<ChatScreen> {
     _didCaptureReadMarker = true;
 
     try {
-      final lastReadAt =
-      await _service.currentUserLastReadAt(widget.conversationId);
+      final lastReadAt = await _service.currentUserLastReadAt(
+        widget.conversationId,
+      );
 
       if (mounted) {
         setState(() => _lastReadAtWhenOpened = lastReadAt);
@@ -93,9 +94,14 @@ class _ChatScreenState extends State<ChatScreen> {
         conversationId: widget.conversationId,
         content: text,
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text("Send failed: $e")));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not send your message. Please try again.',
+        debugLabel: 'ChatScreen.sendMessage',
+      );
     }
   }
 
@@ -140,8 +146,18 @@ class _ChatScreenState extends State<ChatScreen> {
     if (difference == 1) return 'Yesterday';
 
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
@@ -240,8 +256,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 return ListView.builder(
                   reverse: true,
                   controller: _scrollController,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
@@ -249,23 +267,33 @@ class _ChatScreenState extends State<ChatScreen> {
                     final bool isMe = msg['sender_id'] == myId;
                     final timeStr = _formatTime(msg['created_at']);
                     final createdAt = _parseMessageDate(msg['created_at']);
-                    final olderMessage = index + 1 < messages.length ? messages[index + 1] : null;
-                    final olderMessageIsUnread = olderMessage != null &&
+                    final olderMessage = index + 1 < messages.length
+                        ? messages[index + 1]
+                        : null;
+                    final olderMessageIsUnread =
+                        olderMessage != null &&
                         _isUnreadIncomingMessage(olderMessage, myId);
 
                     final olderCreatedAt = olderMessage == null
                         ? null
                         : _parseMessageDate(olderMessage['created_at']);
 
-                    final isUnreadIncoming = _isUnreadIncomingMessage(msg, myId);
-                    final showUnreadDivider = isUnreadIncoming && !olderMessageIsUnread;
-                    final showDateDivider = createdAt != null &&
-                        (olderCreatedAt == null || !_isSameDay(createdAt, olderCreatedAt));
+                    final isUnreadIncoming = _isUnreadIncomingMessage(
+                      msg,
+                      myId,
+                    );
+                    final showUnreadDivider =
+                        isUnreadIncoming && !olderMessageIsUnread;
+                    final showDateDivider =
+                        createdAt != null &&
+                        (olderCreatedAt == null ||
+                            !_isSameDay(createdAt, olderCreatedAt));
                     final showTime = _visibleTimeMessageIds.contains(messageId);
 
                     return Column(
                       children: [
-                        if (showDateDivider) _buildDateDivider(_formatDateDivider(createdAt)),
+                        if (showDateDivider)
+                          _buildDateDivider(_formatDateDivider(createdAt)),
                         if (showUnreadDivider) _buildUnreadDivider(),
                         GestureDetector(
                           onTap: () {
@@ -277,7 +305,12 @@ class _ChatScreenState extends State<ChatScreen> {
                               }
                             });
                           },
-                          child: _buildMessageBubble(msg, isMe, timeStr, showTime),
+                          child: _buildMessageBubble(
+                            msg,
+                            isMe,
+                            timeStr,
+                            showTime,
+                          ),
                         ),
                       ],
                     );
@@ -302,20 +335,22 @@ class _ChatScreenState extends State<ChatScreen> {
       titleSpacing: 0,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(
-          height: 1,
-          color: const Color(0xFFE8EEFF),
-        ),
+        child: Container(height: 1, color: const Color(0xFFE8EEFF)),
       ),
       title: Padding(
         padding: EdgeInsets.only(
-            left: widget.showBackButton ? 0 : 16, right: 16),
+          left: widget.showBackButton ? 0 : 16,
+          right: 16,
+        ),
         child: Row(
           children: [
             if (widget.showBackButton)
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded,
-                    color: Color(0xFF1E293B), size: 18),
+                icon: const Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: Color(0xFF1E293B),
+                  size: 18,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             Stack(
@@ -398,13 +433,11 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             // Action buttons
             IconButton(
-              icon: Icon(Icons.call_outlined,
-                  color: primaryBlue, size: 22),
+              icon: Icon(Icons.call_outlined, color: primaryBlue, size: 22),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.videocam_outlined,
-                  color: primaryBlue, size: 22),
+              icon: Icon(Icons.videocam_outlined, color: primaryBlue, size: 22),
               onPressed: () {},
             ),
           ],
@@ -414,16 +447,22 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageBubble(
-      Map<String, dynamic> msg, bool isMe, String timeStr, bool showTime) {
+    Map<String, dynamic> msg,
+    bool isMe,
+    String timeStr,
+    bool showTime,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Column(
-        crossAxisAlignment:
-            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment:
-                isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isMe
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isMe) ...[
@@ -457,7 +496,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     maxWidth: MediaQuery.of(context).size.width * 0.65,
                   ),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isMe ? primaryBlue : bubbleOther,
                     borderRadius: BorderRadius.only(
@@ -491,10 +532,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           if (showTime && timeStr.isNotEmpty)
             Padding(
-              padding: EdgeInsets.only(
-                  top: 4,
-                  left: isMe ? 0 : 40,
-                  bottom: 8),
+              padding: EdgeInsets.only(top: 4, left: isMe ? 0 : 40, bottom: 8),
               child: Text(
                 timeStr,
                 style: TextStyle(
@@ -549,12 +587,17 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: Icon(Icons.emoji_emotions_outlined,
-                        color: Colors.grey[400], size: 20),
+                    icon: Icon(
+                      Icons.emoji_emotions_outlined,
+                      color: Colors.grey[400],
+                      size: 20,
+                    ),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
-                        minWidth: 36, minHeight: 36),
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                   ),
                   Expanded(
                     child: TextField(
@@ -568,22 +611,28 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: const InputDecoration(
                         hintText: 'Type a message...',
                         hintStyle: TextStyle(
-                            color: Color(0xFFADB5C7), fontSize: 14),
+                          color: Color(0xFFADB5C7),
+                          fontSize: 14,
+                        ),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                         isDense: true,
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.attach_file_rounded,
-                        color: Colors.grey[400], size: 20),
+                    icon: Icon(
+                      Icons.attach_file_rounded,
+                      color: Colors.grey[400],
+                      size: 20,
+                    ),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
-                        minWidth: 36, minHeight: 36),
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                   ),
                 ],
               ),
@@ -610,7 +659,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         color: primaryBlue.withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
-                      )
+                      ),
                     ]
                   : [],
             ),

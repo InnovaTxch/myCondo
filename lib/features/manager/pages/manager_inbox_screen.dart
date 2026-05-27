@@ -101,14 +101,17 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future:
-                  _residentsFuture ?? _service.fetchResidentsForManager(managerId),
+                  _residentsFuture ??
+                  _service.fetchResidentsForManager(managerId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
+                  debugPrint(
+                    '[ManagerInboxScreen.loadResidents] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+                  );
                   return AppScrollableCentered(
                     heightFactor: 0.5,
                     child: AppErrorState(
                       message: 'Unable to load residents. Try again.',
-                      details: '${snapshot.error}',
                       onRetry: _refreshResidents,
                     ),
                   );
@@ -116,10 +119,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                 if (!snapshot.hasData) {
                   return const AppScrollableCentered(
                     heightFactor: 0.5,
-                    child: AppLoadingState(
-                      color: primaryBlue,
-                      strokeWidth: 2,
-                    ),
+                    child: AppLoadingState(color: primaryBlue, strokeWidth: 2),
                   );
                 }
 
@@ -136,7 +136,9 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                     heightFactor: 0.5,
                     child: AppEmptyState(
                       icon: Icons.inbox_outlined,
-                      title: _searchQuery.isNotEmpty ? 'No results' : 'No residents',
+                      title: _searchQuery.isNotEmpty
+                          ? 'No results'
+                          : 'No residents',
                       message: _searchQuery.isNotEmpty
                           ? 'No residents match your search.'
                           : 'No residents available.',
@@ -264,11 +266,13 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
               color: Colors.blueGrey.shade300,
               fontSize: 14,
             ),
-            prefixIcon: const Icon(Icons.search_rounded,
-                color: primaryBlue, size: 20),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: primaryBlue,
+              size: 20,
+            ),
             border: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 13),
+            contentPadding: const EdgeInsets.symmetric(vertical: 13),
           ),
         ),
       ),
@@ -317,22 +321,19 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
       [const Color(0xFF1E40AF), const Color(0xFF93C5FD)],
       [const Color(0xFF3B82F6), const Color(0xFFBAE6FD)],
     ];
-    final colorPair =
-        avatarColors[name.codeUnitAt(0) % avatarColors.length];
+    final colorPair = avatarColors[name.codeUnitAt(0) % avatarColors.length];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _openChat(
-              residentId: residentId, residentName: name),
+          onTap: () => _openChat(residentId: residentId, residentName: name),
           borderRadius: BorderRadius.circular(16),
           splashColor: softBlue,
           highlightColor: softBlue.withValues(alpha: 0.5),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: hasUnread ? softBlue : Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -409,9 +410,13 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                         name,
                         style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w700,
+                          fontWeight: hasUnread
+                              ? FontWeight.w800
+                              : FontWeight.w700,
                           fontSize: hasUnread ? 16 : 15,
-                          color: hasUnread ? Colors.black : const Color(0xFF0F172A),
+                          color: hasUnread
+                              ? Colors.black
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -461,14 +466,14 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: primaryBlue),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: primaryBlue)),
     );
 
     try {
-      final conversationId =
-          await _service.getOrCreateResidentConversation(residentId);
+      final conversationId = await _service.getOrCreateResidentConversation(
+        residentId,
+      );
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       Navigator.push(
@@ -481,10 +486,15 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
-      context.showAppSnackBar(SnackBar(content: Text('Error: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not open this chat. Please try again.',
+        debugLabel: 'ManagerInboxScreen.openChat',
+      );
     }
   }
 
@@ -502,5 +512,4 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     }
     return name.isNotEmpty ? name[0].toUpperCase() : 'R';
   }
-
 }

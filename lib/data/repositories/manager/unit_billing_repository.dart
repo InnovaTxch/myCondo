@@ -2,6 +2,7 @@ import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UnitBillingRepository {
@@ -12,6 +13,8 @@ class UnitBillingRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
   final CondoUnitRepository _unitRepository = CondoUnitRepository.instance;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<UnitOption> getUnitById(int unitId) async {
     final units = await _unitRepository.getUnits();
@@ -151,6 +154,7 @@ class UnitBillingRepository {
     required DateTime month,
     required String name,
     required int amount,
+    int? dueDay,
   }) async {
     if (name.trim().isEmpty) {
       throw Exception('Bill name is required.');
@@ -158,15 +162,13 @@ class UnitBillingRepository {
     if (amount <= 0) {
       throw Exception('Bill amount must be greater than zero.');
     }
+    final resolvedDueDay = dueDay ?? 28;
+    _validateDueDay(resolvedDueDay);
 
     final manager = await _identity.requireCurrentProfile(
       missingMessage: 'No manager profile is linked to this signed-in user.',
     );
-    final dueDate = DateTime(
-      month.year,
-      month.month + 1,
-      1,
-    ).subtract(const Duration(days: 1));
+    final dueDate = _buildDueDate(month: month, dueDay: resolvedDueDay);
 
     final created = await _supabase
         .from('one_time_fees')
@@ -184,6 +186,52 @@ class UnitBillingRepository {
       'name': name.trim(),
       'amount': amount,
     });
+  }
+
+  Future<void> setUnitBillDueDay({
+    required int unitId,
+    required DateTime month,
+    required int dueDay,
+  }) async {
+    _validateDueDay(dueDay);
+    final normalizedMonth = _toMonth(month);
+    final dueDate = _buildDueDate(month: normalizedMonth, dueDay: dueDay);
+    final monthlyBill = await _getUnitMonthlyBill(
+      unitId: unitId,
+      month: normalizedMonth,
+    );
+
+    if (monthlyBill == null) {
+      final billId = await _ensureUnitMonthlyBill(
+        unitId: unitId,
+        month: normalizedMonth,
+        dueDay: dueDay,
+      );
+      await _supabase
+          .from('monthly_bills')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', billId);
+    } else {
+      await _supabase
+          .from('monthly_bills')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', (monthlyBill['id'] as num).toInt());
+    }
+
+    final oneTimeFees = await _getUnitOneTimeFeeRows(
+      unitId: unitId,
+      month: normalizedMonth,
+    );
+    if (oneTimeFees.isEmpty) return;
+
+    for (final fee in oneTimeFees) {
+      final feeId = (fee['id'] as num?)?.toInt();
+      if (feeId == null) continue;
+      await _supabase
+          .from('one_time_fees')
+          .update({'due_date': dueDate.toIso8601String()})
+          .eq('id', feeId);
+    }
   }
 
   Future<Map<int, UnitBillPaymentSummary>> getCurrentMonthPaymentSummaries({
@@ -341,6 +389,7 @@ class UnitBillingRepository {
     }
 
     var remainingPayment = amount;
+    int? firstCreatedPaymentId;
     for (final target in targets) {
       if (remainingPayment <= 0) break;
       final targetPayable = (target.remainingAmount - target.pendingAmount)
@@ -348,17 +397,30 @@ class UnitBillingRepository {
       final appliedAmount = remainingPayment.clamp(0, targetPayable);
       if (appliedAmount <= 0) continue;
 
-      await _supabase.from('payments').insert({
-        'monthly_bill_id': target.isMonthly ? target.id : null,
-        'one_time_fee_id': target.isMonthly ? null : target.id,
-        'paid_by': profile.id,
-        'amount': appliedAmount,
-        'status': 'pending',
-        'proof_url': proofUrl.trim(),
-        'remark': remark?.trim(),
-      });
+      final inserted = await _supabase
+          .from('payments')
+          .insert({
+            'monthly_bill_id': target.isMonthly ? target.id : null,
+            'one_time_fee_id': target.isMonthly ? null : target.id,
+            'paid_by': profile.id,
+            'amount': appliedAmount,
+            'status': 'pending',
+            'proof_url': proofUrl.trim(),
+            'remark': remark?.trim(),
+          })
+          .select('id')
+          .single();
+
+      firstCreatedPaymentId ??= (inserted['id'] as num?)?.toInt();
 
       remainingPayment -= appliedAmount;
+    }
+
+    if (firstCreatedPaymentId != null) {
+      await _pushDispatcher.dispatchPaymentSubmitted(
+        paymentId: firstCreatedPaymentId,
+        residentId: profile.id,
+      );
     }
   }
 
@@ -422,6 +484,7 @@ class UnitBillingRepository {
   Future<int> _ensureUnitMonthlyBill({
     required int unitId,
     required DateTime month,
+    int? dueDay,
   }) async {
     final row = await _getUnitMonthlyBill(unitId: unitId, month: month);
     if (row != null) {
@@ -432,11 +495,7 @@ class UnitBillingRepository {
       missingMessage: 'No manager profile is linked to this signed-in user.',
     );
 
-    final dueDate = DateTime(
-      month.year,
-      month.month + 1,
-      1,
-    ).subtract(const Duration(days: 1));
+    final dueDate = _buildDueDate(month: month, dueDay: dueDay ?? 28);
 
     final created = await _supabase
         .from('monthly_bills')
@@ -759,6 +818,18 @@ class UnitBillingRepository {
   }
 
   DateTime _toMonth(DateTime date) => DateTime(date.year, date.month, 1);
+
+  DateTime _buildDueDate({required DateTime month, required int dueDay}) {
+    _validateDueDay(dueDay);
+    final normalized = _toMonth(month);
+    return DateTime(normalized.year, normalized.month, dueDay);
+  }
+
+  void _validateDueDay(int dueDay) {
+    if (dueDay < 1 || dueDay > 28) {
+      throw Exception('Due date must be between 1 and 28.');
+    }
+  }
 }
 
 class _UnitAccountabilityRow {

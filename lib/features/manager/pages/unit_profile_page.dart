@@ -6,6 +6,8 @@ import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
+import 'package:mycondo/utils/user_friendly_error.dart';
+import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 
 class ManagerUnitProfilePage extends StatefulWidget {
   const ManagerUnitProfilePage({super.key, required this.unitId});
@@ -58,9 +60,16 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         _payers = payers;
       });
       await _loadLedgerForMonth(_selectedMonth);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      setState(() => _errorMessage = e.toString());
+      debugPrint('[ManagerUnitProfilePage.loadAll] $e');
+      debugPrint(st.toString());
+      setState(
+        () => _errorMessage = UserFriendlyError.messageFor(
+          e,
+          fallback: 'Unable to load unit profile.',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -477,85 +486,115 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     );
   }
 
-  Future<void> _openAddOneTimeBillSheet(DateTime month) async {
+  Future<void> _openAddOneTimeBillSheet(
+    DateTime month, {
+    required int initialDueDay,
+  }) async {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    var selectedDueDay = initialDueDay.clamp(1, 28);
+    final dueDayOptions = List<int>.generate(28, (index) => index + 1);
 
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Add One-Time Bill - ${DateFormat('MMMM yyyy').format(month)}',
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add One-Time Bill - ${DateFormat('MMMM yyyy').format(month)}',
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'This bill applies only to this selected month.',
+                        style: TextStyle(color: AppColors.secondaryText),
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText:
+                              'Bill Name (Cleaning service, repairs, etc.)',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if ((value ?? '').trim().isEmpty) {
+                            return 'Bill name is required.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Amount (PHP)',
+                          border: OutlineInputBorder(),
+                          prefixText: 'PHP ',
+                        ),
+                        validator: (value) {
+                          final amount = double.tryParse((value ?? '').trim());
+                          if (amount == null || amount <= 0) {
+                            return 'Enter an amount greater than zero.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<int>(
+                        initialValue: selectedDueDay,
+                        decoration: const InputDecoration(
+                          labelText: 'Due Day (1-28)',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: dueDayOptions
+                            .map(
+                              (day) => DropdownMenuItem<int>(
+                                value: day,
+                                child: Text(day.toString()),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setSheetState(() => selectedDueDay = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (!formKey.currentState!.validate()) return;
+                            Navigator.pop(context, true);
+                          },
+                          child: const Text('Issue One-Time Bill'),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'This bill applies only to this selected month.',
-                    style: TextStyle(color: AppColors.secondaryText),
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Bill Name (Cleaning service, repairs, etc.)',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if ((value ?? '').trim().isEmpty) {
-                        return 'Bill name is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Amount (PHP)',
-                      border: OutlineInputBorder(),
-                      prefixText: 'PHP ',
-                    ),
-                    validator: (value) {
-                      final amount = double.tryParse((value ?? '').trim());
-                      if (amount == null || amount <= 0) {
-                        return 'Enter an amount greater than zero.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (!formKey.currentState!.validate()) return;
-                        Navigator.pop(context, true);
-                      },
-                      child: const Text('Issue One-Time Bill'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -570,9 +609,93 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         month: month,
         name: nameController.text.trim(),
         amount: (amount * 100).round(),
+        dueDay: selectedDueDay,
       );
       _ledgerByMonth.remove(_monthKey(month));
       await _loadLedgerForMonth(month);
+    });
+  }
+
+  Future<void> _openSetDueDateSheet({
+    required DateTime month,
+    required int initialDueDay,
+  }) async {
+    final dueDayOptions = List<int>.generate(28, (index) => index + 1);
+    var selectedDueDay = initialDueDay.clamp(1, 28);
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset + 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Set Due Date - ${DateFormat('MMMM yyyy').format(month)}',
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Choose the day of the month when this unit bill is due.',
+                      style: TextStyle(color: AppColors.secondaryText),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedDueDay,
+                      decoration: const InputDecoration(
+                        labelText: 'Due Day (1-28)',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: dueDayOptions
+                          .map(
+                            (day) => DropdownMenuItem<int>(
+                              value: day,
+                              child: Text(day.toString()),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setSheetState(() => selectedDueDay = value);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Save Due Date'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    if (confirmed != true) return;
+
+    await _withSaving(() async {
+      await _repository.setUnitBillDueDay(
+        unitId: widget.unitId,
+        month: month,
+        dueDay: selectedDueDay,
+      );
+      _ledgerByMonth.remove(_monthKey(month));
+      await _loadLedgerForMonth(month);
+      await _loadAll(showLoading: false);
     });
   }
 
@@ -580,9 +703,14 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     setState(() => _isSaving = true);
     try {
       await action();
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(SnackBar(content: Text('Action failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not complete that action.',
+        debugLabel: 'ManagerUnitProfilePage.withSaving',
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -736,6 +864,16 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     });
   }
 
+  Future<void> _openResidentDetails(String residentId) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResidentDetailsPage(residentId: residentId),
+      ),
+    );
+    await _loadAll(showLoading: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final unit = _unit;
@@ -751,7 +889,6 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
           ? Center(
               child: AppErrorState(
                 message: 'Unable to load unit profile.',
-                details: _errorMessage,
                 onRetry: () => _loadAll(showLoading: true),
               ),
             )
@@ -796,7 +933,7 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
                   : 'Capacity: ${unit.capacity}',
             ),
             const SizedBox(height: 4),
-            Text('Occupied: ${unit.occupied} resident(s)'),
+            _buildOccupantsExpansion(),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -890,6 +1027,7 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
 
   Widget _buildMonthlyPaymentsCard() {
     final ledger = _ledgerByMonth[_monthKey(_selectedMonth)];
+    final currentDueDay = (ledger?.dueDate.day ?? 28).clamp(1, 28);
 
     return Card(
       color: Colors.white,
@@ -931,9 +1069,26 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
               child: OutlinedButton.icon(
                 onPressed: _isSaving
                     ? null
-                    : () => _openAddOneTimeBillSheet(_selectedMonth),
+                    : () => _openAddOneTimeBillSheet(
+                        _selectedMonth,
+                        initialDueDay: currentDueDay,
+                      ),
                 icon: const Icon(Icons.add_card_outlined, size: 16),
                 label: const Text('Add One-Time Bill'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _isSaving
+                    ? null
+                    : () => _openSetDueDateSheet(
+                        month: _selectedMonth,
+                        initialDueDay: currentDueDay,
+                      ),
+                icon: const Icon(Icons.event_outlined, size: 16),
+                label: const Text('Set Due Date (1-28)'),
               ),
             ),
             const SizedBox(height: 8),
@@ -962,6 +1117,71 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     );
   }
 
+
+  Widget _buildOccupantTile(UnitPaymentPayer resident) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            child: Text(_initials(resident.name)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              resident.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () => _openResidentDetails(resident.id),
+            child: const Text('View Info'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOccupantsExpansion() {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey<String>('unit-occupants-${widget.unitId}'),
+        maintainState: true,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 6),
+        title: Text('Occupied: ${_payers.length} resident(s)'),
+        children: _payers.isEmpty
+            ? const [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'No residents in this unit yet.',
+                style: TextStyle(color: AppColors.secondaryText),
+              ),
+            ),
+          ),
+        ]
+            : _payers.map(_buildOccupantTile).toList(),
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .toList();
+
+    if (parts.isEmpty) return '?';
+    return parts.map((part) => part[0].toUpperCase()).join();
+  }
+
   static DateTime _toMonth(DateTime date) => DateTime(date.year, date.month, 1);
 
   static String _monthKey(DateTime month) =>
@@ -978,6 +1198,7 @@ class _MonthlyLedgerPanel extends StatelessWidget {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final statusColor = _statusColor(ledger.status);
     final monthLabel = DateFormat('MMMM yyyy').format(ledger.month);
+    final dueLabel = DateFormat('MMM d, yyyy').format(ledger.dueDate);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -993,9 +1214,23 @@ class _MonthlyLedgerPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  monthLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      monthLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Due $dueLabel',
+                      style: const TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (ledger.hasAssignedBill)

@@ -115,10 +115,13 @@ class _CreateBillPageState extends State<CreateBillPage> {
       context.showAppSnackBar(
         const SnackBar(content: Text('Bills sent successfully!')),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to send bills: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not send bills. Please try again.',
+        debugLabel: 'CreateBillPage.generateBill',
       );
     } finally {
       if (mounted) {

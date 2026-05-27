@@ -1,30 +1,39 @@
-// // This is a basic Flutter widget test.
-// //
-// // To perform an interaction with a widget in your test, use the WidgetTester
-// // utility in the flutter_test package. For example, you can send tap and scroll
-// // gestures. You can also use WidgetTester to find child widgets in the widget
-// // tree, read text, and verify that the values of widget properties are correct.
-//
-// import 'package:flutter/material.dart';
-// import 'package:flutter_test/flutter_test.dart';
-//
-// import 'package:mycondo/main.dart';
-//
-// void main() {
-//   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-//     // Build our app and trigger a frame.
-//     await tester.pumpWidget(const MyApp());
-//
-//     // Verify that our counter starts at 0.
-//     expect(find.text('0'), findsOneWidget);
-//     expect(find.text('1'), findsNothing);
-//
-//     // Tap the '+' icon and trigger a frame.
-//     await tester.tap(find.byIcon(Icons.add));
-//     await tester.pump();
-//
-//     // Verify that our counter has incremented.
-//     expect(find.text('0'), findsNothing);
-//     expect(find.text('1'), findsOneWidget);
-//   });
-// }
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+import 'package:mycondo/features/shared/widgets/app_about_sheet.dart';
+import 'package:mycondo/theme/app_theme.dart';
+
+void main() {
+  setUp(() {
+    PackageInfo.setMockInitialValues(
+      appName: 'mycondo',
+      packageName: 'com.example.mycondo',
+      version: '1.2.3',
+      buildNumber: '45',
+      buildSignature: '',
+    );
+  });
+
+  testWidgets('app about sheet shows release metadata and support notes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(body: AppAboutSheet()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('myCondo'), findsWidgets);
+    expect(find.text('Version'), findsOneWidget);
+    expect(find.text('1.2.3'), findsOneWidget);
+    expect(find.text('Build Number'), findsOneWidget);
+    expect(find.text('45'), findsOneWidget);
+    expect(find.text('com.example.mycondo'), findsOneWidget);
+    expect(find.text('InnovaTxch'), findsOneWidget);
+    expect(find.text('Support Notes'), findsOneWidget);
+  });
+}

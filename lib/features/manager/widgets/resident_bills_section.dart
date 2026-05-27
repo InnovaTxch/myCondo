@@ -52,9 +52,11 @@ class _ResidentBillsSectionState extends State<ResidentBillsSection> {
         }
 
         if (snapshot.hasError) {
+          debugPrint(
+            '[ResidentBillsSection.loadBills] ${snapshot.error}\n${snapshot.stackTrace ?? ''}',
+          );
           return AppErrorState(
             message: 'Unable to load bills. Try again.',
-            details: '${snapshot.error}',
             onRetry: _refresh,
           );
         }

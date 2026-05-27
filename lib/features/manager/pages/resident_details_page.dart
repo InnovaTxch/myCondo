@@ -75,10 +75,13 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
             _selectedUnitId ?? (units.isNotEmpty ? units.first.id : null);
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to load resident: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not load resident details.',
+        debugLabel: 'ResidentDetailsPage.load',
       );
       setState(() => _isLoading = false);
     }
@@ -102,10 +105,13 @@ class _ResidentDetailsPageState extends State<ResidentDetailsPage> {
           unitId: _selectedUnitId!,
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      context.showAppSnackBar(
-        SnackBar(content: Text('Failed to update resident: $e')),
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not update this resident.',
+        debugLabel: 'ResidentDetailsPage.save',
       );
       return;
     }

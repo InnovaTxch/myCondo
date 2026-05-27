@@ -41,6 +41,17 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        const swUrl = new URL('firebase-messaging-sw.js', document.baseURI);
+        navigator.serviceWorker.register(swUrl)
+          .catch(function (error) {
+            console.warn('FCM service worker registration failed:', error);
+          });
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

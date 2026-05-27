@@ -4,6 +4,22 @@ import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
+class MaintenanceRequestFormPrefill {
+  const MaintenanceRequestFormPrefill({
+    this.priority,
+    this.problemType,
+    required this.description,
+    this.sourceRequestId,
+    this.isFollowUp = false,
+  });
+
+  final String? priority;
+  final String? problemType;
+  final String description;
+  final int? sourceRequestId;
+  final bool isFollowUp;
+}
+
 class MaintenanceRequestFormPage extends StatefulWidget {
   const MaintenanceRequestFormPage({super.key});
 
@@ -23,8 +39,10 @@ class _MaintenanceRequestFormPageState
 
   String? _priority;
   String? _problemType;
+  String? _prefillContextText;
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _didResolveRouteArgs = false;
 
   static const _priorities = ['Low', 'Medium', 'High', 'Urgent'];
   static const _problemTypes = [
@@ -42,6 +60,30 @@ class _MaintenanceRequestFormPageState
   void initState() {
     super.initState();
     _loadResidentDetails();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didResolveRouteArgs) return;
+    _didResolveRouteArgs = true;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is! MaintenanceRequestFormPrefill) return;
+
+    final normalizedPriority = _normalizePriority(args.priority);
+    final normalizedProblemType = _normalizeProblemType(args.problemType);
+
+    setState(() {
+      _priority = normalizedPriority;
+      _problemType = normalizedProblemType;
+      _descriptionController.text = args.description.trimRight();
+      if (args.sourceRequestId != null) {
+        final actionLabel = args.isFollowUp ? 'Follow-up' : 'Repeat request';
+        _prefillContextText =
+            '$actionLabel for request #${args.sourceRequestId}';
+      }
+    });
   }
 
   @override
@@ -92,10 +134,15 @@ class _MaintenanceRequestFormPageState
         const SnackBar(content: Text('Maintenance request submitted.')),
       );
       Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      context.showAppSnackBar(SnackBar(content: Text('Submission failed: $e')));
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not submit your maintenance request.',
+        debugLabel: 'MaintenanceRequestFormPage.submit',
+      );
     }
   }
 
@@ -139,6 +186,20 @@ class _MaintenanceRequestFormPageState
                       ),
                     ),
                   ),
+                  if (_prefillContextText != null) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        _prefillContextText!,
+                        style: const TextStyle(
+                          color: Color(0xFF3D4E63),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _SectionCard(
                     title: 'Request Details',
@@ -263,6 +324,23 @@ class _MaintenanceRequestFormPageState
 
   String? _required(String? value) {
     if ((value ?? '').trim().isEmpty) return 'Required';
+    return null;
+  }
+
+  String? _normalizePriority(String? raw) {
+    final normalized = (raw ?? '').trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+    final title = '${normalized[0].toUpperCase()}${normalized.substring(1)}';
+    return _priorities.contains(title) ? title : null;
+  }
+
+  String? _normalizeProblemType(String? raw) {
+    final normalized = (raw ?? '').trim().toLowerCase();
+    if (normalized.isEmpty) return null;
+
+    for (final option in _problemTypes) {
+      if (option.toLowerCase() == normalized) return option;
+    }
     return null;
   }
 }
