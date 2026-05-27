@@ -2,6 +2,7 @@ enum PaymentStatus { pending, approved, rejected }
 
 class PaymentItem {
   final int id;
+  final String residentId;   // ← ADD
   final String residentName;
   final String room;
   final int amount;
@@ -15,6 +16,7 @@ class PaymentItem {
 
   const PaymentItem({
     required this.id,
+    required this.residentId,   // ← ADD
     required this.residentName,
     required this.room,
     required this.amount,
