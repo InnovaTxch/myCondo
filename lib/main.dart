@@ -45,7 +45,7 @@ Future<bool> _initializeFirebase() async {
     final options = _firebaseWebOptionsFromEnv();
     if (options == null) {
       debugPrint(
-        'Firebase web init skipped: missing FIREBASE_WEB_* values in .env',
+        'Firebase web init skipped: missing FIREBASE_WEB_* dart defines',
       );
       return false;
     }
