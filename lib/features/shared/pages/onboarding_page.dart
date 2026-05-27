@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/theme/app_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
-import 'package:mycondo/data/repositories/auth/pending_signup_credentials.dart';
 import 'package:mycondo/data/repositories/onboarding/onboarding_service.dart';
+import 'package:mycondo/services/shared/session_preference_service.dart';
 
 import 'package:mycondo/features/shared/widgets/input_field.dart';
 import 'package:mycondo/features/shared/widgets/role_card.dart';
@@ -20,6 +21,8 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final AuthService _authService = AuthService();
   final OnboardingService _service = OnboardingService();
+  final SessionPreferenceService _sessionPreferenceService =
+      SessionPreferenceService();
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -31,8 +34,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _isLoading = false;
 
   bool get _isManager => _selectedRole == 'manager';
+  bool get _hasActiveSession =>
+      Supabase.instance.client.auth.currentUser != null;
 
   void _handleFinalSubmit() async {
+    if (!_hasActiveSession) {
+      context.showAppMessage(
+        'Your signup session expired. Please sign in again to continue onboarding.',
+        tone: AppSnackTone.error,
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -41,8 +54,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (_isManager) {
         await _service.setupManagerAccount(
           ManagerCondoSetupInput(
-            email: _pendingCredentials?.email ?? '',
-            password: _pendingCredentials?.password ?? '',
             firstName: _firstNameController.text,
             lastName: _lastNameController.text,
             name: _condoNameController.text,
@@ -51,8 +62,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       } else {
         await _service.setupResidentAccount(
           ResidentClaimInput(
-            email: _pendingCredentials?.email ?? '',
-            password: _pendingCredentials?.password ?? '',
             condoCode: _condoCodeController.text,
             residentCode: _residentCodeController.text,
           ),
@@ -60,7 +69,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       }
 
       if (!mounted) return;
-      PendingSignupStore.clear();
+      await _sessionPreferenceService.clearOnboardingRetention();
+      if (!mounted) return;
 
       // Let AuthGate handle routing based on the authenticated session + profile role.
       // Pushing dashboards from here causes stacked home shells.
@@ -135,6 +145,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasActiveSession) {
+      return _buildMissingSessionState();
+    }
+
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
@@ -208,6 +222,76 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 isLoading: _isLoading,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMissingSessionState() {
+    return Scaffold(
+      backgroundColor: AppColors.lightBlueBackground,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Continue setup',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'We could not find an active signup session. Sign in to continue onboarding, or start a new signup if needed.',
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SubmitButton(
+                      text: 'Sign in',
+                      onPressed: () {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (_) => false,
+                        );
+                      },
+                      color: AppColors.primaryBlue,
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/signup',
+                            (_) => false,
+                          );
+                        },
+                        child: const Text('Start new signup'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -292,9 +376,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
     ];
   }
-
-  PendingSignupCredentials? get _pendingCredentials =>
-      PendingSignupStore.credentials;
 }
 
 class _FieldLabel extends StatelessWidget {

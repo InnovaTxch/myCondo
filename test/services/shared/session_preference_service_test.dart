@@ -35,10 +35,22 @@ void main() {
 
   test('clear remembered session resets preference and marker', () async {
     await service.applyLoginChoice(keepSignedIn: true);
+    await service.retainSessionForOnboarding();
 
     await service.clearRememberedSession();
 
     expect(await service.isKeepSignedInEnabled(), isFalse);
+    expect(await service.shouldRetainForOnboarding(), isFalse);
+    expect(await service.shouldRetainSessionOnAppLaunch(), isFalse);
+  });
+
+  test('onboarding retention keeps session across launches', () async {
+    await service.retainSessionForOnboarding();
+
+    service.clearEphemeralSessionMarker();
+    expect(await service.shouldRetainSessionOnAppLaunch(), isTrue);
+
+    await service.clearOnboardingRetention();
     expect(await service.shouldRetainSessionOnAppLaunch(), isFalse);
   });
 }

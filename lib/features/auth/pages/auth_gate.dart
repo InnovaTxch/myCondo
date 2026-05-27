@@ -39,12 +39,22 @@ class _AuthGateState extends State<AuthGate> {
     final session = auth.currentSession;
     if (session == null) {
       _sessionPreferenceService.clearEphemeralSessionMarker();
+      await _sessionPreferenceService.clearOnboardingRetention();
       return;
     }
 
     final shouldRetain = await _sessionPreferenceService
         .shouldRetainSessionOnAppLaunch();
     if (shouldRetain) {
+      return;
+    }
+
+    final role = await authService.getRole();
+    if (role == 'unassigned') {
+      await _sessionPreferenceService.retainSessionForOnboarding();
+      return;
+    }
+    if (role == null) {
       return;
     }
 

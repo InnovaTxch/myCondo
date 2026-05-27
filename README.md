@@ -8,6 +8,8 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 ### Auth and onboarding
 
 - Email/password login and signup.
+- Signup creates the auth account immediately, then routes users with role `unassigned` into onboarding.
+- Onboarding no longer depends on in-memory pending credentials; it requires an active auth session.
 - Role-based routing via `AuthGate`:
   - `manager` -> manager home
   - `resident` -> resident home
@@ -15,6 +17,11 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - Onboarding supports:
   - Manager setup (first name, last name, condo name)
   - Resident claim/join flow using BH code + resident code
+- Password recovery is managed from the in-app Profile page:
+  - `Verify Email for Recovery` opens a PIN flow where the user explicitly taps `Send code`.
+  - Users can request another PIN after a 60-second cooldown.
+  - After successful verification, the app sends the recovery email.
+- Current local Supabase config (`supabase/config.toml`) has `auth.email.enable_confirmations = false`, so signup usually authenticates immediately. If confirmations are enabled in a deployed project, signup shows verify-email guidance and redirects to login.
 
 ### Manager experience
 
