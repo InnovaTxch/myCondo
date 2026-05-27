@@ -2,11 +2,17 @@ import 'dart:io';
 
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/services/shared/presence_service.dart';
+import 'package:mycondo/services/shared/push_session_binding_service.dart';
+import 'package:mycondo/services/shared/session_preference_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final SessionPreferenceService _sessionPreferenceService =
+      SessionPreferenceService();
+  final PushSessionBindingService _pushBindingService =
+      PushSessionBindingService();
 
   Future<String?> getRole() async {
     try {
@@ -35,16 +41,30 @@ class AuthService {
   //log in with email and password
   Future<AuthResponse> signInWithEmailPassword(
     String email,
-    String password,
-  ) async {
-    return await _supabase.auth.signInWithPassword(
+    String password, {
+    required bool keepSignedIn,
+  }) async {
+    final response = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
+
+    await _sessionPreferenceService.applyLoginChoice(
+      keepSignedIn: keepSignedIn,
+    );
+
+    final profileId = response.user?.id ?? _supabase.auth.currentUser?.id;
+    if (keepSignedIn && profileId != null && profileId.isNotEmpty) {
+      await _pushBindingService.bindPersistentSession(profileId: profileId);
+    } else {
+      await _pushBindingService.clearBinding();
+    }
+
+    return response;
   }
 
   //sign out
-  Future<void> signOut() async {
+  Future<void> signOut({bool clearRememberSessionPreference = true}) async {
     try {
       await presenceService.stop();
     } catch (_) {
@@ -53,6 +73,12 @@ class AuthService {
 
     try {
       await _supabase.auth.signOut();
+      if (clearRememberSessionPreference) {
+        await _sessionPreferenceService.clearRememberedSession();
+      } else {
+        _sessionPreferenceService.clearEphemeralSessionMarker();
+      }
+      await _pushBindingService.clearBinding();
     } catch (error, stackTrace) {
       try {
         await presenceService.start();

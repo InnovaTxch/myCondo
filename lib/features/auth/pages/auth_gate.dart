@@ -5,6 +5,7 @@ import 'package:mycondo/features/manager/pages/manager_home_screen.dart';
 import 'package:mycondo/features/resident/pages/resident_home_screen.dart';
 import 'package:mycondo/features/shared/pages/onboarding_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/services/shared/session_preference_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /*
@@ -13,49 +14,87 @@ AUTH GATE: This will continuously listen for auth state changes
   authenticated -> Dashboard
 */
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final auth = Supabase.instance.client.auth;
+  final AuthService authService = AuthService();
+  final SessionPreferenceService _sessionPreferenceService =
+      SessionPreferenceService();
+
+  late final Future<void> _startupSessionFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _startupSessionFuture = _handleStartupSessionPolicy();
+  }
+
+  Future<void> _handleStartupSessionPolicy() async {
+    final session = auth.currentSession;
+    if (session == null) {
+      _sessionPreferenceService.clearEphemeralSessionMarker();
+      return;
+    }
+
+    final shouldRetain = await _sessionPreferenceService
+        .shouldRetainSessionOnAppLaunch();
+    if (shouldRetain) {
+      return;
+    }
+
+    await authService.signOut(clearRememberSessionPreference: false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final auth = Supabase.instance.client.auth;
-    final authService = AuthService();
-
-    return StreamBuilder<AuthState>(
-      stream: auth.onAuthStateChange,
-      initialData: AuthState(
-        AuthChangeEvent.initialSession,
-        auth.currentSession,
-      ),
-      builder: (context, snapshot) {
-        final session = snapshot.data?.session;
-
-        if (session != null) {
-          return FutureBuilder<String?>(
-            future: authService.getRole(),
-            builder: (context, roleSnapshot) {
-              if (roleSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: AppLoadingState(),
-                );
-              }
-
-              final role = roleSnapshot.data;
-              if (role == 'manager') {
-                return const ManagerHomeScreen();
-              }
-              if (role == 'resident') {
-                return const ResidentHomeScreen();
-              }
-              if (role == 'unassigned') {
-                return const OnboardingPage();
-              }
-              return const OnboardingPage();
-            },
-          );
-        } else {
-          return const LoginScreen();
+    return FutureBuilder<void>(
+      future: _startupSessionFuture,
+      builder: (context, startupSnapshot) {
+        if (startupSnapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: AppLoadingState());
         }
+
+        return StreamBuilder<AuthState>(
+          stream: auth.onAuthStateChange,
+          initialData: AuthState(
+            AuthChangeEvent.initialSession,
+            auth.currentSession,
+          ),
+          builder: (context, snapshot) {
+            final session = snapshot.data?.session;
+
+            if (session != null) {
+              return FutureBuilder<String?>(
+                future: authService.getRole(),
+                builder: (context, roleSnapshot) {
+                  if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(body: AppLoadingState());
+                  }
+
+                  final role = roleSnapshot.data;
+                  if (role == 'manager') {
+                    return const ManagerHomeScreen();
+                  }
+                  if (role == 'resident') {
+                    return const ResidentHomeScreen();
+                  }
+                  if (role == 'unassigned') {
+                    return const OnboardingPage();
+                  }
+                  return const OnboardingPage();
+                },
+              );
+            } else {
+              return const LoginScreen();
+            }
+          },
+        );
       },
     );
   }
