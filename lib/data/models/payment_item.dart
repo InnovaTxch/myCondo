@@ -2,7 +2,7 @@ enum PaymentStatus { pending, approved, rejected }
 
 class PaymentItem {
   final int id;
-  final String residentId;   // ← ADD
+  final String residentId;   // ← new ADD
   final String residentName;
   final String room;
   final int amount;
