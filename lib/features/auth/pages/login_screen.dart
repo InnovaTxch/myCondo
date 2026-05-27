@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _keepSignedIn = false;
 
   Future<void> signIn() async {
     final isValid = _formKey.currentState!.validate();
@@ -33,7 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await authService.signInWithEmailPassword(email, password);
+      await authService.signInWithEmailPassword(
+        email,
+        password,
+        keepSignedIn: _keepSignedIn,
+      );
 
       if (!mounted) return;
       context.showAppSnackBar(
@@ -142,6 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       formKey: _formKey,
                       emailController: _emailController,
                       passwordController: _passwordController,
+                      keepSignedIn: _keepSignedIn,
+                      onKeepSignedInChanged: (value) {
+                        setState(() => _keepSignedIn = value);
+                      },
                     ),
                     const SizedBox(height: 24),
 

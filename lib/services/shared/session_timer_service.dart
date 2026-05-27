@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mycondo/services/shared/presence_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mycondo/data/repositories/auth/auth_service.dart';
+import 'package:mycondo/services/shared/session_preference_service.dart';
 import 'package:mycondo/features/shared/widgets/session_timeout_dialog.dart';
 
 class SessionTimerService {
@@ -11,6 +11,8 @@ class SessionTimerService {
 
   Timer? _timer;
   bool _isLoggingOut = false;
+  final SessionPreferenceService _sessionPreferenceService =
+      SessionPreferenceService();
 
   // Ichange lang guys if ano gd man, hindi me kamaan abi hehe
   // If want niyo itest, change minutes to seconds
@@ -28,7 +30,7 @@ class SessionTimerService {
         ? _managerTimeoutDuration
         : _residentTimeoutDuration;
 
-    _timer = Timer(_currentTimeoutDuration, _onTimeout);
+    unawaited(_restartTimerIfEnabled());
   }
 
   void stopTimer() {
@@ -38,6 +40,25 @@ class SessionTimerService {
 
   void resetTimer() {
     if (_timer == null || _isLoggingOut) return;
+
+    unawaited(_restartTimerIfEnabled());
+  }
+
+  Duration timeoutDurationForRole(String userRole) {
+    return userRole == 'manager'
+        ? _managerTimeoutDuration
+        : _residentTimeoutDuration;
+  }
+
+  bool get isTimerActive => _timer != null;
+
+  Future<void> _restartTimerIfEnabled() async {
+    final keepSignedIn = await _sessionPreferenceService
+        .isKeepSignedInEnabled();
+    if (keepSignedIn) {
+      stopTimer();
+      return;
+    }
 
     stopTimer();
     _timer = Timer(_currentTimeoutDuration, _onTimeout);
@@ -50,13 +71,7 @@ class SessionTimerService {
     stopTimer();
 
     try {
-      try {
-        await presenceService.stop();
-      } catch (e) {
-        debugPrint("Presence error during timeout logout: $e");
-      }
-
-      await Supabase.instance.client.auth.signOut();
+      await AuthService().signOut(clearRememberSessionPreference: false);
     } catch (e) {
       debugPrint("Auth error during timeout: $e");
     }
@@ -74,8 +89,10 @@ class SessionTimerService {
       barrierDismissible: false,
       builder: (dialogContext) => SessionExpiredDialog(
         onConfirm: () {
-          Navigator.of(dialogContext, rootNavigator: true)
-            .pushNamedAndRemoveUntil('/login', (route) => false);
+          Navigator.of(
+            dialogContext,
+            rootNavigator: true,
+          ).pushNamedAndRemoveUntil('/login', (route) => false);
         },
       ),
     );

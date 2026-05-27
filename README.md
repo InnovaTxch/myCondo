@@ -83,9 +83,22 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
   - new announcements (resident)
 - Unread badges for chat and action-based notifications.
 - Presence tracking for online profiles.
-- Auto-logout inactivity timer:
-  - manager: 10 minutes
-  - resident: 15 minutes
+- Login includes a `Keep me signed in` option with explicit mobile session rules:
+  - `Checked`:
+    - Session is remembered across app restarts (`AuthGate` keeps the session).
+    - Inactivity timer is disabled.
+    - A persistent device/profile push-session binding is stored until explicit logout.
+  - `Unchecked`:
+    - Session is valid only for the current app run.
+    - On next app launch, `AuthGate` clears any leftover session and sends user to login.
+    - Inactivity timer remains active:
+      - manager: 10 minutes
+      - resident: 15 minutes
+    - Persistent device/profile push-session binding is cleared.
+- Explicit logout always:
+  - signs out the Supabase session
+  - clears `Keep me signed in` preference
+  - clears device/profile push-session binding metadata
 
 ## Known Limitations / Out of Scope
 
