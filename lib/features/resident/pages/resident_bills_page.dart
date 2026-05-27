@@ -205,134 +205,229 @@ class _ResidentBillCard extends StatelessWidget {
             latestCompletedPayment.createdAt.toLocal(),
           );
 
+    final statusColors = context.appStatusColors;
+    final statusColor = _billStatusColor(bill.status, statusColors);
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.softGray),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD6E8F7)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4A90FF).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // ── Header strip ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.07),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.receipt_long_outlined,
+                    size: 18,
+                    color: statusColor,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        bill.billType,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.darkText,
+                        ),
+                      ),
+                      if (bill.isUnitTargeted &&
+                          (bill.targetUnitName ?? '').isNotEmpty)
+                        Text(
+                          'Unit ${bill.targetUnitName}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.secondaryText,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      bill.billType,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _formatBillStatus(bill.status),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                        ),
                       ),
                     ),
-                    if (bill.isUnitTargeted &&
-                        (bill.targetUnitName ?? '').isNotEmpty)
+                    const SizedBox(height: 4),
+                    Text(
+                      'Due $dueDate',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.secondaryText,
+                      ),
+                    ),
+                    if (paidOnLabel != null)
                       Text(
-                        'Unit ${bill.targetUnitName}',
+                        'Paid $paidOnLabel',
                         style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.secondaryText,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                   ],
                 ),
-              ),
-              _StatusPill(status: bill.status),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Due $dueDate',
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 12,
+              ],
             ),
           ),
-          if (paidOnLabel != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              'Paid on $paidOnLabel',
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          ...bill.bills.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                children: [
-                  Expanded(child: Text(item.name)),
-                  Text(currency.format(item.amount / 100)),
-                ],
-              ),
-            ),
-          ),
-          const Divider(height: 22),
-          _AmountRow(
-            label: 'Total',
-            amount: currency.format(bill.totalAmount / 100),
-            isStrong: true,
-          ),
-          if (bill.paidAmount > 0) ...[
-            const SizedBox(height: 8),
-            _AmountRow(
-              label: 'Approved Payments',
-              amount: currency.format(bill.paidAmount / 100),
-            ),
-          ],
-          if (bill.pendingPayment != null) ...[
-            const SizedBox(height: 10),
-            _NoticeBox(
-              icon: Icons.hourglass_top_rounded,
-              color: AppColors.warningOrange,
-              message: 'Payment submitted. Waiting for manager approval.',
-            ),
-          ],
-          if (bill.latestRejectedPayment != null) ...[
-            const SizedBox(height: 10),
-            _NoticeBox(
-              icon: Icons.cancel_outlined,
-              color: AppColors.errorRed,
-              message:
-                  'Payment denied: ${bill.latestRejectedPayment!.rejectionReason ?? 'No reason provided.'}',
-            ),
-          ],
-          if (canPay && !bill.isPaid && bill.pendingPayment == null) ...[
-            const SizedBox(height: 8),
-            _AmountRow(
-              label: 'Amount to Pay',
-              amount: currency.format(bill.outstandingAmount / 100),
-              isStrong: true,
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onPay,
-                icon: const Icon(Icons.payments_outlined, size: 18),
-                label: const Text('Pay Bill'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.darkText,
-                  foregroundColor: AppColors.pureWhite,
-                  minimumSize: const Size.fromHeight(46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+          // ── Bill line items ───────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Column(
+              children: [
+                ...bill.bills.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(item.name)),
+                        Text(currency.format(item.amount / 100)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                const Divider(height: 22),
+                _AmountRow(
+                  label: 'Total',
+                  amount: currency.format(bill.totalAmount / 100),
+                  isStrong: true,
+                ),
+                if (bill.paidAmount > 0) ...[
+                  const SizedBox(height: 8),
+                  _AmountRow(
+                    label: 'Approved Payments',
+                    amount: currency.format(bill.paidAmount / 100),
+                  ),
+                ],
+                if (bill.pendingPayment != null) ...[
+                  const SizedBox(height: 10),
+                  _NoticeBox(
+                    icon: Icons.hourglass_top_rounded,
+                    color: AppColors.warningOrange,
+                    message: 'Payment submitted. Waiting for manager approval.',
+                  ),
+                ],
+                if (bill.latestRejectedPayment != null) ...[
+                  const SizedBox(height: 10),
+                  _NoticeBox(
+                    icon: Icons.cancel_outlined,
+                    color: AppColors.errorRed,
+                    message:
+                        'Payment denied: ${bill.latestRejectedPayment!.rejectionReason ?? 'No reason provided.'}',
+                  ),
+                ],
+                if (canPay && !bill.isPaid && bill.pendingPayment == null) ...[
+                  const SizedBox(height: 8),
+                  _AmountRow(
+                    label: 'Amount to Pay',
+                    amount: currency.format(bill.outstandingAmount / 100),
+                    isStrong: true,
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
+          // ── Action area ───────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: bill.isPaid
+                ? _StatusChip(
+                    label: 'Payment Approved',
+                    icon: Icons.check_circle_outline,
+                    color: statusColor,
+                  )
+                : canPay && bill.pendingPayment == null
+                    ? SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: onPay,
+                          icon: const Icon(Icons.payments_outlined, size: 18),
+                          label: const Text('Pay Bill'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                            foregroundColor: AppColors.pureWhite,
+                            minimumSize: const Size.fromHeight(42),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
+  }
+
+  Color _billStatusColor(String status, AppStatusColors statusColors) {
+    switch (status) {
+      case 'paid':
+        return statusColors.success;
+      case 'partial':
+        return AppColors.primaryBlue;
+      case 'overdue':
+        return statusColors.destructive;
+      default:
+        return statusColors.warningStrong;
+    }
+  }
+
+  String _formatBillStatus(String status) {
+    final words = status
+        .split('_')
+        .where((w) => w.isNotEmpty)
+        .map((w) => '${w[0].toUpperCase()}${w.substring(1)}');
+    return words.join(' ');
   }
 }
 
@@ -903,51 +998,42 @@ class _AmountRow extends StatelessWidget {
   }
 }
 
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.status});
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
 
-  final String status;
+  final String label;
+  final IconData icon;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final statusColors = context.appStatusColors;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: _statusColor(status, statusColors).withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        _formatStatus(status),
-        style: TextStyle(
-          color: _statusColor(status, statusColors),
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  String _formatStatus(String status) {
-    final words = status
-        .split('_')
-        .where((word) => word.isNotEmpty)
-        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}');
-    return words.join(' ');
-  }
-
-  Color _statusColor(String status, AppStatusColors statusColors) {
-    switch (status) {
-      case 'paid':
-        return statusColors.success;
-      case 'partial':
-        return AppColors.primaryBlue;
-      case 'overdue':
-        return statusColors.destructive;
-      default:
-        return statusColors.warningStrong;
-    }
   }
 }
 
