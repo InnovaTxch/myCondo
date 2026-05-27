@@ -117,6 +117,7 @@ class PaymentApprovalRepository {
 
     return PaymentItem(
       id: (map['id'] as num).toInt(),
+      residentId: paidBy,  // ← new ADD
       residentName: name.isEmpty ? 'Resident' : name,
       room: unitName.isEmpty ? 'Resident Bill' : 'Unit $unitName',
       amount: (map['amount'] as num).toInt(),
