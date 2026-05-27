@@ -8,6 +8,9 @@ import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
+import 'package:mycondo/services/shared/chat_services.dart';
+import 'package:mycondo/features/shared/pages/chat_screen.dart';
+import 'package:mycondo/utils/app_snackbar.dart';
 
 class ManagerUnitProfilePage extends StatefulWidget {
   const ManagerUnitProfilePage({super.key, required this.unitId});
@@ -97,6 +100,42 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     setState(() => _selectedMonth = normalized);
     await _loadLedgerForMonth(normalized);
   }
+  
+  Future<void> _messageResident(String residentId, String residentName) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      // Reuse the same chat creation logic as the inbox
+      final chatService = MessagingService();
+      final conversationId =
+          await chatService.getOrCreateResidentConversation(residentId);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            name: residentName,
+            conversationId: conversationId,
+            otherProfileId: residentId,
+          ),
+        ),
+      );
+    } catch (e, st) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not open chat.',
+        debugLabel: 'UnitProfilePage.messageResident',
+      );
+    }
+  }
+
 
   Future<void> _moveMonth(int offset) {
     return _selectMonth(
@@ -1133,6 +1172,12 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
               resident.name,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
+          ),
+           IconButton(
+            tooltip: 'Message resident',
+            icon: const Icon(Icons.chat_bubble_outline_rounded,
+                size: 18, color: AppColors.primaryBlue),
+            onPressed: () => _messageResident(resident.id, resident.name),
           ),
           OutlinedButton(
             onPressed: () => _openResidentDetails(resident.id),
