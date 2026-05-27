@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/repositories/auth/auth_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_profile_service.dart';
@@ -39,6 +42,8 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
 
   bool _isLoading = true;
   bool _isSigningOut = false;
+  bool _isRecoveryVerified = false;
+  bool _isRecoveryActionLoading = false;
 
   @override
   void initState() {
@@ -73,6 +78,7 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
         _notifications = settings.notifications;
         _messaging = settings.messaging;
         _paymentMethods = settings.paymentMethods;
+        _isRecoveryVerified = _authService.isRecoveryAccountVerified();
         _isLoading = false;
       });
     } catch (e, st) {
@@ -187,6 +193,55 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
     showAppAboutSheet(context);
   }
 
+  Future<void> _handleRecoveryEmailAction() async {
+    if (_isRecoveryActionLoading) return;
+
+    setState(() => _isRecoveryActionLoading = true);
+    var verifiedThisRun = false;
+    try {
+      if (!_isRecoveryVerified) {
+        final verified = await showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => _RecoveryPinSheet(
+            email: (_email ?? '').trim(),
+            onSendCode: _authService.sendRecoveryVerificationPin,
+            onVerifyPin: _authService.verifyRecoveryAccountWithPin,
+          ),
+        );
+
+        if (!mounted || verified != true) return;
+        verifiedThisRun = true;
+        setState(() => _isRecoveryVerified = true);
+      }
+
+      await _authService.sendRecoveryEmailForVerifiedAccount();
+      if (!mounted) return;
+      context.showAppSnackBar(
+        SnackBar(
+          content: Text(
+            verifiedThisRun
+                ? 'Email verified. Recovery email sent.'
+                : 'Recovery email sent. Please check your inbox.',
+          ),
+        ),
+      );
+    } catch (e, st) {
+      if (!mounted) return;
+      context.showAppError(
+        e,
+        stackTrace: st,
+        fallbackMessage: 'Could not complete email verification.',
+        debugLabel: 'ResidentProfilePage.handleRecoveryEmailAction',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRecoveryActionLoading = false);
+      }
+    }
+  }
+
   Future<void> _openNotificationsSheet() async {
     final settings = _notifications;
     if (settings == null) return;
@@ -283,6 +338,9 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
                       name: fullName,
                       email: email,
                       status: _status,
+                      isRecoveryVerified: _isRecoveryVerified,
+                      isRecoveryActionLoading: _isRecoveryActionLoading,
+                      onVerifyAccountTap: _handleRecoveryEmailAction,
                     ),
                     const SizedBox(height: 16),
                     _InfoGrid(
@@ -442,16 +500,360 @@ class _ResidentProfilePageState extends State<ResidentProfilePage> {
   }
 }
 
+class _RecoveryPinSheet extends StatefulWidget {
+  const _RecoveryPinSheet({
+    required this.email,
+    required this.onSendCode,
+    required this.onVerifyPin,
+  });
+
+  final String email;
+  final Future<void> Function() onSendCode;
+  final Future<void> Function(String pin) onVerifyPin;
+
+  @override
+  State<_RecoveryPinSheet> createState() => _RecoveryPinSheetState();
+}
+
+class _RecoveryPinSheetState extends State<_RecoveryPinSheet> {
+  static const int _pinLength = 8;
+  static const int _minPinLength = 6;
+  late final List<TextEditingController> _digitControllers = List.generate(
+    _pinLength,
+    (_) => TextEditingController(),
+  );
+  late final List<FocusNode> _digitFocusNodes = List.generate(
+    _pinLength,
+    (_) => FocusNode(),
+  );
+
+  Timer? _timer;
+  int _secondsRemaining = 0;
+  bool _hasRequestedCode = false;
+  bool _isSendingCode = false;
+  bool _isVerifying = false;
+  String? _errorText;
+
+  String get _displayEmail {
+    final trimmed = widget.email.trim();
+    return trimmed.isEmpty ? 'your email' : trimmed;
+  }
+
+  String get _pinValue =>
+      _digitControllers.map((controller) => controller.text).join();
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    for (final controller in _digitControllers) {
+      controller.dispose();
+    }
+    for (final node in _digitFocusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  void _focusDigit(int index) {
+    if (index < 0 || index >= _pinLength) return;
+    _digitFocusNodes[index].requestFocus();
+  }
+
+  void _clearDigits() {
+    for (final controller in _digitControllers) {
+      controller.clear();
+    }
+  }
+
+  void _handleDigitChanged(int index, String rawValue) {
+    final value = rawValue.replaceAll(RegExp(r'[^0-9]'), '');
+    if (value.isEmpty) {
+      _digitControllers[index].clear();
+      return;
+    }
+
+    if (value.length > 1) {
+      var cursor = index;
+      for (var i = 0; i < value.length && cursor < _pinLength; i += 1) {
+        _digitControllers[cursor].text = value[i];
+        _digitControllers[cursor].selection = const TextSelection.collapsed(
+          offset: 1,
+        );
+        cursor += 1;
+      }
+      if (cursor < _pinLength) {
+        _focusDigit(cursor);
+      } else {
+        _digitFocusNodes.last.unfocus();
+      }
+      setState(() {});
+      return;
+    }
+
+    _digitControllers[index].text = value;
+    _digitControllers[index].selection = const TextSelection.collapsed(
+      offset: 1,
+    );
+    if (index < _pinLength - 1) {
+      _focusDigit(index + 1);
+    } else {
+      _digitFocusNodes[index].unfocus();
+    }
+    setState(() {});
+  }
+
+  KeyEventResult _handleDigitKey(FocusNode node, int index, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.backspace) {
+      return KeyEventResult.ignored;
+    }
+    if (_digitControllers[index].text.isEmpty && index > 0) {
+      _digitControllers[index - 1].clear();
+      _focusDigit(index - 1);
+      setState(() {});
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  Future<void> _sendCode() async {
+    if (_isSendingCode) return;
+    setState(() {
+      _isSendingCode = true;
+      _errorText = null;
+    });
+    try {
+      await widget.onSendCode();
+      if (!mounted) return;
+      setState(() => _hasRequestedCode = true);
+      _clearDigits();
+      _focusDigit(0);
+      _startCooldown();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorText = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingCode = false);
+      }
+    }
+  }
+
+  void _startCooldown() {
+    _timer?.cancel();
+    setState(() => _secondsRemaining = 60);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_secondsRemaining <= 1) {
+        timer.cancel();
+        setState(() => _secondsRemaining = 0);
+      } else {
+        setState(() => _secondsRemaining -= 1);
+      }
+    });
+  }
+
+  Future<void> _verify() async {
+    if (!_hasRequestedCode) {
+      setState(() => _errorText = 'Tap "Send code" first.');
+      return;
+    }
+    final pin = _pinValue.trim();
+    if (pin.length < _minPinLength || pin.length > _pinLength) {
+      setState(
+        () => _errorText = 'Enter the verification code from your email.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isVerifying = true;
+      _errorText = null;
+    });
+    try {
+      await widget.onVerifyPin(pin);
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorText = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isVerifying = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isStepTwo = _hasRequestedCode;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 12,
+          right: 12,
+          top: 12,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Verify Email',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isStepTwo
+                    ? 'Enter the code sent to $_displayEmail:'
+                    : 'Verify your email so you can recover your account if you forget your password.',
+                style: const TextStyle(color: Color(0xFF66737C), height: 1.3),
+              ),
+              const SizedBox(height: 14),
+              if (isStepTwo) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(_pinLength, (index) {
+                    return SizedBox(
+                      width: 36,
+                      child: Focus(
+                        onKeyEvent: (node, event) =>
+                            _handleDigitKey(node, index, event),
+                        child: TextField(
+                          controller: _digitControllers[index],
+                          focusNode: _digitFocusNodes[index],
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          textInputAction: index == _pinLength - 1
+                              ? TextInputAction.done
+                              : TextInputAction.next,
+                          maxLength: 1,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                            counterText: '',
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF7FBFF),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD7E6F3),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD7E6F3),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: AppColors.primaryBlue,
+                                width: 1.4,
+                              ),
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          onChanged: (value) =>
+                              _handleDigitChanged(index, value),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+              if (_errorText != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _errorText!,
+                  style: const TextStyle(
+                    color: AppColors.errorRed,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: isStepTwo
+                    ? ElevatedButton(
+                        onPressed: _isVerifying ? null : _verify,
+                        child: Text(
+                          _isVerifying ? 'Verifying...' : 'Verify Pin',
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: _isSendingCode ? null : _sendCode,
+                        child: Text(
+                          _isSendingCode
+                              ? 'Sending...'
+                              : 'Send Verification Code to Email',
+                        ),
+                      ),
+              ),
+              if (isStepTwo) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: (_isSendingCode || _secondsRemaining > 0)
+                        ? null
+                        : _sendCode,
+                    child: Text(
+                      _secondsRemaining > 0
+                          ? 'Resend Code (${_secondsRemaining}s)'
+                          : (_isSendingCode ? 'Sending...' : 'Resend Code'),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.name,
     required this.email,
     required this.status,
+    required this.isRecoveryVerified,
+    required this.isRecoveryActionLoading,
+    required this.onVerifyAccountTap,
   });
 
   final String name;
   final String email;
   final String? status;
+  final bool isRecoveryVerified;
+  final bool isRecoveryActionLoading;
+  final Future<void> Function() onVerifyAccountTap;
 
   @override
   Widget build(BuildContext context) {
@@ -463,15 +865,46 @@ class _ProfileHeader extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE3EEF7)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            radius: 32,
-            backgroundColor: Color(0xFFEAF4FB),
-            child: Icon(
-              Icons.person_outline_rounded,
-              color: AppColors.primaryBlue,
-              size: 34,
-            ),
+          Column(
+            children: [
+              const CircleAvatar(
+                radius: 32,
+                backgroundColor: Color(0xFFEAF4FB),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  color: AppColors.primaryBlue,
+                  size: 34,
+                ),
+              ),
+              if (!isRecoveryVerified) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: 104,
+                  child: OutlinedButton(
+                    onPressed: isRecoveryActionLoading
+                        ? null
+                        : onVerifyAccountTap,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(34),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      side: const BorderSide(color: Color(0xFFBFD6EA)),
+                    ),
+                    child: Text(
+                      isRecoveryActionLoading
+                          ? 'Processing...'
+                          : 'Verify Account',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -499,9 +932,43 @@ class _ProfileHeader extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                if (isRecoveryVerified) ...[
+                  const SizedBox(height: 8),
+                  const _VerifiedBadge(),
+                ] else
+                  const SizedBox(height: 8),
                 _RolePill(status: status),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VerifiedBadge extends StatelessWidget {
+  const _VerifiedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9F8EF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified_rounded, size: 14, color: Color(0xFF1F8A4C)),
+          SizedBox(width: 4),
+          Text(
+            'Verified',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F8A4C),
             ),
           ),
         ],
