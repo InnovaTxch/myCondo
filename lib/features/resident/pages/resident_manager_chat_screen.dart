@@ -5,7 +5,9 @@ import 'package:mycondo/services/shared/chat_services.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
 
 class ResidentManagerChatScreen extends StatefulWidget {
-  const ResidentManagerChatScreen({super.key});
+  const ResidentManagerChatScreen({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<ResidentManagerChatScreen> createState() =>
@@ -44,7 +46,7 @@ class _ResidentManagerChatScreenState extends State<ResidentManagerChatScreen> {
           name: conversation.managerName,
           conversationId: conversation.conversationId,
           otherProfileId: conversation.managerId,
-          showBackButton: false,
+          showBackButton: widget.showBackButton,
         );
       },
     );
