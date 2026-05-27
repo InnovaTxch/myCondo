@@ -16,6 +16,10 @@ Future<void> main() async {
     return;
   }
 
+  await Supabase.initialize(
+    url: AppConfig.supabaseUrl,
+    anonKey: AppConfig.supabaseAnonKey,
+  );
 
   try {
     final didInitializeFirebase = await _initializeFirebase();
@@ -31,10 +35,6 @@ Future<void> main() async {
     debugPrint('Firebase initialization skipped: $error');
   }
 
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
   runApp(const MyCondoApp());
 }
 
