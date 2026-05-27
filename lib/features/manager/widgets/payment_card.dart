@@ -20,142 +20,249 @@ class PaymentCard extends StatelessWidget {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final dateLabel = _buildDateLabel(payment);
     final statusColors = context.appStatusColors;
+    final statusColor = _statusColor(payment.status, statusColors);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: AppColors.creamWhite,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.softGray),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      payment.residentName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+          // ── Header strip ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.07),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar circle
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      payment.residentName.isNotEmpty
+                          ? payment.residentName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: statusColor,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Name + bill info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        payment.residentName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.darkText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${payment.billType} · ${payment.room}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Status badge + date
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _statusLabel(payment.status),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      payment.billType,
+                      dateLabel,
                       style: const TextStyle(
-                        fontFamily: "Urbanist",
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: AppColors.secondaryText,
-                        height: 1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      payment.room,
-                      style: const TextStyle(
-                        fontFamily: "Urbanist",
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.secondaryText,
-                        height: 1.0,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _statusLabel(payment.status),
-                    style: TextStyle(
-                      fontFamily: "Urbanist",
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: _statusColor(payment.status, statusColors),
-                      height: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    dateLabel,
-                    style: const TextStyle(
-                      fontFamily: "Urbanist",
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.secondaryText,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              currency.format(payment.amount / 100),
-              style: const TextStyle(
-                fontFamily: "Urbanist",
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.darkText,
-                height: 1.0,
-              ),
+              ],
             ),
           ),
-          if ((payment.proofUrl ?? '').isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _InfoRow(label: 'Proof', value: payment.proofUrl!),
+
+          // ── Amount ───────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Amount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+                Text(
+                  currency.format(payment.amount / 100),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Info rows ────────────────────────────────────────
+          if ((payment.proofUrl ?? '').isNotEmpty ||
+              (payment.remark ?? '').isNotEmpty ||
+              (payment.rejectionReason ?? '').isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Divider(height: 1, color: AppColors.softGray),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Column(
+                children: [
+                  if ((payment.proofUrl ?? '').isNotEmpty)
+                    _InfoRow(
+                      icon: Icons.image_outlined,
+                      label: 'Proof',
+                      value: payment.proofUrl!,
+                    ),
+                  if ((payment.remark ?? '').isNotEmpty)
+                    _InfoRow(
+                      icon: Icons.notes_outlined,
+                      label: 'Remark',
+                      value: payment.remark!,
+                    ),
+                  if ((payment.rejectionReason ?? '').isNotEmpty)
+                    _InfoRow(
+                      icon: Icons.cancel_outlined,
+                      label: 'Reason',
+                      value: payment.rejectionReason!,
+                      valueColor: const Color(0xFFB3261E),
+                    ),
+                ],
+              ),
+            ),
           ],
-          if ((payment.remark ?? '').isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _InfoRow(label: 'Remark', value: payment.remark!),
-          ],
-          if ((payment.rejectionReason ?? '').isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _InfoRow(label: 'Reason', value: payment.rejectionReason!),
-          ],
-          const SizedBox(height: 12),
-          _buildActionArea(),
+
+          // ── Action area ──────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: _buildActionArea(statusColor),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActionArea() {
+  Widget _buildActionArea(Color statusColor) {
     switch (payment.status) {
       case PaymentStatus.pending:
         return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            _outlineButton(label: 'Deny', onTap: onReject),
+            Expanded(
+              child: _outlineButton(label: 'Deny', onTap: onReject),
+            ),
             const SizedBox(width: 8),
-            _filledButton(label: 'Approve', onTap: onApprove),
+            Expanded(
+              child: _filledButton(label: 'Approve', onTap: onApprove),
+            ),
           ],
         );
       case PaymentStatus.approved:
-        return _filledButton(label: 'Approved', onTap: null, minWidth: 110);
+        return _statusChip(
+          label: 'Payment Approved',
+          icon: Icons.check_circle_outline,
+          color: statusColor,
+        );
       case PaymentStatus.rejected:
-        return _outlineButton(label: 'Denied', onTap: null, minWidth: 100);
+        return _statusChip(
+          label: 'Payment Denied',
+          icon: Icons.cancel_outlined,
+          color: statusColor,
+        );
     }
+  }
+
+  Widget _statusChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _filledButton({
     required String label,
     VoidCallback? onTap,
-    double minWidth = 100,
   }) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: minWidth, minHeight: 32),
+    return SizedBox(
+      height: 38,
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
@@ -169,15 +276,11 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
           style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.pureWhite,
-            height: 1.0,
           ),
         ),
       ),
@@ -187,15 +290,14 @@ class PaymentCard extends StatelessWidget {
   Widget _outlineButton({
     required String label,
     VoidCallback? onTap,
-    double minWidth = 100,
   }) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: minWidth, minHeight: 32),
+    return SizedBox(
+      height: 38,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryBlue,
-          side: const BorderSide(color: AppColors.primaryBlue),
+          foregroundColor: const Color(0xFFB3261E),
+          side: const BorderSide(color: Color(0xFFB3261E)),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
@@ -203,15 +305,11 @@ class PaymentCard extends StatelessWidget {
         ),
         child: Text(
           label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
           style: const TextStyle(
             fontFamily: "Urbanist",
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppColors.primaryBlue,
-            height: 1.0,
+            color: Color(0xFFB3261E),
           ),
         ),
       ),
@@ -255,34 +353,51 @@ class PaymentCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
 
+  final IconData icon;
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 58,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 14, color: AppColors.secondaryText),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 52,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondaryText,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 12, height: 1.25),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.25,
+                color: valueColor ?? AppColors.darkText,
+                fontWeight: valueColor != null ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
