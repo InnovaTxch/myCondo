@@ -5,12 +5,16 @@ class LoginForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final TextEditingController passwordController;
+  final bool keepSignedIn;
+  final ValueChanged<bool> onKeepSignedInChanged;
 
   const LoginForm({
     super.key,
     required this.formKey,
     required this.emailController,
-    required this.passwordController
+    required this.passwordController,
+    required this.keepSignedIn,
+    required this.onKeepSignedInChanged,
   });
 
   String? emailValidator(String? value) {
@@ -58,6 +62,20 @@ class LoginForm extends StatelessWidget {
             controller: passwordController,
             validator: passwordValidator,
             obscureText: true,
+          ),
+          Row(
+            children: [
+              Checkbox(
+                value: keepSignedIn,
+                onChanged: (value) => onKeepSignedInChanged(value ?? false),
+              ),
+              const Expanded(
+                child: Text(
+                  'Keep me signed in',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
         ],
       ),
