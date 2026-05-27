@@ -146,6 +146,49 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
                   ),
                 ),
               ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        DateFormat('MMM yyyy').format(
+                          DateTime(
+                            _selectedMonth.year,
+                            _selectedMonth.month - 1,
+                            1,
+                          ),
+                        ),
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.swipe_rounded,
+                      size: 14,
+                      color: AppColors.secondaryText,
+                    ),
+                    Expanded(
+                      child: Text(
+                        DateFormat('MMM yyyy').format(
+                          DateTime(
+                            _selectedMonth.year,
+                            _selectedMonth.month + 1,
+                            1,
+                          ),
+                        ),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                 child: PageView.builder(
                   controller: _monthPageController,
@@ -290,6 +333,12 @@ class _BreakdownCard extends StatelessWidget {
       'MMM d, yyyy',
     ).format(_toLocalIssuedAt(bill));
     final dueLabel = DateFormat('MMM d, yyyy').format(bill.dueDate);
+    final latestCompletedPayment = bill.latestCompletedPayment;
+    final paidOnLabel = latestCompletedPayment == null
+        ? null
+        : DateFormat('MMM d, yyyy').format(
+            latestCompletedPayment.createdAt.toLocal(),
+          );
     final statusColors = context.appStatusColors;
     final statusColor = _statusColor(
       status: bill.status,
@@ -356,6 +405,17 @@ class _BreakdownCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (paidOnLabel != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Paid on $paidOnLabel',
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           ...bill.bills.map(
             (item) => Padding(

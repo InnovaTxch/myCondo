@@ -141,6 +141,49 @@ class _ResidentUnitBillPageState extends State<ResidentUnitBillPage> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          DateFormat('MMM yyyy').format(
+                            DateTime(
+                              _selectedMonth.year,
+                              _selectedMonth.month - 1,
+                              1,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.swipe_rounded,
+                        size: 14,
+                        color: AppColors.secondaryText,
+                      ),
+                      Expanded(
+                        child: Text(
+                          DateFormat('MMM yyyy').format(
+                            DateTime(
+                              _selectedMonth.year,
+                              _selectedMonth.month + 1,
+                              1,
+                            ),
+                          ),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: PageView.builder(
                     controller: _monthController,

@@ -18,7 +18,7 @@ class PaymentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
-    final date = _formatDate(payment.date);
+    final dateLabel = _buildDateLabel(payment);
     final statusColors = context.appStatusColors;
 
     return Container(
@@ -85,7 +85,7 @@ class PaymentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    date,
+                    dateLabel,
                     style: const TextStyle(
                       fontFamily: "Urbanist",
                       fontSize: 10,
@@ -218,10 +218,17 @@ class PaymentCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(String value) {
-    final date = DateTime.tryParse(value);
-    if (date == null) return value;
-    return DateFormat('MMM d, h:mm a').format(date.toLocal());
+  String _buildDateLabel(PaymentItem payment) {
+    final date = DateTime.tryParse(payment.date)?.toLocal();
+    if (date == null) return payment.date;
+
+    switch (payment.status) {
+      case PaymentStatus.approved:
+        return 'Paid on ${DateFormat('MMM d, yyyy').format(date)}';
+      case PaymentStatus.pending:
+      case PaymentStatus.rejected:
+        return DateFormat('MMM d, h:mm a').format(date);
+    }
   }
 
   String _statusLabel(PaymentStatus status) {

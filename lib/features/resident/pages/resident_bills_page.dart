@@ -198,6 +198,12 @@ class _ResidentBillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
     final dueDate = DateFormat('MMM d, yyyy').format(bill.dueDate);
+    final latestCompletedPayment = bill.latestCompletedPayment;
+    final paidOnLabel = latestCompletedPayment == null
+        ? null
+        : DateFormat('MMM d, yyyy').format(
+            latestCompletedPayment.createdAt.toLocal(),
+          );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -246,6 +252,17 @@ class _ResidentBillCard extends StatelessWidget {
               fontSize: 12,
             ),
           ),
+          if (paidOnLabel != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Paid on $paidOnLabel',
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           ...bill.bills.map(
             (item) => Padding(

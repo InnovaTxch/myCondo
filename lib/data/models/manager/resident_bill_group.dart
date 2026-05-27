@@ -51,6 +51,13 @@ class ResidentBillGroup {
     return null;
   }
 
+  BillPaymentAttempt? get latestCompletedPayment {
+    for (final payment in payments) {
+      if (payment.status == 'completed') return payment;
+    }
+    return null;
+  }
+
   int get outstandingAmount {
     final amount = totalAmount - paidAmount;
     return amount < 0 ? 0 : amount;
