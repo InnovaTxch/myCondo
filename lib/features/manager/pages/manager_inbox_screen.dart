@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/features/manager/pages/resident_details_page.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
@@ -410,9 +411,8 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                         name,
                         style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: hasUnread
-                              ? FontWeight.w800
-                              : FontWeight.w700,
+                          fontWeight:
+                              hasUnread ? FontWeight.w800 : FontWeight.w700,
                           fontSize: hasUnread ? 16 : 15,
                           color: hasUnread
                               ? Colors.black
@@ -420,23 +420,29 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Text(
-                            isOnline ? 'Active now' : 'Resident',
-                            style: const TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        isOnline ? 'Active now' : 'Resident',
+                        style: const TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                // Chat button
+                // ── Resident profile shortcut ──
+                IconButton(
+                  tooltip: 'View resident profile',
+                  icon: const Icon(
+                    Icons.person_outline_rounded,
+                    size: 20,
+                    color: Color(0xFF64748B),
+                  ),
+                  onPressed: () => _openResidentProfile(residentId),
+                ),
+                // Unread chat badge
                 if (hasUnread)
                   Container(
                     width: 36,
@@ -455,6 +461,15 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _openResidentProfile(String residentId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResidentDetailsPage(residentId: residentId),
       ),
     );
   }
