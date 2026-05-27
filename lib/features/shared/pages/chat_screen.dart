@@ -10,12 +10,23 @@ class ChatScreen extends StatefulWidget {
   final bool showBackButton;
   final String otherProfileId;
 
+  /// Optional subtitle shown under the name in the app bar (e.g. "Unit A").
+  /// When null the subtitle area is left empty (same as before).
+  final String? unitName;
+
+  /// Optional callback invoked when the manager taps the header avatar/name.
+  /// Typically used to push ResidentDetailsPage. When null the header is not
+  /// tappable and no visual affordance is shown.
+  final VoidCallback? onHeaderTap;
+
   const ChatScreen({
     super.key,
     required this.name,
     required this.conversationId,
     required this.otherProfileId,
     this.showBackButton = true,
+    this.unitName,
+    this.onHeaderTap,
   });
 
   @override
@@ -146,18 +157,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (difference == 1) return 'Yesterday';
 
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
@@ -326,6 +327,17 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // Determine the subtitle: unit name takes priority, then online status.
+    final unitName = widget.unitName;
+    final String subtitle;
+    if (unitName != null && unitName.isNotEmpty) {
+      subtitle = _isOtherUserActive ? 'Unit $unitName · Active now' : 'Unit $unitName';
+    } else {
+      subtitle = _isOtherUserActive ? 'Active now' : '';
+    }
+
+    final tappable = widget.onHeaderTap != null;
+
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -353,78 +365,109 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 onPressed: () => Navigator.pop(context),
               ),
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [primaryBlue, deepBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryBlue.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _getInitials(widget.name),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                if (_isOtherUserActive)
-                  Positioned(
-                    right: -1,
-                    bottom: -1,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 12),
+            // Tappable avatar + name section
             Expanded(
-              child: Transform.translate(
-                offset: const Offset(0, 3),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: GestureDetector(
+                onTap: tappable ? widget.onHeaderTap : null,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
                   children: [
-                    Text(
-                      widget.name,
-                      style: const TextStyle(
-                        color: Color(0xFF1E293B),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [primaryBlue, deepBlue],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryBlue.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getInitials(widget.name),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_isOtherUserActive)
+                          Positioned(
+                            right: -1,
+                            bottom: -1,
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF22C55E),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _isOtherUserActive ? 'Active now' : '',
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Transform.translate(
+                        offset: const Offset(0, 3),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    widget.name,
+                                    style: const TextStyle(
+                                      color: Color(0xFF1E293B),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (tappable) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 16,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            if (subtitle.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -433,11 +476,15 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             // Action buttons
             IconButton(
-              icon: Icon(Icons.call_outlined, color: primaryBlue, size: 22),
+              icon: const Icon(Icons.call_outlined, color: primaryBlue, size: 22),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.videocam_outlined, color: primaryBlue, size: 22),
+              icon: const Icon(
+                Icons.videocam_outlined,
+                color: primaryBlue,
+                size: 22,
+              ),
               onPressed: () {},
             ),
           ],

@@ -22,12 +22,18 @@ class MessagingService {
 
     final units = await _supabase
         .from('units')
-        .select('id')
+        .select('id, name')
         .eq('condo_id', condoId);
 
     final unitIds = (units as List)
         .map((unit) => (unit as Map<String, dynamic>)['id'])
         .toList();
+
+    // Build a lookup from unit_id → unit_name for the chat header subtitle.
+    final unitNameById = <dynamic, String>{
+      for (final u in units as List)
+        (u as Map<String, dynamic>)['id']: (u['name'] ?? '').toString(),
+    };
 
     if (unitIds.isEmpty) return [];
 
@@ -37,9 +43,13 @@ class MessagingService {
         .inFilter('unit_id', unitIds)
         .eq('status', 'active');
 
-    final residentIds = (residentRows as List)
-        .map((resident) => (resident as Map<String, dynamic>)['id'].toString())
-        .toList();
+    // Build a lookup from profile id → unit_id so we can attach it below.
+    final unitIdByResidentId = <String, dynamic>{
+      for (final row in residentRows as List)
+        (row as Map<String, dynamic>)['id'].toString(): row['unit_id'],
+    };
+
+    final residentIds = unitIdByResidentId.keys.toList();
 
     if (residentIds.isEmpty) return [];
 
@@ -48,9 +58,15 @@ class MessagingService {
         .select('id, first_name, last_name, role')
         .inFilter('id', residentIds);
 
-    return (profiles as List)
-        .map((profile) => profile as Map<String, dynamic>)
-        .toList();
+    // Merge unit_id and unit_name into each profile map so the inbox can
+    // show shortcuts and the chat header subtitle without extra round-trips.
+    return (profiles as List).map((profile) {
+      final map = Map<String, dynamic>.from(profile as Map<String, dynamic>);
+      final unitId = unitIdByResidentId[map['id'].toString()];
+      map['unit_id'] = unitId;
+      map['unit_name'] = unitId != null ? (unitNameById[unitId] ?? '') : '';
+      return map;
+    }).toList();
   }
 
   Future<Map<String, dynamic>?> fetchResidentManager(String residentId) async {

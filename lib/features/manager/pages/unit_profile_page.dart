@@ -121,6 +121,8 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
             name: residentName,
             conversationId: conversationId,
             otherProfileId: residentId,
+            unitName: _unit?.name,
+            onHeaderTap: () => _openResidentDetails(residentId),
           ),
         ),
       );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/features/manager/pages/resident_details_page.dart';
+import 'package:mycondo/features/manager/pages/unit_profile_page.dart';
 import 'package:mycondo/features/shared/pages/chat_screen.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
@@ -161,10 +162,15 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                         final resident = filtered[index];
                         final residentId = resident['id'].toString();
                         final name = _displayName(resident);
+                        // unit_id and unit_name are now included by fetchResidentsForManager
+                        final unitId = resident['unit_id'] as int?;
+                        final unitName = (resident['unit_name'] ?? '').toString();
 
                         return _buildResidentTile(
                           residentId: residentId,
                           name: name,
+                          unitId: unitId,
+                          unitName: unitName,
                           hasUnread: unreadResidentIds.contains(residentId),
                           isOnline: _onlineResidentIds.contains(residentId),
                         );
@@ -312,6 +318,8 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
   Widget _buildResidentTile({
     required String residentId,
     required String name,
+    int? unitId,
+    String unitName = '',
     bool hasUnread = false,
     bool isOnline = false,
   }) {
@@ -329,7 +337,11 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _openChat(residentId: residentId, residentName: name),
+          onTap: () => _openChat(
+            residentId: residentId,
+            residentName: name,
+            unitName: unitName,
+          ),
           borderRadius: BorderRadius.circular(16),
           splashColor: softBlue,
           highlightColor: softBlue.withValues(alpha: 0.5),
@@ -402,7 +414,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                   ],
                 ),
                 const SizedBox(width: 14),
-                // Name + role
+                // Name + status
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,7 +444,7 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                     ],
                   ),
                 ),
-                // ── Resident profile shortcut ──
+                // ── Resident profile shortcut ──────────────────────────────
                 IconButton(
                   tooltip: 'View resident profile',
                   icon: const Icon(
@@ -442,6 +454,17 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
                   ),
                   onPressed: () => _openResidentProfile(residentId),
                 ),
+                // ── Unit shortcut ──────────────────────────────────────────
+                if (unitId != null)
+                  IconButton(
+                    tooltip: 'View unit',
+                    icon: const Icon(
+                      Icons.home_outlined,
+                      size: 20,
+                      color: Color(0xFF64748B),
+                    ),
+                    onPressed: () => _openUnitProfile(unitId),
+                  ),
                 // Unread chat badge
                 if (hasUnread)
                   Container(
@@ -474,9 +497,19 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
     );
   }
 
+  void _openUnitProfile(int unitId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ManagerUnitProfilePage(unitId: unitId),
+      ),
+    );
+  }
+
   Future<void> _openChat({
     required String residentId,
     required String residentName,
+    String unitName = '',
   }) async {
     showDialog(
       context: context,
@@ -498,6 +531,8 @@ class _ManagerInboxScreenState extends State<ManagerInboxScreen> {
             name: residentName,
             conversationId: conversationId,
             otherProfileId: residentId,
+            unitName: unitName.isNotEmpty ? unitName : null,
+            onHeaderTap: () => _openResidentProfile(residentId),
           ),
         ),
       );
