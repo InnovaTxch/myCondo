@@ -1,10 +1,13 @@
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PaymentApprovalRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<List<PaymentItem>> getPayments(PaymentStatus status) async {
     return _getPaymentsForStatuses([_toDatabaseStatus(status)]);
@@ -59,6 +62,15 @@ class PaymentApprovalRepository {
         })
         .eq('id', payment.id);
 
+    final residentId = await _getResidentIdForPayment(payment.id);
+    if (residentId != null) {
+      await _pushDispatcher.dispatchPaymentDecision(
+        paymentId: payment.id,
+        residentId: residentId,
+        decision: 'completed',
+      );
+    }
+
     final bill = await _getBillForPayment(payment);
     final paidAmount = await _getCompletedPaidAmount(payment);
     final nextStatus = paidAmount >= bill.totalAmount ? 'paid' : 'partial';
@@ -90,6 +102,15 @@ class PaymentApprovalRepository {
           'rejection_reason': trimmed,
         })
         .eq('id', payment.id);
+
+    final residentId = await _getResidentIdForPayment(payment.id);
+    if (residentId != null) {
+      await _pushDispatcher.dispatchPaymentDecision(
+        paymentId: payment.id,
+        residentId: residentId,
+        decision: 'rejected',
+      );
+    }
   }
 
   String _toDatabaseStatus(PaymentStatus status) {
@@ -219,6 +240,17 @@ class PaymentApprovalRepository {
     return (rows as List).fold<int>(0, (sum, row) {
       return sum + ((row as Map<String, dynamic>)['amount'] as num).toInt();
     });
+  }
+
+  Future<String?> _getResidentIdForPayment(int paymentId) async {
+    final row = await _supabase
+        .from('payments')
+        .select('paid_by')
+        .eq('id', paymentId)
+        .maybeSingle();
+    final paidBy = row?['paid_by']?.toString().trim();
+    if (paidBy == null || paidBy.isEmpty) return null;
+    return paidBy;
   }
 
   Future<_ManagerContext> _requireManagerContext() async {

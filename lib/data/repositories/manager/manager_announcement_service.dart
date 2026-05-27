@@ -1,10 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 
 class ManagerAnnouncementService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<List<Announcement>> getAnnouncements() async {
     final manager = await _requireManagerContext();
@@ -142,11 +145,23 @@ class ManagerAnnouncementService {
 
   Future<void> createAnnouncement(Announcement announcement) async {
     final manager = await _requireManagerContext();
-    await _supabase.from('announcements').insert({
-      ...announcement.toJson(),
-      'condo_id': manager.condoId,
-      'posted_by': manager.managerId,
-    });
+    final inserted = await _supabase
+        .from('announcements')
+        .insert({
+          ...announcement.toJson(),
+          'condo_id': manager.condoId,
+          'posted_by': manager.managerId,
+        })
+        .select('id')
+        .single();
+
+    final announcementId = (inserted['id'] as num?)?.toInt();
+    if (announcementId != null) {
+      await _pushDispatcher.dispatchAnnouncementPublished(
+        announcementId: announcementId,
+        condoId: manager.condoId,
+      );
+    }
   }
 
   Future<void> updateAnnouncement(

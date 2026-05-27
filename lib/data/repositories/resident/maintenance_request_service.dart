@@ -1,4 +1,5 @@
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MaintenanceRequestService {
@@ -7,6 +8,8 @@ class MaintenanceRequestService {
 
   final SupabaseClient _supabase;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<MaintenanceResidentDetails> fetchResidentDetails() async {
     final context = await _requireResidentContext();
@@ -20,18 +23,31 @@ class MaintenanceRequestService {
   Future<void> submitRequest(MaintenanceRequestInput input) async {
     final context = await _requireResidentContext();
 
-    await _supabase.from('maintenance_requests').insert({
-      'resident_id': context.residentId,
-      'unit_id': context.unitId,
-      'condo_id': context.condoId,
-      'reporter_first_name': input.firstName.trim(),
-      'reporter_last_name': input.lastName.trim(),
-      'room_number': input.roomNumber.trim(),
-      'priority': input.priority.toLowerCase(),
-      'problem_type': input.problemType,
-      'description': input.description.trim(),
-      'status': 'pending',
-    });
+    final inserted = await _supabase
+        .from('maintenance_requests')
+        .insert({
+          'resident_id': context.residentId,
+          'unit_id': context.unitId,
+          'condo_id': context.condoId,
+          'reporter_first_name': input.firstName.trim(),
+          'reporter_last_name': input.lastName.trim(),
+          'room_number': input.roomNumber.trim(),
+          'priority': input.priority.toLowerCase(),
+          'problem_type': input.problemType,
+          'description': input.description.trim(),
+          'status': 'pending',
+        })
+        .select('id')
+        .single();
+
+    final requestId = (inserted['id'] as num?)?.toInt();
+    if (requestId != null) {
+      await _pushDispatcher.dispatchMaintenanceSubmitted(
+        requestId: requestId,
+        condoId: context.condoId,
+        residentId: context.residentId,
+      );
+    }
   }
 
   Future<List<MaintenanceRequestRecord>> fetchMyRequests({

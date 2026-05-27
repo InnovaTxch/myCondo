@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/services/shared/presence_service.dart';
-import 'package:mycondo/services/shared/push_session_binding_service.dart';
+import 'package:mycondo/services/push/push_notification_service.dart';
+import 'package:mycondo/services/push/push_session_binding_service.dart';
 import 'package:mycondo/services/shared/session_preference_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -13,6 +14,8 @@ class AuthService {
       SessionPreferenceService();
   final PushSessionBindingService _pushBindingService =
       PushSessionBindingService();
+  final PushNotificationService _pushNotificationService =
+      PushNotificationService.instance;
 
   Future<String?> getRole() async {
     try {
@@ -44,6 +47,13 @@ class AuthService {
     String password, {
     required bool keepSignedIn,
   }) async {
+    final previousProfile = await _identity.getCurrentProfile();
+    if (previousProfile != null) {
+      await _pushNotificationService.unregisterCurrentProfileDevice(
+        profileId: previousProfile.id,
+      );
+    }
+
     final response = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
@@ -60,11 +70,15 @@ class AuthService {
       await _pushBindingService.clearBinding();
     }
 
+    await _pushNotificationService.registerCurrentProfileDevice();
+
     return response;
   }
 
   //sign out
   Future<void> signOut({bool clearRememberSessionPreference = true}) async {
+    final profileId = (await _identity.getCurrentProfile())?.id;
+
     try {
       await presenceService.stop();
     } catch (_) {
@@ -78,6 +92,9 @@ class AuthService {
       } else {
         _sessionPreferenceService.clearEphemeralSessionMarker();
       }
+      await _pushNotificationService.unregisterCurrentProfileDevice(
+        profileId: profileId,
+      );
       await _pushBindingService.clearBinding();
     } catch (error, stackTrace) {
       try {

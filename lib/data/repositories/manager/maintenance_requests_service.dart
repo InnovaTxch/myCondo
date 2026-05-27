@@ -1,4 +1,5 @@
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ManagerMaintenanceRequestsService {
@@ -7,6 +8,8 @@ class ManagerMaintenanceRequestsService {
 
   final SupabaseClient _supabase;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<List<ManagerMaintenanceRequest>> fetchRequests({
     String? status,
@@ -45,7 +48,7 @@ class ManagerMaintenanceRequestsService {
     final normalizedStatus = status.toLowerCase().trim();
     final now = DateTime.now().toUtc().toIso8601String();
 
-    await _supabase
+    final updated = await _supabase
         .from('maintenance_requests')
         .update({
           'status': normalizedStatus,
@@ -54,7 +57,18 @@ class ManagerMaintenanceRequestsService {
           'updated_by': profile.id,
           'resolved_at': normalizedStatus == 'resolved' ? now : null,
         })
-        .eq('id', requestId);
+        .eq('id', requestId)
+        .select('id, resident_id')
+        .maybeSingle();
+
+    final residentId = updated?['resident_id']?.toString().trim();
+    if (residentId != null && residentId.isNotEmpty) {
+      await _pushDispatcher.dispatchMaintenanceUpdated(
+        requestId: requestId,
+        residentId: residentId,
+        status: normalizedStatus,
+      );
+    }
   }
 
   Future<int> _requireManagerCondoId() async {
