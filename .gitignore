@@ -18,6 +18,8 @@ supabase
 .history
 
 .env
+.env.*
+!.env.example
 
 # Flutter repo-specific
 /bin/cache/
@@ -65,7 +67,11 @@ unlinked_spec.ds
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
+android/app/google-services.json
 *.jks
+*.keystore
+firebase-adminsdk-*.json
+serviceAccountKey.json
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -96,6 +102,10 @@ unlinked_spec.ds
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner/GoogleService-Info.plist
+*.p8
+*.p12
+*.mobileprovision
 
 # macOS
 **/Flutter/ephemeral/

@@ -87,24 +87,23 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
   - `Checked`:
     - Session is remembered across app restarts (`AuthGate` keeps the session).
     - Inactivity timer is disabled.
-    - A persistent device/profile push-session binding is stored until explicit logout.
+    - Device push token stays bound to the signed-in profile until explicit logout.
   - `Unchecked`:
     - Session is valid only for the current app run.
     - On next app launch, `AuthGate` clears any leftover session and sends user to login.
     - Inactivity timer remains active:
       - manager: 10 minutes
       - resident: 15 minutes
-    - Persistent device/profile push-session binding is cleared.
+    - Device push token is deactivated when the session is cleared.
 - Explicit logout always:
   - signs out the Supabase session
   - clears `Keep me signed in` preference
-  - clears device/profile push-session binding metadata
+  - deactivates push tokens for the current device/profile
 
 ## Known Limitations / Out of Scope
 
 - No external payment gateway integration yet (manual submission + manager approval flow).
 - Payment proof is text/reference/link entry only (no in-app file upload pipeline yet).
-- Notifications are in-app realtime badges/popups; push notifications are not configured.
 - Demo credentials are not public in this repo; ask the maintainer.
 - Some screens depend on seeded data to be meaningful (`docs/DEMO.md`).
 
@@ -116,6 +115,8 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - Supabase Realtime
 - Supabase Row Level Security (RLS)
 - `flutter_dotenv` for local env config
+- Firebase Cloud Messaging (Android + iOS via APNs)
+- Supabase Edge Functions (push dispatch)
 
 ## Run Options
 
@@ -155,6 +156,95 @@ flutter run
 flutter run -d chrome
 flutter run -d android
 ```
+
+## Public Repo Security Checklist
+
+Before contributing, read the secure setup guide:
+
+- `docs/SECURITY_SETUP.md`
+
+Quick rules:
+- Never commit `.env`, `android/app/google-services.json`, or `ios/Runner/GoogleService-Info.plist`
+- Use project-local credentials only
+- Rotate any key immediately if it was exposed in a public commit
+
+## Push Notification Setup (Android + Web, iOS ready)
+
+This app now supports push notifications for:
+- manager: resident payment submissions, maintenance submissions
+- resident: payment decisions, maintenance status updates, announcements, messages
+
+### 1) Firebase project setup
+
+1. Create a Firebase project.
+2. Add Android app package (`com.example.mycondo` unless changed).
+3. Download `google-services.json` and place it in `android/app/google-services.json`.
+4. (iOS ready) Add iOS app in Firebase and download `GoogleService-Info.plist` for `ios/Runner/GoogleService-Info.plist`.
+5. Add a Firebase **Web app** and copy its config object values + Web Push certificate key pair (VAPID key).
+
+### 2) Web config values
+
+Set these in `.env` (see `.env.example`):
+
+```env
+FIREBASE_WEB_API_KEY=...
+FIREBASE_WEB_APP_ID=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_WEB_PROJECT_ID=...
+FIREBASE_WEB_AUTH_DOMAIN=...
+FIREBASE_WEB_STORAGE_BUCKET=...
+FIREBASE_WEB_MEASUREMENT_ID=...
+FIREBASE_WEB_VAPID_KEY=...
+```
+
+Update placeholders in `web/firebase-messaging-sw.js` with the same Firebase web config values.
+
+### 3) APNs (for iOS push delivery)
+
+1. In Apple Developer, create APNs auth key or certificate.
+2. Upload APNs credentials in Firebase Cloud Messaging for your iOS app.
+3. Enable Push Notifications capability in Xcode target `Runner` when testing on iOS device.
+
+### 4) Supabase migration + function
+
+Run migrations and deploy the push edge function:
+
+```bash
+supabase db push
+supabase functions deploy send-push-event
+```
+
+Set required function secrets:
+
+```bash
+supabase secrets set FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
+supabase secrets set FIREBASE_PROJECT_ID='your-firebase-project-id'
+```
+
+`FIREBASE_SERVICE_ACCOUNT_JSON` must be a full JSON service account with Firebase Messaging API access.
+
+### 5) Test flow (mobile + web)
+
+1. Login as resident, allow notification permission, submit payment and maintenance request.
+2. Login as manager on another device/session, approve/reject payment and update maintenance status.
+3. Create an announcement and send chat messages.
+4. Verify push arrives when recipient app is backgrounded/closed (or browser tab not focused for web).
+5. Logout and confirm new pushes for that profile stop on that device.
+
+### 6) Preference behavior
+
+- Push dispatch checks `notification_preferences` (when saved) for:
+  - `payment_reminders`
+  - `announcement_alerts`
+  - `maintenance_updates`
+  - `message_alerts`
+  - `allow_manager_messages`
+- If no preference row exists yet, defaults are treated as enabled.
+
+### 7) Hosting note for GitHub Pages
+
+- If the app is hosted under a subpath (example: `/myCondo/`), ensure `web/firebase-messaging-sw.js` is publicly served and the browser successfully registers it.
+- Web push requires HTTPS and a browser that supports service workers + notifications.
 
 ## Important Status Values
 
@@ -205,6 +295,7 @@ lib/
       pages/
       widgets/
   services/
+    push/
     shared/
   theme/
   utils/

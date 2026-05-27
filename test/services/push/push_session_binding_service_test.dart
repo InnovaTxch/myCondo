@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mycondo/services/shared/push_session_binding_service.dart';
+import 'package:mycondo/services/push/push_session_binding_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
