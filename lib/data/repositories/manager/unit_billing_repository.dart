@@ -2,6 +2,7 @@ import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/data/repositories/manager/condo_unit_repository.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class UnitBillingRepository {
@@ -12,6 +13,8 @@ class UnitBillingRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
   final CondoUnitRepository _unitRepository = CondoUnitRepository.instance;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<UnitOption> getUnitById(int unitId) async {
     final units = await _unitRepository.getUnits();
@@ -386,6 +389,7 @@ class UnitBillingRepository {
     }
 
     var remainingPayment = amount;
+    int? firstCreatedPaymentId;
     for (final target in targets) {
       if (remainingPayment <= 0) break;
       final targetPayable = (target.remainingAmount - target.pendingAmount)
@@ -393,17 +397,30 @@ class UnitBillingRepository {
       final appliedAmount = remainingPayment.clamp(0, targetPayable);
       if (appliedAmount <= 0) continue;
 
-      await _supabase.from('payments').insert({
-        'monthly_bill_id': target.isMonthly ? target.id : null,
-        'one_time_fee_id': target.isMonthly ? null : target.id,
-        'paid_by': profile.id,
-        'amount': appliedAmount,
-        'status': 'pending',
-        'proof_url': proofUrl.trim(),
-        'remark': remark?.trim(),
-      });
+      final inserted = await _supabase
+          .from('payments')
+          .insert({
+            'monthly_bill_id': target.isMonthly ? target.id : null,
+            'one_time_fee_id': target.isMonthly ? null : target.id,
+            'paid_by': profile.id,
+            'amount': appliedAmount,
+            'status': 'pending',
+            'proof_url': proofUrl.trim(),
+            'remark': remark?.trim(),
+          })
+          .select('id')
+          .single();
+
+      firstCreatedPaymentId ??= (inserted['id'] as num?)?.toInt();
 
       remainingPayment -= appliedAmount;
+    }
+
+    if (firstCreatedPaymentId != null) {
+      await _pushDispatcher.dispatchPaymentSubmitted(
+        paymentId: firstCreatedPaymentId,
+        residentId: profile.id,
+      );
     }
   }
 

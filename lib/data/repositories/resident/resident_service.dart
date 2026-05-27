@@ -5,6 +5,7 @@ import 'package:mycondo/data/models/manager/resident_bill_group.dart';
 import 'package:mycondo/data/models/unit.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/data/repositories/manager/resident_bill_repository.dart';
+import 'package:mycondo/services/push/push_event_dispatcher_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResidentService {
@@ -12,6 +13,8 @@ class ResidentService {
   final ResidentBillRepository _billRepository =
       ResidentBillRepository.instance;
   final ProfileIdentityService _identity = ProfileIdentityService();
+  final PushEventDispatcherService _pushDispatcher =
+      PushEventDispatcherService();
 
   Future<ResidentDashboardData> fetchDashboardData() async {
     final context = await _requireResidentContext();
@@ -118,7 +121,18 @@ class ResidentService {
       payment['one_time_fee_id'] = bill.id;
     }
 
-    await _supabase.from('payments').insert(payment);
+    final inserted = await _supabase
+        .from('payments')
+        .insert(payment)
+        .select('id')
+        .single();
+    final paymentId = (inserted['id'] as num?)?.toInt();
+    if (paymentId != null) {
+      await _pushDispatcher.dispatchPaymentSubmitted(
+        paymentId: paymentId,
+        residentId: context.id,
+      );
+    }
   }
 
   Future<List<Unit>?> fetchUnitsForManager() async {
