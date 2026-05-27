@@ -27,7 +27,14 @@ class PaymentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.softGray),
+        border: Border.all(color: const Color(0xFFD6E8F7)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4A90FF).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
