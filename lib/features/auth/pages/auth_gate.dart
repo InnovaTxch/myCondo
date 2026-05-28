@@ -28,11 +28,29 @@ class _AuthGateState extends State<AuthGate> {
       SessionPreferenceService();
 
   late final Future<void> _startupSessionFuture;
+  String? _roleUserId;
+  Future<String?>? _roleFuture;
 
   @override
   void initState() {
     super.initState();
     _startupSessionFuture = _handleStartupSessionPolicy();
+  }
+
+  Future<String?> _getRoleForSession(Session session) {
+    final userId = session.user.id;
+    final cachedRoleFuture = _roleFuture;
+    if (_roleUserId == userId && cachedRoleFuture != null) {
+      return cachedRoleFuture;
+    }
+
+    _roleUserId = userId;
+    return _roleFuture = authService.getRole();
+  }
+
+  void _clearRoleCache() {
+    _roleUserId = null;
+    _roleFuture = null;
   }
 
   Future<void> _handleStartupSessionPolicy() async {
@@ -81,7 +99,7 @@ class _AuthGateState extends State<AuthGate> {
 
             if (session != null) {
               return FutureBuilder<String?>(
-                future: authService.getRole(),
+                future: _getRoleForSession(session),
                 builder: (context, roleSnapshot) {
                   if (roleSnapshot.connectionState == ConnectionState.waiting) {
                     return const Scaffold(body: AppLoadingState());
@@ -101,6 +119,7 @@ class _AuthGateState extends State<AuthGate> {
                 },
               );
             } else {
+              _clearRoleCache();
               return const LoginScreen();
             }
           },
