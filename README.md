@@ -121,7 +121,7 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - Supabase Postgres
 - Supabase Realtime
 - Supabase Row Level Security (RLS)
-- `flutter_dotenv` for local env config
+- Flutter compile-time configuration via `--dart-define-from-file`
 - Firebase Cloud Messaging (Android + iOS via APNs)
 - Supabase Edge Functions (push dispatch)
 
@@ -132,6 +132,27 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - URL: https://innovatxch.github.io/myCondo/
 - Credentials: ask the maintainer
 - Demo seed reference: `docs/DEMO.md`
+
+Release configuration is injected by GitHub Actions from repository secrets. The workflow writes an ignored `.env` file during CI and passes it to Flutter with:
+
+```bash
+flutter build web --release --base-href "/myCondo/" --dart-define-from-file=.env
+```
+
+Required GitHub repository secrets:
+
+```env
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+FIREBASE_WEB_API_KEY=...
+FIREBASE_WEB_APP_ID=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_WEB_PROJECT_ID=...
+FIREBASE_WEB_AUTH_DOMAIN=...
+FIREBASE_WEB_STORAGE_BUCKET=...
+FIREBASE_WEB_MEASUREMENT_ID=...
+FIREBASE_WEB_VAPID_KEY=...
+```
 
 ### Option B: Local run
 
@@ -154,14 +175,14 @@ flutter pub get
 6. Run app:
 
 ```bash
-flutter run
+flutter run --dart-define-from-file=.env
 ```
 
 7. Optional targets:
 
 ```bash
-flutter run -d chrome
-flutter run -d android
+flutter run -d chrome --dart-define-from-file=.env
+flutter run -d android --dart-define-from-file=.env
 ```
 
 ## Public Repo Security Checklist

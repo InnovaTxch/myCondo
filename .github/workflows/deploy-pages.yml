@@ -41,7 +41,7 @@ jobs:
       - name: Build web
         env:
           REPO_NAME: ${{ github.event.repository.name }}
-        run: flutter build web --release --base-href "/$REPO_NAME/"
+        run: flutter build web --release --base-href "/$REPO_NAME/" --dart-define-from-file=.env
 
       - name: Add .nojekyll
         run: touch build/web/.nojekyll

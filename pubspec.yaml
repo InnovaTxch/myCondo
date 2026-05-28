@@ -10,7 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  flutter_dotenv: ^5.0.2
   google_fonts: ^8.0.2
   intl: ^0.20.2
   package_info_plus: ^10.1.0
@@ -32,7 +31,6 @@ flutter:
   assets:
     - assets/images/house.png
     - assets/images/profile.png
-    - .env
 
   fonts:
     - family: Urbanist
