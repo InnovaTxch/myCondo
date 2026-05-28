@@ -101,6 +101,17 @@ class AnnouncementCard extends StatelessWidget {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
+                if (expiresDate != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Expires $expiresDate',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF777777),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -109,13 +120,6 @@ class AnnouncementCard extends StatelessWidget {
                       background: style.background,
                       textColor: style.tint,
                     ),
-                    const SizedBox(width: 6),
-                    if (expiresDate != null)
-                      _MetaChip(
-                        label: 'Expires $expiresDate',
-                        background: const Color(0xFFF3F4F6),
-                        textColor: const Color(0xFF5C6673),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 6),
