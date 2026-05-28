@@ -195,6 +195,7 @@ Quick rules:
 - Never commit `.env`, `android/app/google-services.json`, or `ios/Runner/GoogleService-Info.plist`
 - Use project-local credentials only
 - Rotate any key immediately if it was exposed in a public commit
+- Android launcher and launch-screen source artwork lives in `assets/images/app-icon.png`.
 
 ## Push Notification Setup (Android + Web, iOS ready)
 

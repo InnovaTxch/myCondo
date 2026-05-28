@@ -29,7 +29,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
+    - assets/images/house.png
+    - assets/images/profile.png
 
   fonts:
     - family: Urbanist
