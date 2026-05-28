@@ -127,6 +127,24 @@ class _ManagerTransactionHistoryPageState
                       );
                     }
 
+                    if (filteredPayments.isEmpty) {
+                      return RefreshIndicator(
+                        onRefresh: _refresh,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 120),
+                            AppEmptyState(
+                              title: 'No results',
+                              message: 'No payments match your search or filters.',
+                              icon: Icons.search_off_rounded,
+                              card: false,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     return RefreshIndicator(
                       onRefresh: _refresh,
                       child: ListView.builder(
