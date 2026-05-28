@@ -4,6 +4,7 @@ import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
@@ -113,7 +114,7 @@ class _ResidentUnitBillPageState extends State<ResidentUnitBillPage> {
   Widget build(BuildContext context) {
     return AppPageScaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(title: const Text('Unit Bill')),
+      appBar: appPageAppBar(context: context, title: 'Unit Bill'),
       body: _isLoading
           ? const AppLoadingState()
           : _errorMessage != null

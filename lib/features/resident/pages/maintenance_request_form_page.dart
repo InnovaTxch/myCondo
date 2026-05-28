@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -156,25 +157,7 @@ class _MaintenanceRequestFormPageState
             : ListView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.chevron_left_rounded),
-                      ),
-                      const SizedBox(width: 4),
-                      const Expanded(
-                        child: Text(
-                          'Request Maintenance',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.darkText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const AppPageHeader(title: 'Request Maintenance'),
                   const SizedBox(height: 4),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),

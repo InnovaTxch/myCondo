@@ -7,6 +7,7 @@ import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 
 class ResidentBillBreakdownPage extends StatefulWidget {
@@ -92,7 +93,7 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
     final headerTopPadding = screenWidth < 380 ? 8.0 : 12.0;
 
     return AppPageScaffold(
-      appBar: AppBar(title: const Text('Bill Breakdown')),
+      appBar: appPageAppBar(context: context, title: 'Bill Breakdown'),
       body: FutureBuilder<List<ResidentBillGroup>>(
         future: _billsFuture,
         builder: (context, snapshot) {
@@ -159,7 +160,12 @@ class _ResidentBillBreakdownPageState extends State<ResidentBillBreakdownPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 8),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  0,
+                  horizontalPadding,
+                  8,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -390,7 +396,9 @@ class _BreakdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
-    final issuedLabel = DateFormat('MMM d, yyyy').format(entry.issuedAt.toLocal());
+    final issuedLabel = DateFormat(
+      'MMM d, yyyy',
+    ).format(entry.issuedAt.toLocal());
     final dueLabel = DateFormat('MMM d, yyyy').format(entry.dueDate.toLocal());
     final paidOnLabel = entry.fullyPaidAt == null
         ? null

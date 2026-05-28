@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 
 class PlaceholderPage extends StatelessWidget {
@@ -17,19 +18,7 @@ class PlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.lightBlueBackground,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.darkText),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.darkText,
-            fontFamily: 'Urbanist',
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+      appBar: appPageAppBar(context: context, title: title),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -37,11 +26,7 @@ class PlaceholderPage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  color: AppColors.primaryBlue,
-                  size: 64,
-                ),
+                Icon(icon, color: AppColors.primaryBlue, size: 64),
                 const SizedBox(height: 20),
                 Text(
                   title,

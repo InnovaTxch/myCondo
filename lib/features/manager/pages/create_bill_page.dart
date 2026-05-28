@@ -7,6 +7,7 @@ import 'package:mycondo/data/repositories/manager/bill_service.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/features/manager/widgets/bill_details.dart';
 import 'package:mycondo/features/manager/widgets/bill_recipient_container.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/features/shared/widgets/submit_button.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -164,120 +165,114 @@ class _CreateBillPageState extends State<CreateBillPage> {
       backgroundColor: AppColors.lightBlueBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.chevron_left_rounded),
-                  ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'Add Bills',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildSection(
-                title: 'Recipients',
-                child: BillRecipientContainer(
-                  selectedResidents: _selectedResidents,
-                  allUnits: _allUnits,
-                  onSelectionChanged: () => setState(() {}),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildSection(
-                title: 'Bill Details',
-                child: BillDetails(
-                  dueDate: _dueDate,
-                  selectedBillType: _selectedBillType,
-                  billTypes: _billTypes,
-                  setSelectedBillType: (value) =>
-                      setState(() => _selectedBillType = value),
-                  setDueDate: (date) => setState(() => _dueDate = date),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildSection(
-                title: 'Line Items',
-                child: Column(
-                  children: [
-                    ..._lineItems.asMap().entries.map(
-                      (entry) => _buildLineItem(entry.key),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: _addLineItem,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Line Item'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.darkText,
-                  borderRadius: BorderRadius.circular(18),
-                ),
+              const AppPageHeader(title: 'Add Bills'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Total Amount Due',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _pesoFormatter.format(_calculateTotal()),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
+                    _buildSection(
+                      title: 'Recipients',
+                      child: BillRecipientContainer(
+                        selectedResidents: _selectedResidents,
+                        allUnits: _allUnits,
+                        onSelectionChanged: () => setState(() {}),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSection(
+                      title: 'Bill Details',
+                      child: BillDetails(
+                        dueDate: _dueDate,
+                        selectedBillType: _selectedBillType,
+                        billTypes: _billTypes,
+                        setSelectedBillType: (value) =>
+                            setState(() => _selectedBillType = value),
+                        setDueDate: (date) => setState(() => _dueDate = date),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSection(
+                      title: 'Line Items',
+                      child: Column(
+                        children: [
+                          ..._lineItems.asMap().entries.map(
+                            (entry) => _buildLineItem(entry.key),
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: _addLineItem,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Line Item'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.darkText,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Amount Due',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _pesoFormatter.format(_calculateTotal()),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE6E2DD)),
+                      ),
+                      child: SwitchListTile(
+                        title: const Text(
+                          'Split across all residents',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: const Text(
+                          'Each selected resident receives an equal share.',
+                        ),
+                        value: _isAccountabilityShared,
+                        onChanged: (val) =>
+                            setState(() => _isAccountabilityShared = val),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SubmitButton(
+                      text: 'Generate & Send Bills',
+                      onPressed: _isSubmissionValid() ? _generateBill : null,
+                      color: AppColors.darkText,
+                      isLoading: _isLoading,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE6E2DD)),
-                ),
-                child: SwitchListTile(
-                  title: const Text(
-                    'Split across all residents',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  subtitle: const Text(
-                    'Each selected resident receives an equal share.',
-                  ),
-                  value: _isAccountabilityShared,
-                  onChanged: (val) =>
-                      setState(() => _isAccountabilityShared = val),
-                ),
-              ),
-              const SizedBox(height: 18),
-              SubmitButton(
-                text: 'Generate & Send Bills',
-                onPressed: _isSubmissionValid() ? _generateBill : null,
-                color: AppColors.darkText,
-                isLoading: _isLoading,
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/resident/maintenance_request_service.dart';
 import 'package:mycondo/features/resident/pages/maintenance_request_form_page.dart';
 import 'package:mycondo/features/resident/pages/resident_manager_chat_screen.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -161,25 +162,7 @@ class _MaintenanceRequestPageState extends State<MaintenanceRequestPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.chevron_left_rounded),
-                ),
-                const SizedBox(width: 4),
-                const Expanded(
-                  child: Text(
-                    'Maintenance',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            const AppPageHeader(title: 'Maintenance'),
             const SizedBox(height: 6),
             _ResidentRequestsSection(
               statuses: _statusTabs,

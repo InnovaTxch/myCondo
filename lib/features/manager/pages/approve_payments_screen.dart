@@ -3,6 +3,7 @@ import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
 import 'package:mycondo/features/manager/widgets/payment_card.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 
@@ -76,36 +77,7 @@ class _ApprovePaymentsScreenState extends State<ApprovePaymentsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton.icon(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.chevron_left,
-                  color: AppColors.darkText,
-                  size: 20,
-                ),
-                label: const Text(
-                  'Back',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.darkText,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 0),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Approve Payments',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.darkText,
-                ),
-              ),
+              const AppPageHeader(title: 'Approve Payments'),
               const SizedBox(height: 12),
               _buildTabs(),
               const SizedBox(height: 12),

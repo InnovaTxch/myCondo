@@ -6,6 +6,7 @@ import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 
 class ResidentBillsPage extends StatefulWidget {
   const ResidentBillsPage({
@@ -46,33 +47,14 @@ class _ResidentBillsPageState extends State<ResidentBillsPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 20, 8),
-            child: Row(
-              children: [
-                if (widget.showBackButton)
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.chevron_left_rounded),
-                  )
-                else
-                  const SizedBox(width: 12),
-                Text(
-                  widget.paidOnly ? 'Payment History' : 'Pay Bill',
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.darkText,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  tooltip: 'Monthly bill breakdown',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/resident-bill-breakdown'),
-                  icon: const Icon(Icons.calendar_month_rounded),
-                ),
-              ],
+          AppPageHeader(
+            title: widget.paidOnly ? 'Payment History' : 'Pay Bill',
+            showBackButton: widget.showBackButton,
+            trailing: IconButton(
+              tooltip: 'Monthly bill breakdown',
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/resident-bill-breakdown'),
+              icon: const Icon(Icons.calendar_month_rounded),
             ),
           ),
           Expanded(
@@ -201,9 +183,9 @@ class _ResidentBillCard extends StatelessWidget {
     final latestCompletedPayment = bill.latestCompletedPayment;
     final paidOnLabel = latestCompletedPayment == null
         ? null
-        : DateFormat('MMM d, yyyy').format(
-            latestCompletedPayment.createdAt.toLocal(),
-          );
+        : DateFormat(
+            'MMM d, yyyy',
+          ).format(latestCompletedPayment.createdAt.toLocal());
 
     final statusColors = context.appStatusColors;
     final statusColor = _billStatusColor(bill.status, statusColors);
@@ -386,23 +368,23 @@ class _ResidentBillCard extends StatelessWidget {
                     color: statusColor,
                   )
                 : canPay && bill.pendingPayment == null
-                    ? SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: onPay,
-                          icon: const Icon(Icons.payments_outlined, size: 18),
-                          label: const Text('Pay Bill'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryBlue,
-                            foregroundColor: AppColors.pureWhite,
-                            minimumSize: const Size.fromHeight(42),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
+                ? SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: onPay,
+                      icon: const Icon(Icons.payments_outlined, size: 18),
+                      label: const Text('Pay Bill'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: AppColors.pureWhite,
+                        minimumSize: const Size.fromHeight(42),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                      )
-                    : const SizedBox.shrink(),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),

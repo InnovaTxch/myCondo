@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class DashboardTabItem {
-  const DashboardTabItem({
-    required this.root,
-    this.navigatorKey,
-  });
+  const DashboardTabItem({required this.root, this.navigatorKey});
 
   final Widget root;
   final GlobalKey<NavigatorState>? navigatorKey;
@@ -25,7 +23,7 @@ class DashboardTabScaffold extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
   final Widget Function(int currentIndex, ValueChanged<int> onIndexChanged)
-      bottomNavigationBar;
+  bottomNavigationBar;
 
   @override
   State<DashboardTabScaffold> createState() => _DashboardTabScaffoldState();
@@ -40,6 +38,35 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
     _navigatorKeys = widget.tabs
         .map((t) => t.navigatorKey ?? GlobalKey<NavigatorState>())
         .toList(growable: false);
+  }
+
+  Future<bool> _confirmExitApp() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Exit app?'),
+        content: const Text('Do you want to leave myCondo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    return shouldExit == true;
+  }
+
+  Future<void> _handleRootBackPress() async {
+    final shouldExit = await _confirmExitApp();
+    if (shouldExit) {
+      await SystemNavigator.pop();
+    }
   }
 
   bool _handleBackPressed() {
@@ -78,18 +105,13 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
 
     final builder = widget.routes[settings.name];
     if (builder != null) {
-      return MaterialPageRoute(
-        settings: settings,
-        builder: builder,
-      );
+      return MaterialPageRoute(settings: settings, builder: builder);
     }
 
     return MaterialPageRoute(
       settings: settings,
       builder: (_) => Scaffold(
-        body: Center(
-          child: Text('Unknown route: ${settings.name}'),
-        ),
+        body: Center(child: Text('Unknown route: ${settings.name}')),
       ),
     );
   }
@@ -102,7 +124,7 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
         if (didPop) return;
         final shouldPopRoute = _handleBackPressed();
         if (shouldPopRoute) {
-          Navigator.of(context).pop();
+          _handleRootBackPress();
         }
       },
       child: Scaffold(
@@ -115,14 +137,17 @@ class _DashboardTabScaffoldState extends State<DashboardTabScaffold> {
                 enabled: widget.currentIndex == index,
                 child: Navigator(
                   key: _navigatorKeys[index],
-                  onGenerateRoute: (settings) => _onGenerateRoute(index, settings),
+                  onGenerateRoute: (settings) =>
+                      _onGenerateRoute(index, settings),
                 ),
               ),
             );
           }),
         ),
-        bottomNavigationBar:
-            widget.bottomNavigationBar(widget.currentIndex, _selectTab),
+        bottomNavigationBar: widget.bottomNavigationBar(
+          widget.currentIndex,
+          _selectTab,
+        ),
       ),
     );
   }

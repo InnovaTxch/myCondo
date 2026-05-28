@@ -6,6 +6,7 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/manager/manager_announcement_service.dart';
 import 'package:mycondo/features/manager/widgets/announcement_card.dart';
 import 'package:mycondo/features/manager/widgets/announcement_form_sheet.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -223,50 +224,10 @@ class _ManagerAnnouncementsPageState extends State<ManagerAnnouncementsPage> {
           child: Column(
             children: [
               // ─── Header ───────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(_didMutate),
-                      child: const Row(
-                        children: [
-                          Icon(
-                            Icons.chevron_left_rounded,
-                            size: 22,
-                            color: Color(0xFF333333),
-                          ),
-                          SizedBox(width: 2),
-                          Text(
-                            'Back',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF333333),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 16, 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Announcements',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.darkText,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
+              AppPageHeader(
+                title: 'Announcements',
+                onBackPressed: () => Navigator.of(context).pop(_didMutate),
+                padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
               ),
               // ─── Body ─────────────────────────────────────────────────
               Expanded(

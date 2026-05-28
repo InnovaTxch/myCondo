@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mycondo/data/repositories/manager/manager_profile_service.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -92,14 +93,7 @@ class _ManagerEditProfilePageState extends State<ManagerEditProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.lightBlueBackground,
-        elevation: 0,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
+      appBar: appPageAppBar(context: context, title: 'Edit Profile'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
