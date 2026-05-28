@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/features/manager/widgets/payment_history_card.dart';
 
@@ -57,36 +58,10 @@ class PaymentHistoryScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 18, 24, 20),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(
-                    Icons.chevron_left,
-                    color: Colors.black,
-                    size: 20,
-                  ),
-                  label: Text(
-                    'Back',
-                    style: TextStyle(
-                      fontFamily: "Urbanist",
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                      height: 1.0,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 0),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
+              const AppPageHeader(
+                title: 'Payment History',
+                padding: EdgeInsets.fromLTRB(0, 0, 0, 8),
               ),
-
-              const SizedBox(height: 8),
 
               Expanded(
                 child: Container(
@@ -98,17 +73,7 @@ class PaymentHistoryScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        'Payment History',
-                        style: TextStyle(
-                          fontFamily: "Urbanist",
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                          height: 1.0,
-                        ),
-                      ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         'As of Feb 8, 2026',
                         style: TextStyle(
@@ -124,7 +89,8 @@ class PaymentHistoryScreen extends StatelessWidget {
                       Expanded(
                         child: ListView(
                           children: paymentSections.map((section) {
-                            final items = section['items'] as List<Map<String, dynamic>>;
+                            final items =
+                                section['items'] as List<Map<String, dynamic>>;
 
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +108,7 @@ class PaymentHistoryScreen extends StatelessWidget {
                                 const SizedBox(height: 10),
 
                                 ...items.map(
-                                      (item) => Padding(
+                                  (item) => Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
                                     child: PaymentHistoryCard(
                                       time: item['time'] as String,
@@ -164,7 +130,6 @@ class PaymentHistoryScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 14),
-
             ],
           ),
         ),
@@ -172,4 +137,3 @@ class PaymentHistoryScreen extends StatelessWidget {
     );
   }
 }
-

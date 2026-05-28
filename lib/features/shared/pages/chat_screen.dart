@@ -346,10 +346,14 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             if (widget.showBackButton)
               IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_rounded,
-                  color: Color(0xFF1E293B),
-                  size: 18,
+                icon: const Text(
+                  '←',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                    height: 1,
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context),
               ),

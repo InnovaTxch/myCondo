@@ -11,6 +11,7 @@ import 'package:mycondo/features/manager/widgets/resident_list_avatar.dart';
 import 'package:mycondo/features/manager/widgets/unit_bill_progress_badge.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
 import 'package:mycondo/features/manager/pages/unit_profile_page.dart';
@@ -197,11 +198,7 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
   Widget build(BuildContext context) {
     return AppPageScaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.lightBlueBackground,
-        elevation: 0,
-        title: const Text('Manage Residents'),
-      ),
+      appBar: appPageAppBar(context: context, title: 'Manage Residents'),
       onRefresh: () => _loadResidents(showLoading: false),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
@@ -297,8 +294,8 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     final unit = group.unit;
     final isFull = unit.isFull;
     final billSummary =
-      _unitBillSummaries[unit.id] ??
-      UnitBillPaymentSummary.empty(unitId: unit.id, month: DateTime.now());
+        _unitBillSummaries[unit.id] ??
+        UnitBillPaymentSummary.empty(unitId: unit.id, month: DateTime.now());
 
     return Card(
       color: Colors.white,
@@ -318,7 +315,10 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
                     onTap: () => _openUnitProfile(unit),
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 2,
+                        vertical: 2,
+                      ),
                       child: Text(
                         'Unit ${unit.name}',
                         style: const TextStyle(
@@ -491,5 +491,3 @@ class _ManageResidentsPageState extends State<ManageResidentsPage> {
     );
   }
 }
-
-

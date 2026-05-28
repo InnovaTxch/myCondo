@@ -10,6 +10,7 @@ import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 
 class ManageCondoPage extends StatefulWidget {
   const ManageCondoPage({super.key});
@@ -117,11 +118,7 @@ class _ManageCondoPageState extends State<ManageCondoPage> {
 
     return AppPageScaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.lightBlueBackground,
-        elevation: 0,
-        title: const Text('Manage Condo'),
-      ),
+      appBar: appPageAppBar(context: context, title: 'Manage Condo'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openUnitSheet(),
         icon: const Icon(Icons.add_home_work_outlined),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/repositories/manager/resident_repository.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
 class ResidentFormPage extends StatefulWidget {
@@ -149,7 +150,7 @@ class _ResidentFormPageState extends State<ResidentFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Resident')),
+      appBar: appPageAppBar(context: context, title: 'Add Resident'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),

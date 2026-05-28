@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mycondo/data/repositories/manager/maintenance_requests_service.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
@@ -98,26 +99,9 @@ class _MaintenanceRequestsPageState extends State<MaintenanceRequestsPage> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.chevron_left_rounded),
-                    ),
-                    const SizedBox(width: 4),
-                    const Expanded(
-                      child: Text(
-                        'Maintenance',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              const AppPageHeader(
+                title: 'Maintenance',
+                padding: EdgeInsets.fromLTRB(12, 14, 20, 12),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),

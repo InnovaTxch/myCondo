@@ -4,6 +4,7 @@ import 'package:mycondo/data/models/manager/resident_profile.dart';
 import 'package:mycondo/data/models/manager/unit_monthly_models.dart';
 import 'package:mycondo/data/repositories/manager/unit_billing_repository.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 import 'package:mycondo/utils/user_friendly_error.dart';
@@ -879,9 +880,9 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     final unit = _unit;
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.lightBlueBackground,
-        title: Text(unit == null ? 'Unit Profile' : 'Unit ${unit.name}'),
+      appBar: appPageAppBar(
+        context: context,
+        title: unit == null ? 'Unit Profile' : 'Unit ${unit.name}',
       ),
       body: _isLoading
           ? const AppLoadingState()
@@ -1117,16 +1118,12 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
     );
   }
 
-
   Widget _buildOccupantTile(UnitPaymentPayer resident) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            child: Text(_initials(resident.name)),
-          ),
+          CircleAvatar(radius: 24, child: Text(_initials(resident.name))),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -1154,17 +1151,17 @@ class _ManagerUnitProfilePageState extends State<ManagerUnitProfilePage> {
         title: Text('Occupied: ${_payers.length} resident(s)'),
         children: _payers.isEmpty
             ? const [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                'No residents in this unit yet.',
-                style: TextStyle(color: AppColors.secondaryText),
-              ),
-            ),
-          ),
-        ]
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'No residents in this unit yet.',
+                      style: TextStyle(color: AppColors.secondaryText),
+                    ),
+                  ),
+                ),
+              ]
             : _payers.map(_buildOccupantTile).toList(),
       ),
     );

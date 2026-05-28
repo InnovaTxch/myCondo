@@ -7,6 +7,7 @@ import 'package:mycondo/features/manager/widgets/resident_bill_add_sheet.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_card.dart';
 import 'package:mycondo/features/manager/widgets/resident_bill_payment_sheet.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/utils/app_snackbar.dart';
 
@@ -64,8 +65,9 @@ class _ManagerBillBreakdownPageState extends State<ManagerBillBreakdownPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBlueBackground,
-      appBar: AppBar(
-        title: const Text('Bill Breakdown'),
+      appBar: appPageAppBar(
+        context: context,
+        title: 'Bill Breakdown',
         actions: [
           TextButton.icon(
             onPressed: _openAddBillSheet,

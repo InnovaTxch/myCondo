@@ -5,12 +5,10 @@ import 'package:mycondo/data/models/manager/announcement_models.dart';
 import 'package:mycondo/data/repositories/resident/resident_service.dart';
 import 'package:mycondo/features/shared/widgets/app_states.dart';
 import 'package:mycondo/features/shared/widgets/app_page.dart';
+import 'package:mycondo/features/shared/widgets/page_header.dart';
 
 class ResidentAnnouncementsPage extends StatefulWidget {
-  const ResidentAnnouncementsPage({
-    super.key,
-    this.showBackButton = true,
-  });
+  const ResidentAnnouncementsPage({super.key, this.showBackButton = true});
 
   final bool showBackButton;
 
@@ -40,8 +38,9 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
   Map<String, List<Announcement>> _grouped(List<Announcement> announcements) {
     final now = DateTime.now();
     final todayKey = DateFormat('yyyy-MM-dd').format(now);
-    final yesterdayKey =
-        DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 1)));
+    final yesterdayKey = DateFormat(
+      'yyyy-MM-dd',
+    ).format(now.subtract(const Duration(days: 1)));
 
     final groups = <String, List<Announcement>>{};
     for (final ann in announcements) {
@@ -49,8 +48,8 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
       final label = dayKey == todayKey
           ? 'Today'
           : dayKey == yesterdayKey
-              ? 'Yesterday'
-              : DateFormat('MMMM d, yyyy').format(ann.createdAt.toLocal());
+          ? 'Yesterday'
+          : DateFormat('MMMM d, yyyy').format(ann.createdAt.toLocal());
       groups.putIfAbsent(label, () => []).add(ann);
     }
     return groups;
@@ -62,82 +61,65 @@ class _ResidentAnnouncementsPageState extends State<ResidentAnnouncementsPage> {
       backgroundColor: AppColors.lightBlueBackground,
       body: Column(
         children: [
-          Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 20, 8),
-              child: Row(
-                children: [
-                  if (widget.showBackButton)
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.chevron_left_rounded),
-                    )
-                  else
-                    const SizedBox(width: 12),
-                  const Text(
-                    'Announcements',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: FutureBuilder<List<Announcement>>(
-                future: _announcementsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const AppLoadingState();
-                  }
+          AppPageHeader(
+            title: 'Announcements',
+            showBackButton: widget.showBackButton,
+          ),
+          Expanded(
+            child: FutureBuilder<List<Announcement>>(
+              future: _announcementsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const AppLoadingState();
+                }
 
-                  if (snapshot.hasError) {
-                    return AppErrorState(
-                      message: 'Unable to load announcements. Try again.',
-                      onRetry: _refresh,
-                    );
-                  }
+                if (snapshot.hasError) {
+                  return AppErrorState(
+                    message: 'Unable to load announcements. Try again.',
+                    onRetry: _refresh,
+                  );
+                }
 
-                  final announcements = snapshot.data ?? const <Announcement>[];
-                  if (announcements.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: _refresh,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(20, 80, 20, 24),
-                        children: const [
-                          AppEmptyState(
-                            icon: Icons.campaign_outlined,
-                            title: 'No announcements yet',
-                            message: 'Announcements from management will appear here.',
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final grouped = _grouped(announcements);
+                final announcements = snapshot.data ?? const <Announcement>[];
+                if (announcements.isEmpty) {
                   return RefreshIndicator(
                     onRefresh: _refresh,
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      children: [
-                        for (final entry in grouped.entries) ...[
-                          _GroupLabel(label: entry.key),
-                          ...entry.value.map(
-                            (announcement) => _ReadOnlyAnnouncementCard(
-                              announcement: announcement,
-                            ),
-                          ),
-                        ],
+                      padding: const EdgeInsets.fromLTRB(20, 80, 20, 24),
+                      children: const [
+                        AppEmptyState(
+                          icon: Icons.campaign_outlined,
+                          title: 'No announcements yet',
+                          message:
+                              'Announcements from management will appear here.',
+                        ),
                       ],
                     ),
                   );
-                },
-              ),
+                }
+
+                final grouped = _grouped(announcements);
+                return RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    children: [
+                      for (final entry in grouped.entries) ...[
+                        _GroupLabel(label: entry.key),
+                        ...entry.value.map(
+                          (announcement) => _ReadOnlyAnnouncementCard(
+                            announcement: announcement,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
+          ),
         ],
       ),
     );
@@ -152,8 +134,9 @@ class _ReadOnlyAnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = _styleFor(announcement.category);
-    final postedDate = DateFormat("MMM d, yyyy 'at' h:mm a")
-        .format(announcement.createdAt.toLocal());
+    final postedDate = DateFormat(
+      "MMM d, yyyy 'at' h:mm a",
+    ).format(announcement.createdAt.toLocal());
 
     return Container(
       width: double.infinity,
@@ -271,5 +254,3 @@ class _GroupLabel extends StatelessWidget {
     );
   }
 }
-
-
