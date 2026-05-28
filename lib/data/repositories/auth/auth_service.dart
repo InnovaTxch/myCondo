@@ -120,7 +120,15 @@ class AuthService {
     );
 
     try {
-      await _supabase.auth.updateUser(UserAttributes(password: password));
+      await verifier.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+    } finally {
+      await verifier.dispose();
+    }
+  }
+
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
