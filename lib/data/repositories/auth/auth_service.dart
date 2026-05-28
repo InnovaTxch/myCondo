@@ -109,13 +109,47 @@ class AuthService {
     }
   }
 
-  Future<void> updatePassword(String password) async {
+  Future<void> _verifyCurrentPassword({
+    required String email,
+    required String currentPassword,
+  }) async {
+    final verifier = SupabaseClient(
+      AppConfig.supabaseUrl,
+      AppConfig.supabaseAnonKey,
+      authOptions: const AuthClientOptions(autoRefreshToken: false),
+    );
+
     try {
       await _supabase.auth.updateUser(UserAttributes(password: password));
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    final email = user?.email?.trim();
+
+    if (email == null || email.isEmpty) {
+      throw 'No account email found. Please sign in again.';
+    }
+
+    try {
+      await _verifyCurrentPassword(
+        email: email,
+        currentPassword: currentPassword,
+      );
+
+      await _supabase.auth.updateUser(UserAttributes(password: newPassword));
     } on AuthException catch (e) {
+      final message = e.message.toLowerCase();
+
+      if (message.contains('invalid login credentials') ||
+          message.contains('invalid email or password')) {
+        throw 'Current password is incorrect.';
+      }
+
       throw e.message;
     } on SocketException {
-      throw "Cannot connect to Supabase. Check your internet.";
+      throw 'Cannot connect to Supabase. Check your internet.';
     } catch (e) {
       throw e.toString();
     }
@@ -145,10 +179,7 @@ class AuthService {
     }
 
     try {
-      await _supabase.auth.signInWithOtp(
-        email: email,
-        shouldCreateUser: false,
-      );
+      await _supabase.auth.signInWithOtp(email: email, shouldCreateUser: false);
     } on AuthException catch (e) {
       throw _mapRecoveryOtpMessage(e.message);
     } on SocketException {
