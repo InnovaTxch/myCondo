@@ -39,7 +39,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   String? _selectedBillType = 'Monthly Bill';
   bool _isLoading = false;
-  bool _isAccountabilityShared = false;
 
   final List<Map<String, dynamic>> _lineItems = [
     {'title': TextEditingController(), 'amount': TextEditingController()},
@@ -85,20 +84,28 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
   Future<void> _generateBill() async {
     if (!_isSubmissionValid()) return;
+
+    final residentIds = _selectedResidents.map((r) => r.id).toList();
+    final bills = _lineItems.map((item) {
+      final title = (item['title'] as TextEditingController).text.trim();
+      final amount =
+          double.tryParse(
+            (item['amount'] as TextEditingController).text.trim(),
+          ) ??
+          0;
+      return Bill(name: title, amount: (amount * 100).round());
+    }).toList();
+
+    final confirmed = await _confirmBeforeSend(
+      residentCount: _selectedResidents.length,
+      lineItemCount: bills.length,
+      totalAmount: _calculateTotal(),
+    );
+    if (!confirmed) return;
+    if (!mounted) return;
+
     setState(() => _isLoading = true);
-
     try {
-      final residentIds = _selectedResidents.map((r) => r.id).toList();
-      final bills = _lineItems.map((item) {
-        final title = (item['title'] as TextEditingController).text.trim();
-        final amount =
-            double.tryParse(
-              (item['amount'] as TextEditingController).text.trim(),
-            ) ??
-            0;
-        return Bill(name: title, amount: (amount * 100).round());
-      }).toList();
-
       context.showAppSnackBar(
         SnackBar(content: Text('Sending $_selectedBillType...')),
       );
@@ -107,7 +114,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
         billType: _selectedBillType!,
         dueDate: _dueDate,
         bills: bills,
-        isAccountabilityShared: _isAccountabilityShared,
+        isAccountabilityShared: false,
         recipientMode: BillRecipientMode.resident,
         residentIds: residentIds,
       );
@@ -129,6 +136,45 @@ class _CreateBillPageState extends State<CreateBillPage> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<bool> _confirmBeforeSend({
+    required int residentCount,
+    required int lineItemCount,
+    required double totalAmount,
+  }) async {
+    final dueDateText = DateFormat.yMMMd().format(_dueDate);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm Bill Send'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Bill type: ${_selectedBillType ?? 'Unspecified'}'),
+              Text('Due date: $dueDateText'),
+              Text('Residents: $residentCount'),
+              Text('Line items: $lineItemCount'),
+              Text('Total: ${_pesoFormatter.format(totalAmount)}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Send Bills'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed ?? false;
   }
 
   double _calculateTotal() {
@@ -242,26 +288,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE6E2DD)),
-                      ),
-                      child: SwitchListTile(
-                        title: const Text(
-                          'Split across all residents',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: const Text(
-                          'Each selected resident receives an equal share.',
-                        ),
-                        value: _isAccountabilityShared,
-                        onChanged: (val) =>
-                            setState(() => _isAccountabilityShared = val),
                       ),
                     ),
                     const SizedBox(height: 18),
