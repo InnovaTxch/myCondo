@@ -36,7 +36,7 @@ class PushNotificationService {
   static const String _installationIdKey = 'push.installation_id';
   static const Uuid _uuid = Uuid();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   final SupabaseClient _supabase = Supabase.instance.client;
