@@ -8,7 +8,7 @@ import 'package:mycondo/theme/app_theme.dart';
 void main() {
   setUp(() {
     PackageInfo.setMockInitialValues(
-      appName: 'mycondo',
+      appName: 'myCondo',
       packageName: 'com.example.mycondo',
       version: '1.2.3',
       buildNumber: '45',
