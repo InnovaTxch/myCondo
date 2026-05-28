@@ -142,7 +142,23 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
     );
 
     if (!mounted || updated != true) return;
-    context.showAppSnackBar(const SnackBar(content: Text('Password updated.')));
+    await _showPasswordChangedDialog();
+  }
+
+  Future<void> _showPasswordChangedDialog() {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Password Successfully Changed'),
+        content: const Text('Your password has been updated.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Okay'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showPasswordError(Object error, [StackTrace? stackTrace]) {
@@ -1243,7 +1259,11 @@ class _ReadOnlyProfileField extends StatelessWidget {
 class _ChangePasswordSheet extends StatefulWidget {
   const _ChangePasswordSheet({required this.onSubmit, required this.onError});
 
-  final Future<void> Function(String password) onSubmit;
+  final Future<void> Function({
+    required String currentPassword,
+    required String newPassword,
+  })
+  onSubmit;
   final void Function(Object error, [StackTrace? stackTrace]) onError;
 
   @override
@@ -1252,6 +1272,7 @@ class _ChangePasswordSheet extends StatefulWidget {
 
 class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
@@ -1259,6 +1280,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   @override
   void dispose() {
+    _currentPasswordController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
@@ -1269,7 +1291,10 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
     setState(() => _isSaving = true);
     try {
-      await widget.onSubmit(_passwordController.text);
+      await widget.onSubmit(
+        currentPassword: _currentPasswordController.text,
+        newPassword: _passwordController.text,
+      );
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e, st) {
@@ -1343,7 +1368,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Create a new password for your account.',
+                            'Verify your current password before changing it.',
                             style: TextStyle(
                               color: Color(0xFF66737C),
                               fontSize: 12,
@@ -1365,11 +1390,11 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 const _PasswordRequirementCard(),
                 const SizedBox(height: 16),
                 TextFormField(
-                  controller: _passwordController,
+                  controller: _currentPasswordController,
                   obscureText: _obscurePassword,
                   decoration: _profileInputDecoration(
-                    label: 'New password',
-                    icon: Icons.password_rounded,
+                    label: 'Current password',
+                    icon: Icons.lock_outline_rounded,
                     suffixIcon: IconButton(
                       onPressed: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
@@ -1379,6 +1404,22 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                             : Icons.visibility_off_outlined,
                       ),
                     ),
+                  ),
+                  validator: (value) {
+                    final password = value ?? '';
+                    if (password.isEmpty) {
+                      return 'Enter your current password.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: _profileInputDecoration(
+                    label: 'New password',
+                    icon: Icons.password_rounded,
                   ),
                   validator: (value) {
                     final password = value ?? '';
