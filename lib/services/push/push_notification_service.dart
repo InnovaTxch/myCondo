@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:mycondo/data/repositories/auth/profile_identity_service.dart';
 import 'package:mycondo/services/push/push_session_binding_service.dart';
+import 'package:mycondo/config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -36,7 +36,7 @@ class PushNotificationService {
   static const String _installationIdKey = 'push.installation_id';
   static const Uuid _uuid = Uuid();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -218,7 +218,7 @@ class PushNotificationService {
   }
 
   String? _webVapidKeyOrNull() {
-    final vapid = dotenv.env['FIREBASE_WEB_VAPID_KEY']?.trim() ?? '';
+    final vapid = AppConfig.firebaseWebVapidKey.trim();
     return vapid.isEmpty ? null : vapid;
   }
 

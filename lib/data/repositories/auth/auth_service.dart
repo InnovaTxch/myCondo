@@ -59,6 +59,7 @@ class AuthService {
       password: password,
     );
 
+    await _sessionPreferenceService.clearOnboardingRetention();
     await _sessionPreferenceService.applyLoginChoice(
       keepSignedIn: keepSignedIn,
     );
@@ -91,6 +92,7 @@ class AuthService {
         await _sessionPreferenceService.clearRememberedSession();
       } else {
         _sessionPreferenceService.clearEphemeralSessionMarker();
+        await _sessionPreferenceService.clearOnboardingRetention();
       }
       await _pushNotificationService.unregisterCurrentProfileDevice(
         profileId: profileId,
@@ -116,6 +118,112 @@ class AuthService {
     } catch (e) {
       throw e.toString();
     }
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(email.trim());
+    } on AuthException catch (e) {
+      throw e.message;
+    } on SocketException {
+      throw "Cannot connect to Supabase. Check your internet.";
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<void> sendRecoveryVerificationPin() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw 'No active session found. Please sign in again.';
+    }
+
+    final email = (user.email ?? '').trim();
+    if (email.isEmpty) {
+      throw 'No account email found. Please update your email first.';
+    }
+
+    try {
+      await _supabase.auth.signInWithOtp(
+        email: email,
+        shouldCreateUser: false,
+      );
+    } on AuthException catch (e) {
+      throw _mapRecoveryOtpMessage(e.message);
+    } on SocketException {
+      throw "Cannot connect to Supabase. Check your internet.";
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<void> verifyRecoveryAccountWithPin(String pin) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw 'No active session found. Please sign in again.';
+    }
+
+    final email = (user.email ?? '').trim();
+    if (email.isEmpty) {
+      throw 'No account email found. Please update your email first.';
+    }
+
+    final trimmedPin = pin.trim();
+    if (trimmedPin.isEmpty) {
+      throw 'Enter the verification code sent to your email.';
+    }
+
+    final metadata = Map<String, dynamic>.from(user.userMetadata ?? {});
+    metadata['recovery_verified'] = true;
+    metadata['recovery_verified_at'] = DateTime.now().toUtc().toIso8601String();
+
+    try {
+      await _supabase.auth.verifyOTP(
+        email: email,
+        token: trimmedPin,
+        type: OtpType.email,
+      );
+      await _supabase.auth.updateUser(UserAttributes(data: metadata));
+    } on AuthException catch (e) {
+      throw _mapRecoveryOtpMessage(e.message);
+    } on SocketException {
+      throw "Cannot connect to Supabase. Check your internet.";
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  String _mapRecoveryOtpMessage(String message) {
+    final normalized = message.toLowerCase();
+    if (normalized.contains('token has expired') ||
+        normalized.contains('is invalid')) {
+      return 'That verification code is invalid or expired. Please request a new code and try again.';
+    }
+    return message;
+  }
+
+  bool isRecoveryAccountVerified() {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return false;
+    return user.userMetadata?['recovery_verified'] == true;
+  }
+
+  Future<void> sendRecoveryEmailForVerifiedAccount() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw 'No active session found. Please sign in again.';
+    }
+
+    if (!isRecoveryAccountVerified()) {
+      throw 'Verify your account in Profile before requesting a recovery email.';
+    }
+
+    final email = (user.email ?? '').trim();
+    if (email.isEmpty) {
+      throw 'No account email found. Please update your profile email first.';
+    }
+
+    await sendPasswordResetEmail(email);
   }
 
   String? getCurrentUserEmail() {

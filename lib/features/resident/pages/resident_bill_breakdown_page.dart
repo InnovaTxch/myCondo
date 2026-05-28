@@ -390,18 +390,11 @@ class _BreakdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(symbol: 'PHP ', decimalDigits: 2);
-    final issuedLabel = DateFormat(
-      'MMM d, yyyy',
-    ).format(_toLocalIssuedAt(bill));
-    final dueLabel = DateFormat('MMM d, yyyy').format(bill.dueDate);
-    final latestCompletedPayment = bill.latestCompletedPayment;
-    final paidOnLabel = latestCompletedPayment == null
-        ? null
-        : DateFormat('MMM d, yyyy').format(
-            latestCompletedPayment.createdAt.toLocal(),
-          );
-    ).format(entry.issuedAt.toLocal());
+    final issuedLabel = DateFormat('MMM d, yyyy').format(entry.issuedAt.toLocal());
     final dueLabel = DateFormat('MMM d, yyyy').format(entry.dueDate.toLocal());
+    final paidOnLabel = entry.fullyPaidAt == null
+        ? null
+        : DateFormat('MMM d, yyyy').format(entry.fullyPaidAt!.toLocal());
     final statusColors = context.appStatusColors;
     final statusColor = _statusColor(
       status: entry.status,

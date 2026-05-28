@@ -8,6 +8,8 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 ### Auth and onboarding
 
 - Email/password login and signup.
+- Signup creates the auth account immediately, then routes users with role `unassigned` into onboarding.
+- Onboarding no longer depends on in-memory pending credentials; it requires an active auth session.
 - Role-based routing via `AuthGate`:
   - `manager` -> manager home
   - `resident` -> resident home
@@ -15,6 +17,11 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - Onboarding supports:
   - Manager setup (first name, last name, condo name)
   - Resident claim/join flow using BH code + resident code
+- Password recovery is managed from the in-app Profile page:
+  - `Verify Email for Recovery` opens a PIN flow where the user explicitly taps `Send code`.
+  - Users can request another PIN after a 60-second cooldown.
+  - After successful verification, the app sends the recovery email.
+- Current local Supabase config (`supabase/config.toml`) has `auth.email.enable_confirmations = false`, so signup usually authenticates immediately. If confirmations are enabled in a deployed project, signup shows verify-email guidance and redirects to login.
 
 ### Manager experience
 
@@ -114,7 +121,7 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - Supabase Postgres
 - Supabase Realtime
 - Supabase Row Level Security (RLS)
-- `flutter_dotenv` for local env config
+- Flutter compile-time configuration via `--dart-define-from-file`
 - Firebase Cloud Messaging (Android + iOS via APNs)
 - Supabase Edge Functions (push dispatch)
 
@@ -125,6 +132,27 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
 - URL: https://innovatxch.github.io/myCondo/
 - Credentials: ask the maintainer
 - Demo seed reference: `docs/DEMO.md`
+
+Release configuration is injected by GitHub Actions from repository secrets. The workflow writes an ignored `.env` file during CI and passes it to Flutter with:
+
+```bash
+flutter build web --release --base-href "/myCondo/" --dart-define-from-file=.env
+```
+
+Required GitHub repository secrets:
+
+```env
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+FIREBASE_WEB_API_KEY=...
+FIREBASE_WEB_APP_ID=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_WEB_PROJECT_ID=...
+FIREBASE_WEB_AUTH_DOMAIN=...
+FIREBASE_WEB_STORAGE_BUCKET=...
+FIREBASE_WEB_MEASUREMENT_ID=...
+FIREBASE_WEB_VAPID_KEY=...
+```
 
 ### Option B: Local run
 
@@ -147,14 +175,14 @@ flutter pub get
 6. Run app:
 
 ```bash
-flutter run
+flutter run --dart-define-from-file=.env
 ```
 
 7. Optional targets:
 
 ```bash
-flutter run -d chrome
-flutter run -d android
+flutter run -d chrome --dart-define-from-file=.env
+flutter run -d android --dart-define-from-file=.env
 ```
 
 ## Public Repo Security Checklist
@@ -167,6 +195,7 @@ Quick rules:
 - Never commit `.env`, `android/app/google-services.json`, or `ios/Runner/GoogleService-Info.plist`
 - Use project-local credentials only
 - Rotate any key immediately if it was exposed in a public commit
+- Android launcher and launch-screen source artwork lives in `assets/images/app-icon.png`.
 
 ## Push Notification Setup (Android + Web, iOS ready)
 

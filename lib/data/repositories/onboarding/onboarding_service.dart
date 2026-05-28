@@ -8,12 +8,7 @@ class OnboardingService {
 
   Future<void> setupManagerAccount(ManagerCondoSetupInput input) async {
     try {
-      final authResponse = await _signUpIfNeeded(
-        email: input.email,
-        password: input.password,
-      );
-      final authId = authResponse?.user?.id ?? _supabase.auth.currentUser?.id;
-      if (authId == null) throw "No user logged in";
+      final authId = _requireAuthenticatedUserId();
 
       final existingProfile = await _supabase
           .from('profiles')
@@ -33,11 +28,14 @@ class OnboardingService {
             .select('id')
             .single();
       } else {
-        await _supabase.from('profiles').update({
-          'first_name': input.firstName.trim(),
-          'last_name': input.lastName.trim(),
-          'role': 'manager',
-        }).eq('id', existingProfile['id']);
+        await _supabase
+            .from('profiles')
+            .update({
+              'first_name': input.firstName.trim(),
+              'last_name': input.lastName.trim(),
+              'role': 'manager',
+            })
+            .eq('id', existingProfile['id']);
       }
 
       await _supabase.rpc(
@@ -50,7 +48,6 @@ class OnboardingService {
           'p_gallery_urls': <String>[],
         },
       );
-
     } catch (e) {
       debugPrint("Error in setupManagerAccount: $e");
       throw e.toString();
@@ -59,17 +56,14 @@ class OnboardingService {
 
   Future<void> setupResidentAccount(ResidentClaimInput input) async {
     try {
-      await _signUpIfNeeded(
-        email: input.email,
-        password: input.password,
-      );
+      final authId = _requireAuthenticatedUserId();
 
       await _supabase.rpc(
         'claim_resident_profile',
         params: {
           'p_condo_code': input.condoCode.trim(),
           'p_resident_code': input.residentCode.trim(),
-          'p_auth_id': _supabase.auth.currentUser?.id,
+          'p_auth_id': authId,
         },
       );
       await _identity.requireCurrentProfile();
@@ -79,38 +73,22 @@ class OnboardingService {
     }
   }
 
-  Future<AuthResponse?> _signUpIfNeeded({
-    String? email,
-    String? password,
-  }) async {
-    if (_supabase.auth.currentUser != null) return null;
-    if (email == null || email.trim().isEmpty) {
-      throw 'Missing signup email. Please sign up again.';
+  String _requireAuthenticatedUserId() {
+    final authId = _supabase.auth.currentUser?.id;
+    if (authId == null || authId.isEmpty) {
+      throw 'Your signup session expired. Please sign in again to continue onboarding.';
     }
-    if (password == null || password.isEmpty) {
-      throw 'Missing signup password. Please sign up again.';
-    }
-
-    return _supabase.auth.signUp(
-      email: email.trim(),
-      password: password,
-    );
+    return authId;
   }
-
-
 }
 
 class ManagerCondoSetupInput {
   const ManagerCondoSetupInput({
-    required this.email,
-    required this.password,
     required this.firstName,
     required this.lastName,
     required this.name,
   });
 
-  final String email;
-  final String password;
   final String firstName;
   final String lastName;
   final String name;
@@ -118,14 +96,10 @@ class ManagerCondoSetupInput {
 
 class ResidentClaimInput {
   const ResidentClaimInput({
-    required this.email,
-    required this.password,
     required this.condoCode,
     required this.residentCode,
   });
 
-  final String email;
-  final String password;
   final String condoCode;
   final String residentCode;
 }
