@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mycondo/theme/app_theme.dart';
 import 'package:mycondo/data/models/payment_item.dart';
 import 'package:mycondo/data/repositories/manager/payment_approval_repository.dart';
@@ -167,30 +168,56 @@ class _ManagerTransactionHistoryPageState
   }
 
   List<PaymentItem> _applyFilters(List<PaymentItem> payments) {
-    final query = _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim();
 
     return payments.where((payment) {
       if (_statusFilter != null && payment.status != _statusFilter) {
         return false;
       }
+
       if (!_matchesDateFilter(payment.date)) return false;
 
-      if (query.isNotEmpty) {
-        final amount = payment.amount / 100;
-        final amountText = amount.toStringAsFixed(2);
-
-        final matchesSearch =
-            payment.residentName.toLowerCase().contains(query) ||
-            payment.room.toLowerCase().contains(query) ||
-            payment.billType.toLowerCase().contains(query) ||
-            amountText.contains(query) ||
-            'php $amountText'.contains(query);
-
-        if (!matchesSearch) return false;
+      if (query.isNotEmpty && !_matchesSearch(payment, query)) {
+        return false;
       }
 
       return true;
     }).toList();
+  }
+
+  bool _matchesSearch(PaymentItem payment, String query) {
+    final normalizedQuery = _normalizeSearchText(query);
+    if (normalizedQuery.isEmpty) return true;
+
+    final terms = normalizedQuery.split(' ').where((term) => term.isNotEmpty);
+    final searchable = _buildSearchablePaymentText(payment);
+
+    return terms.every(searchable.contains);
+  }
+
+  String _buildSearchablePaymentText(PaymentItem payment) {
+    final amount = payment.amount / 100;
+    final amountText = amount.toStringAsFixed(2);
+    final amountWithCommas = NumberFormat('#,##0.00').format(amount);
+
+    return _normalizeSearchText([
+      payment.residentName,
+      payment.room,
+      payment.billType,
+      payment.remark ?? '',
+      payment.rejectionReason ?? '',
+      amountText,
+      amountWithCommas,
+      'php $amountText',
+      'php $amountWithCommas',
+    ].join(' '));
+  }
+
+  String _normalizeSearchText(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .trim();
   }
 
   bool _matchesDateFilter(String value) {
