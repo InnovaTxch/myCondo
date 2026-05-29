@@ -16,7 +16,7 @@ It uses Supabase for auth, Postgres data, role-based access control, and realtim
   - `unassigned` -> onboarding flow
 - Onboarding supports:
   - Manager setup (first name, last name, condo name)
-  - Resident claim/join flow using BH code + resident code
+  - Resident claim/join flow using Condo code + resident code
 - Password recovery is managed from the in-app Profile page:
   - `Verify Email for Recovery` opens a PIN flow where the user explicitly taps `Send code`.
   - Users can request another PIN after a 60-second cooldown.
@@ -341,6 +341,128 @@ supabase_public_dump.sql
 - `services/shared/` contains cross-feature behavior (chat, notifications, presence, session timer).
 - Routing is centralized in `app_routes.dart`, with auth/role gate logic in `AuthGate`.
 
+
+## Logical View Diagram
+
+### Description
+ 
+myCondo is a mobile application built with Flutter and Dart. It allows **condo managers** to manage residents, units, and occupancy records. **Managers** can generate bills for residents and broadcast announcements for maintenance and security notices. **Residents** can receive push notifications, submit payment details/proof/reference for manager review, view their payment history, and receive security notices. The system uses **Supabase** as its backend for authentication, database storage, and real-time updates.
+
+### Diagram
+> [!NOTE]
+> The diagram below is rendered using **Mermaid.js**. For the best viewing experience, please view this file on GitHub or a Markdown editor with Mermaid support.
+```mermaid
+flowchart TD
+
+USER(["👤 User"]) 
+    
+    AUTHGATE{Role-based Signup / Login}
+    
+    subgraph LOGIC["Business Logic"]
+        direction TB
+            COMMS["Communications"]
+        
+            subgraph FINANCE["Finance"]
+                BILLING["Billing & Finance"]
+            end
+
+            subgraph OPERATIONS["Operations"]
+                SUPPORT["Maintenance & Support"]
+                SECURITY["Security & Oversight"]
+            end
+
+            subgraph CORE["Core Domains"]
+                direction TB
+                RES_MANAGE["Resident Management"]
+                UNIT_MANAGE["Unit Management"]
+                RECORDS["Occupancy Records"]
+            end 
+    end
+    
+    DB[("Database")]
+
+
+    RES_MANAGE --> UNIT_MANAGE
+    RES_MANAGE --> RECORDS
+
+    RECORDS --> BILLING
+    UNIT_MANAGE --> SUPPORT
+    UNIT_MANAGE --> SECURITY
+    
+    BILLING --> COMMS
+    SECURITY --> COMMS
+    SUPPORT --> COMMS
+
+    USER --> AUTHGATE
+    AUTHGATE --> LOGIC
+    LOGIC --> DB
+
+    DB -.-> |information retrieval| USER
+    COMMS -.-> |notifications / updates| USER
+```
+## Logical View Diagram Description
+Given the diagram above, the functional flow is explained below:
+### 1. Entry & Authentication
+* **Role-Based Access Control (RBAC):**
+  * **Manager Signup:** Requires condo registration, generating a unique **8-digit code** for the property.
+  * **Resident Signup:** Requires the 8-digit code provided by the manager to link the resident to the property.
+  * **Role-based Dashboard:** Flutter dynamically renders the dashboard and UI elements based on the user's role and updates them with real-time data.
+* **Supabase Authentication:**
+  * Authenticates via email and password.
+  * The system dynamically determines if the user is a manager or resident by querying Supabase storage metadata which contains profiles table and role-based profile records.
+
+### 2. Business Logic Layer
+#### **A. Core Domains (Manager Restricted)**
+* **Resident Management:** Overview of resident profiles, approval/rejection of pending registrations, and removal of vacated residents.
+* **Unit Management:** Monitoring of unit/room availability; acts as the prerequisite for maintenance and security tickets.
+* **Occupancy Records:** Tracks active residency, which serves as the trigger for manager-created bills and fees.
+
+#### **B. Operations & Finance**
+* **Maintenance & Support:** A request-response pipeline where residents submit repair issues for manager resolution.
+* **Security & Oversight:** Centralized log for incident reporting and property monitoring.
+* **Billing & Finance:** Managers generate invoices; residents can view and ubmit payment details/proof/reference for manager review.
+
+#### **C. Communications**
+* **Messaging Service:** Facilitates interaction for maintenance and support inquiries.
+* **Broadcast Service:** Allows managers to send property-wide announcements (e.g., maintenance or security notices).
+
+### 3. Data & Feedback (Persistence Layer)
+* **Supabase & PostgreSQL:** All logic data is stored in PostgreSQL for persistent storage.
+* **Row Level Security (RLS):** Ensures data isolation—users can only access records belonging to their specific property.
+* **Real-time Database:** Powers emergency alerts, instant messaging, and financial updates.
+* **Push Notifications:** Provides urgent updates for payments or security alerts once data is saved in Supabase.
+
+
+# Software Architecture
+
+### Architecture Pattern
+
+Feature-First Architecture with Layered Data Access
+
+The system follows a Feature-First architecture where code is organized by business capability instead of technical type. Each feature contains its own UI and logic. Shared data logic is placed in a centralized data layer.
+
+## Structure Layers
+
+```
+Presentation Layer
+  * Pages
+  * Widgets
+  * Role-based UI (Resident, Condo Manager)
+
+Feature Layer
+  * Auth
+  * Resident
+  * Manager
+
+Data Layer
+  * Models
+  * Repositories
+  * Supabase integration
+```
+
+---
+
+
 ## System Flow (Mermaid)
 
 ### 1) Auth and onboarding
@@ -353,7 +475,7 @@ flowchart TD
   AG -->|unassigned| OB["Onboarding"]
 
   OB --> MS["Manager Setup"]
-  OB --> RS["Resident Join via BH and Resident Code"]
+  OB --> RS["Resident Join via Condo and Resident Code"]
 ```
 
 ### 2) Manager feature flow
