@@ -402,7 +402,6 @@ USER(["👤 User"])
 ```
 ## Logical View Diagram Description
 Given the diagram above, the functional flow is explained below:
----
 ### 1. Entry & Authentication
 * **Role-Based Access Control (RBAC):**
   * **Manager Signup:** Requires condo registration, generating a unique **8-digit code** for the property.
